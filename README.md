@@ -1,6 +1,6 @@
 # AERO_2021-2022
 
-AERO Code for CleanSpeed 6.0
+AERO Code for CleanSpeed 5.0
 
 This is all the boards and code we generate
 
