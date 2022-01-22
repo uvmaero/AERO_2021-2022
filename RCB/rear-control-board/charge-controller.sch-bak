@@ -3,7 +3,7 @@ EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 2 6
+Sheet 2 5
 Title ""
 Date ""
 Rev ""
@@ -13,10 +13,45 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
-Text HLabel 3900 3650 0    50   Input ~ 0
+Text HLabel 3900 3250 0    50   Input ~ 0
 DCDC_IN
-Text HLabel 4400 3650 2    50   Output ~ 0
-DCDC_OUT
+Text HLabel 3925 3925 0    50   Input ~ 0
+BATTERY_IN
+$Comp
+L Device:Fuse F11
+U 1 1 622D3615
+P 4225 3250
+F 0 "F11" V 4028 3250 50  0000 C CNN
+F 1 "20A" V 4119 3250 50  0000 C CNN
+F 2 "AERO_Footprints:Fuseholder_Blade_Mini_Keystone_3568" V 4155 3250 50  0001 C CNN
+F 3 "~" H 4225 3250 50  0001 C CNN
+	1    4225 3250
+	0    1    1    0   
+$EndComp
 Wire Wire Line
-	4400 3650 3900 3650
+	3900 3250 4075 3250
+Wire Wire Line
+	4375 3250 4625 3250
+Wire Wire Line
+	4625 3250 4625 3400
+Wire Wire Line
+	4625 3925 3925 3925
+Text Notes 3150 2800 0    50   ~ 0
+Not really a charge controller, just a fuse and diode\n\nCrude, but functional implementation
+$Comp
+L Device:D_KAK D?
+U 1 1 6256B1F2
+P 4625 3650
+F 0 "D?" V 4554 3794 50  0000 L CNN
+F 1 "D_KAK" V 4645 3794 50  0000 L CNN
+F 2 "" H 4625 3650 50  0001 C CNN
+F 3 "~" H 4625 3650 50  0001 C CNN
+	1    4625 3650
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	4625 3850 4625 3925
+Wire Wire Line
+	4725 3400 4625 3400
+Connection ~ 4625 3400
 $EndSCHEMATC
