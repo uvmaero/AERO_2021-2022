@@ -141,30 +141,30 @@ F 3 "~" H 2550 4775 50  0001 C CNN
 	1    2550 4775
 	-1   0    0    -1  
 $EndComp
-Text Label 1725 2025 2    50   ~ 0
+Text Label 1725 1925 2    50   ~ 0
 PUMP_12V
 Wire Wire Line
-	1725 2025 950  2025
-Text Label 1725 2125 2    50   ~ 0
+	1725 1925 950  1925
+Text Label 1725 2525 2    50   ~ 0
 PUMP_SIG
 Wire Wire Line
-	1725 2125 950  2125
-Text Label 1725 1625 2    50   ~ 0
+	1725 2525 950  2525
+Text Label 1725 1225 2    50   ~ 0
 FAN_12V
 Wire Wire Line
-	1725 1625 950  1625
-Text Label 1725 1725 2    50   ~ 0
+	1725 1225 950  1225
+Text Label 1725 1825 2    50   ~ 0
 FAN_SIG
 Wire Wire Line
-	1725 1725 950  1725
-Text Label 1725 1825 2    50   ~ 0
+	1725 1825 950  1825
+Text Label 1725 1425 2    50   ~ 0
 BRAKE_12V
 Wire Wire Line
-	1725 1825 950  1825
-Text Label 1725 1925 2    50   ~ 0
+	1725 1425 950  1425
+Text Label 1725 1725 2    50   ~ 0
 BRAKE_SIG
 Wire Wire Line
-	1725 1925 950  1925
+	1725 1725 950  1725
 $Sheet
 S 7150 2075 1100 850 
 U 61F4D99A
@@ -197,59 +197,23 @@ F13 "TEMP_WATER" I L 5950 3650 50
 $EndSheet
 Wire Wire Line
 	6800 2425 7150 2425
-$Comp
-L power:+12VA #PWR0107
-U 1 1 6217930C
-P 1725 1125
-F 0 "#PWR0107" H 1725 975 50  0001 C CNN
-F 1 "+12VA" H 1740 1298 50  0000 C CNN
-F 2 "" H 1725 1125 50  0001 C CNN
-F 3 "" H 1725 1125 50  0001 C CNN
-	1    1725 1125
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	1725 1125 950  1125
-Wire Wire Line
-	950  1225 1725 1225
-Wire Wire Line
-	1725 1225 1725 1125
-Connection ~ 1725 1125
-Text Label 1725 1425 2    50   ~ 0
+Text Label 1700 2325 2    50   ~ 0
 DCDC_IN
-Text Label 1725 1225 2    50   ~ 0
-Battery
-Wire Wire Line
-	950  1425 1300 1425
-Wire Wire Line
-	950  1325 1300 1325
-Wire Wire Line
-	1300 1325 1300 1425
-Connection ~ 1300 1425
-Wire Wire Line
-	1300 1425 1725 1425
 $Comp
 L power:GND #PWR0108
 U 1 1 6218B3DC
-P 1750 3325
-F 0 "#PWR0108" H 1750 3075 50  0001 C CNN
-F 1 "GND" H 1755 3152 50  0000 C CNN
-F 2 "" H 1750 3325 50  0001 C CNN
-F 3 "" H 1750 3325 50  0001 C CNN
-	1    1750 3325
+P 2025 3025
+F 0 "#PWR0108" H 2025 2775 50  0001 C CNN
+F 1 "GND" H 2030 2852 50  0000 C CNN
+F 2 "" H 2025 3025 50  0001 C CNN
+F 3 "" H 2025 3025 50  0001 C CNN
+	1    2025 3025
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	1750 3325 950  3325
 Wire Wire Line
 	950  5300 1750 5300
 Wire Wire Line
 	1750 5300 1750 5400
-Connection ~ 1750 3325
-Wire Wire Line
-	950  3225 1750 3225
-Wire Wire Line
-	1750 3225 1750 3325
 $Comp
 L Device:Fuse F1
 U 1 1 61F130D9
@@ -453,34 +417,32 @@ F 3 "" H 10375 950 50  0001 C CNN
 	1    10375 950 
 	1    0    0    -1  
 $EndComp
-Text Label 1725 2225 2    50   ~ 0
+Text Label 1725 1125 2    50   ~ 0
 RINEHART
 Wire Wire Line
-	1725 2225 950  2225
-Text Label 1725 2325 2    50   ~ 0
-DASH
-Wire Wire Line
-	1725 2325 950  2325
-Text Label 1725 2425 2    50   ~ 0
-HVB_12V
-Wire Wire Line
-	1725 2425 950  2425
-Text Label 1725 2525 2    50   ~ 0
-SPARE
-Wire Wire Line
-	1725 2525 950  2525
+	1725 1125 950  1125
 Text Label 1725 2625 2    50   ~ 0
-TSV
+DASH
 Wire Wire Line
 	1725 2625 950  2625
 Text Label 1725 2725 2    50   ~ 0
-BRB
+HVB_12V
 Wire Wire Line
 	1725 2725 950  2725
+Text Label 1725 1325 2    50   ~ 0
+SPARE
+Wire Wire Line
+	1725 1325 950  1325
+Text Label 1725 3325 2    50   ~ 0
+TSV
+Wire Wire Line
+	1725 3325 950  3325
 Text Label 1725 2825 2    50   ~ 0
+BRB
+Text Label 1725 2925 2    50   ~ 0
 BRB_RTN
 Wire Wire Line
-	1725 2825 950  2825
+	1725 2925 950  2925
 $Comp
 L power:VDD #PWR0110
 U 1 1 6226F925
@@ -556,7 +518,7 @@ Wire Wire Line
 	2975 7250 3350 7250
 Text Notes 1025 6450 0    50   ~ 0
 Main Relay for all car systems
-Text Label 3150 4475 2    50   ~ 0
+Text Label 3150 4875 2    50   ~ 0
 CAN_P
 Text Label 5625 3450 0    50   ~ 0
 CAN_P
@@ -578,24 +540,16 @@ Wire Wire Line
 	5175 3075 5950 3075
 Wire Wire Line
 	5175 2975 5950 2975
-Text Label 3150 4675 2    50   ~ 0
+Text Label 3150 4575 2    50   ~ 0
 CAN_N
 Wire Wire Line
-	3150 4475 2750 4475
+	3150 4875 2750 4875
 Wire Wire Line
-	3150 4675 2750 4675
+	3150 4575 2750 4575
 Text Label 5625 3525 0    50   ~ 0
 CAN_N
 Wire Wire Line
 	5625 3525 5950 3525
-Wire Wire Line
-	2750 4575 3150 4575
-Wire Wire Line
-	3150 4575 3150 4475
-Wire Wire Line
-	2750 4775 3150 4775
-Wire Wire Line
-	3150 4775 3150 4675
 $Comp
 L Regulator_Switching:R-78B5.0-2.0 U3
 U 1 1 623629FD
@@ -667,18 +621,14 @@ Wire Wire Line
 	950  5000 1750 5000
 Wire Wire Line
 	1750 5000 1750 5100
-Wire Wire Line
-	950  1525 1300 1525
-Wire Wire Line
-	1300 1525 1300 1425
-Text Label 1725 2925 2    50   ~ 0
+Text Label 1725 2025 2    50   ~ 0
 FAULT_IMD
 Wire Wire Line
-	1725 2925 950  2925
-Text Label 1725 3025 2    50   ~ 0
+	1725 2025 950  2025
+Text Label 1725 3225 2    50   ~ 0
 FAULT_BMS
 Wire Wire Line
-	1725 3025 950  3025
+	1725 3225 950  3225
 Text Label 3925 2650 0    50   ~ 0
 FAULT_IMD
 Wire Wire Line
@@ -755,4 +705,73 @@ Wire Wire Line
 	10375 2800 10375 3300
 Text Label 10375 4000 2    50   ~ 0
 SSOK
+Wire Wire Line
+	1700 2325 1375 2325
+Wire Wire Line
+	950  2425 1375 2425
+Wire Wire Line
+	1375 2425 1375 2325
+Connection ~ 1375 2325
+Wire Wire Line
+	1375 2325 950  2325
+Text Label 1725 1625 2    50   ~ 0
+DCDC_IN
+Wire Wire Line
+	1725 1625 950  1625
+Text Label 1725 1525 2    50   ~ 0
+Battery
+Text Label 1725 2225 2    50   ~ 0
+Battery
+$Comp
+L power:+12VA #PWR0107
+U 1 1 61F1F158
+P 1850 2225
+F 0 "#PWR0107" H 1850 2075 50  0001 C CNN
+F 1 "+12VA" H 1865 2398 50  0000 C CNN
+F 2 "" H 1850 2225 50  0001 C CNN
+F 3 "" H 1850 2225 50  0001 C CNN
+	1    1850 2225
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	950  2225 1375 2225
+Wire Wire Line
+	950  1525 1850 1525
+$Comp
+L power:+12VA #PWR0138
+U 1 1 61F18DE9
+P 1850 1525
+F 0 "#PWR0138" H 1850 1375 50  0001 C CNN
+F 1 "+12VA" H 1865 1698 50  0000 C CNN
+F 2 "" H 1850 1525 50  0001 C CNN
+F 3 "" H 1850 1525 50  0001 C CNN
+	1    1850 1525
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	950  2125 1375 2125
+Wire Wire Line
+	1375 2125 1375 2225
+Connection ~ 1375 2225
+Wire Wire Line
+	1375 2225 1850 2225
+Wire Wire Line
+	950  2825 1725 2825
+Text Label 3150 4675 2    50   ~ 0
+CAN_P
+Wire Wire Line
+	3150 4675 2750 4675
+Text Label 3150 4775 2    50   ~ 0
+CAN_N
+Wire Wire Line
+	3150 4775 2750 4775
+Wire Wire Line
+	950  3025 1725 3025
+Wire Wire Line
+	950  3125 1725 3125
+Wire Wire Line
+	1725 3125 1725 3025
+Connection ~ 1725 3025
+Wire Wire Line
+	1725 3025 2025 3025
 $EndSCHEMATC
