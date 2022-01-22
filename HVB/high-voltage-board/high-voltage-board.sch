@@ -147,32 +147,7 @@ Wire Wire Line
 Text Label 5800 3700 0    50   ~ 0
 DC_DC_FAULT
 Text Label 8700 3250 2    50   ~ 0
-SHDN_LOOP_OUT
-Wire Wire Line
-	1100 4500 1450 4500
-Text Label 1450 4500 2    50   ~ 0
-FANOUT0
-Wire Wire Line
-	1100 4600 1450 4600
-Text Label 1450 4600 2    50   ~ 0
-FANOUT0
-$Comp
-L power:+12V #PWR?
-U 1 1 5C8304FF
-P 1150 4250
-AR Path="/5C8304FF" Ref="#PWR?"  Part="1" 
-AR Path="/5C83278E/5C8304FF" Ref="#PWR0110"  Part="1" 
-F 0 "#PWR?" H 1150 4100 50  0001 C CNN
-F 1 "+12V" H 1165 4423 50  0000 C CNN
-F 2 "" H 1150 4250 50  0001 C CNN
-F 3 "" H 1150 4250 50  0001 C CNN
-	1    1150 4250
-	-1   0    0    -1  
-$EndComp
-Wire Wire Line
-	1150 4250 1150 4300
-Wire Wire Line
-	1150 4300 1100 4300
+DCDC_OUT
 $Comp
 L Connector_Generic:Conn_01x05 J?
 U 1 1 5C830507
@@ -290,28 +265,14 @@ F 3 "~" H 850 6550 50  0001 C CNN
 	1    850  6550
 	-1   0    0    -1  
 $EndComp
-Text Label 1800 6150 2    50   ~ 0
-SHDN_LOOP_OUT
 Wire Wire Line
 	1050 6150 1800 6150
-Text Label 1800 6850 2    50   ~ 0
-SHDN_LOOP_OUT
-Wire Wire Line
-	1050 6850 1800 6850
-Text Label 1800 7650 2    50   ~ 0
-SHDN_LOOP_OUT
-Wire Wire Line
-	1050 7650 1800 7650
 Wire Wire Line
 	1050 7250 1400 7250
 Wire Wire Line
 	1050 7050 1400 7050
-Text Label 1800 6050 2    50   ~ 0
-SHDN_LOOP_OUT
 Wire Wire Line
 	1050 6050 1800 6050
-Text Label 1800 6750 2    50   ~ 0
-SHDN_LOOP_OUT
 Wire Wire Line
 	1150 5750 1150 5850
 Connection ~ 1150 5850
@@ -643,19 +604,6 @@ F 3 "" H 10325 5575 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	10325 5575 10325 5625
-Text Notes 8800 7050 0    100  ~ 0
-Willem Hillier\nUVM AERO\n3/5/2019
-$Comp
-L Connector_Generic:Conn_01x04 J2
-U 1 1 5CA58654
-P 900 4500
-F 0 "J2" H 820 4075 50  0000 C CNN
-F 1 "FANS" V 1000 4450 50  0000 C CNN
-F 2 "Connector_JST:JST_PH_B4B-PH-K_1x04_P2.00mm_Vertical" H 900 4500 50  0001 C CNN
-F 3 "~" H 900 4500 50  0001 C CNN
-	1    900  4500
-	-1   0    0    1   
-$EndComp
 $Comp
 L Connector_Generic:Conn_01x04 J3
 U 1 1 5CA5874A
@@ -667,11 +615,6 @@ F 3 "~" H 2100 4500 50  0001 C CNN
 	1    2100 4500
 	-1   0    0    1   
 $EndComp
-Wire Wire Line
-	1150 4300 1150 4400
-Wire Wire Line
-	1150 4400 1100 4400
-Connection ~ 1150 4300
 Wire Wire Line
 	2300 4300 2400 4300
 Wire Wire Line
@@ -698,8 +641,6 @@ Wire Wire Line
 	1150 7550 1050 7550
 Text Label 1400 7450 2    50   ~ 0
 TEMP_1
-Wire Wire Line
-	1050 6750 1800 6750
 Wire Wire Line
 	1050 5850 1150 5850
 Wire Wire Line
@@ -788,4 +729,20 @@ F6 "DC_DC_TRIM_EN" O L 6350 1850 50
 F7 "NTC1" I R 7950 2150 50 
 F8 "NTC2" I R 7950 2250 50 
 $EndSheet
+Text Label 1800 6050 2    50   ~ 0
+DCDC_OUT
+Text Label 1800 6150 2    50   ~ 0
+DCDC_OUT
+Text Label 1800 6750 2    50   ~ 0
+DCDC_OUT
+Wire Wire Line
+	1050 6750 1800 6750
+Wire Wire Line
+	1050 6950 1400 6950
+Wire Wire Line
+	1050 6850 1400 6850
+Text Label 1400 6950 2    50   ~ 0
+CAN+
+Text Label 1400 6850 2    50   ~ 0
+CAN-
 $EndSCHEMATC

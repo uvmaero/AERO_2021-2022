@@ -3,7 +3,7 @@ EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 1 5
+Sheet 1 4
 Title ""
 Date ""
 Rev ""
@@ -102,51 +102,8 @@ F 3 "~" H 1300 1450 50  0001 C CNN
 	1    1300 1450
 	-1   0    0    1   
 $EndComp
-$Sheet
-S 6350 1500 1600 900 
-U 5C8304A7
-F0 "controller" 50
-F1 "controller.sch" 50
-F2 "FAN_CTRL_0" O R 7950 1600 50 
-F3 "FAN_CTRL_1" O R 7950 1700 50 
-F4 "FAN_CTRL_2" O R 7950 1800 50 
-F5 "FAN_CTRL_3" O R 7950 1900 50 
-F6 "CAN+" B L 6350 1600 50 
-F7 "CAN-" B L 6350 1700 50 
-F8 "DC_DC_EN" O L 6350 2200 50 
-F9 "DC_DC_FAULT" I L 6350 2300 50 
-F10 "RXD" I L 6350 1950 50 
-F11 "TXD" O L 6350 1850 50 
-F12 "DC_DC_TRIM_EN" O L 6350 2100 50 
-F13 "NTC1" I R 7950 2150 50 
-F14 "NTC2" I R 7950 2250 50 
-$EndSheet
 Text Notes 6350 1400 0    50   ~ 0
 Global nets connected to this sheet: \nGND, 5V,  SDA, SCL
-$Sheet
-S 8300 1500 1100 500 
-U 5C8304B2
-F0 "sheet5C830477" 50
-F1 "../../../AERO-Boards-KiCad/interface-board-standoffs-biggerbox/file5C5EE840.sch" 50
-F2 "FANOUT0" O R 9400 1600 50 
-F3 "FAN_CTRL_0" I L 8300 1600 50 
-F4 "FANOUT1" O R 9400 1700 50 
-F5 "FAN_CTRL_1" I L 8300 1700 50 
-F6 "FANOUT2" O R 9400 1800 50 
-F7 "FAN_CTRL_2" I L 8300 1800 50 
-F8 "FANOUT3" O R 9400 1900 50 
-F9 "FAN_CTRL_3" I L 8300 1900 50 
-$EndSheet
-Text Notes 8300 1400 0    50   ~ 0
-Global nets connected to this sheet: \nGND, 12V
-Wire Wire Line
-	7950 1600 8300 1600
-Wire Wire Line
-	7950 1700 8300 1700
-Wire Wire Line
-	7950 1800 8300 1800
-Wire Wire Line
-	7950 1900 8300 1900
 $Sheet
 S 6400 3150 1600 850 
 U 5C8304BF
@@ -165,17 +122,17 @@ Text Label 5650 3250 0    50   ~ 0
 HV+
 Text Label 5650 3350 0    50   ~ 0
 HV-
-Text Label 5750 2100 0    50   ~ 0
+Text Label 5750 1850 0    50   ~ 0
 DC_DC_TRIM_EN
 Wire Wire Line
-	5750 2100 6350 2100
+	5750 1850 6350 1850
 Wire Wire Line
-	5750 2200 6350 2200
-Text Label 5750 2200 0    50   ~ 0
+	5750 1950 6350 1950
+Text Label 5750 1950 0    50   ~ 0
 DC_DC_EN
 Wire Wire Line
-	5750 2300 6350 2300
-Text Label 5750 2300 0    50   ~ 0
+	5750 2050 6350 2050
+Text Label 5750 2050 0    50   ~ 0
 DC_DC_FAULT
 Text Label 5800 3600 0    50   ~ 0
 DC_DC_TRIM_EN
@@ -191,22 +148,6 @@ Text Label 5800 3700 0    50   ~ 0
 DC_DC_FAULT
 Text Label 8700 3250 2    50   ~ 0
 SHDN_LOOP_OUT
-Wire Wire Line
-	9400 1600 9900 1600
-Wire Wire Line
-	9400 1700 9900 1700
-Wire Wire Line
-	9400 1800 9900 1800
-Wire Wire Line
-	9400 1900 9900 1900
-Text Label 9900 1700 2    50   ~ 0
-FANOUT1
-Text Label 9900 1800 2    50   ~ 0
-FANOUT2
-Text Label 9900 1900 2    50   ~ 0
-FANOUT3
-Text Label 9900 1600 2    50   ~ 0
-FANOUT0
 Wire Wire Line
 	1100 4500 1450 4500
 Text Label 1450 4500 2    50   ~ 0
@@ -289,14 +230,6 @@ Text Label 1500 3150 2    50   ~ 0
 HECS_AN2
 Text Label 1500 3250 2    50   ~ 0
 HECS_AN3
-Wire Wire Line
-	6350 1850 6000 1850
-Wire Wire Line
-	6350 1950 6000 1950
-Text Label 6000 1950 0    50   ~ 0
-UART_RX
-Text Label 6000 1850 0    50   ~ 0
-UART_TX
 Wire Wire Line
 	6350 1600 6050 1600
 Wire Wire Line
@@ -842,4 +775,17 @@ F 3 "~" H 1300 1700 50  0001 C CNN
 $EndComp
 Text Notes 8375 3125 0    50   ~ 0
 Goes to RCB to charge \nbattery / run 12V systems\n
+$Sheet
+S 6350 1500 1600 900 
+U 5C8304A7
+F0 "controller" 50
+F1 "controller.sch" 50
+F2 "CAN+" B L 6350 1600 50 
+F3 "CAN-" B L 6350 1700 50 
+F4 "DC_DC_EN" O L 6350 1950 50 
+F5 "DC_DC_FAULT" I L 6350 2050 50 
+F6 "DC_DC_TRIM_EN" O L 6350 1850 50 
+F7 "NTC1" I R 7950 2150 50 
+F8 "NTC2" I R 7950 2250 50 
+$EndSheet
 $EndSCHEMATC
