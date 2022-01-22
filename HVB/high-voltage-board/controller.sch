@@ -3,7 +3,7 @@ EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 3 5
+Sheet 4 4
 Title ""
 Date ""
 Rev ""
@@ -137,14 +137,6 @@ Text Notes 4075 750  0    100  ~ 0
 Status LEDs
 Wire Wire Line
 	2550 4800 2300 4800
-Text HLabel 4000 5200 2    50   Output ~ 0
-FAN_CTRL_0
-Text HLabel 4000 5300 2    50   Output ~ 0
-FAN_CTRL_1
-Text HLabel 4000 5600 2    50   Output ~ 0
-FAN_CTRL_2
-Text HLabel 4000 5800 2    50   Output ~ 0
-FAN_CTRL_3
 $Comp
 L Device:R_US R7
 U 1 1 5C53D9DB
@@ -943,19 +935,11 @@ Wire Wire Line
 Wire Wire Line
 	4000 5900 3850 5900
 Wire Wire Line
-	3850 5800 4000 5800
-Wire Wire Line
 	4000 5700 3850 5700
-Wire Wire Line
-	3850 5600 4000 5600
 Wire Wire Line
 	4000 5500 3850 5500
 Wire Wire Line
 	3850 5400 4000 5400
-Wire Wire Line
-	4000 5300 3850 5300
-Wire Wire Line
-	3850 5200 4000 5200
 Wire Wire Line
 	4000 5100 3850 5100
 $EndSCHEMATC
