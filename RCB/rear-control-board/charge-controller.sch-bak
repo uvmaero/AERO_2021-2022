@@ -31,27 +31,29 @@ $EndComp
 Wire Wire Line
 	3900 3250 4075 3250
 Wire Wire Line
-	4375 3250 4625 3250
+	4375 3250 4675 3250
 Wire Wire Line
-	4625 3250 4625 3400
-Wire Wire Line
-	4625 3925 3925 3925
+	4675 3250 4675 3400
 Text Notes 3150 2800 0    50   ~ 0
 Not really a charge controller, just a fuse and diode\n\nCrude, but functional implementation
-$Comp
-L Device:D_KAK D?
-U 1 1 6256B1F2
-P 4625 3650
-F 0 "D?" V 4554 3794 50  0000 L CNN
-F 1 "D_KAK" V 4645 3794 50  0000 L CNN
-F 2 "" H 4625 3650 50  0001 C CNN
-F 3 "~" H 4625 3650 50  0001 C CNN
-	1    4625 3650
-	0    1    1    0   
-$EndComp
 Wire Wire Line
 	4625 3850 4625 3925
 Wire Wire Line
-	4725 3400 4625 3400
-Connection ~ 4625 3400
+	4625 3925 3925 3925
+$Comp
+L Device:D_KAK D3
+U 1 1 6256B1F2
+P 4675 3600
+F 0 "D3" V 4696 3512 50  0000 R CNN
+F 1 "D_KAK" V 4605 3512 50  0000 R CNN
+F 2 "Package_TO_SOT_SMD:TO-252-2" H 4675 3600 50  0001 C CNN
+F 3 "~" H 4675 3600 50  0001 C CNN
+	1    4675 3600
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	4575 3850 4625 3850
+Wire Wire Line
+	4675 3850 4625 3850
+Connection ~ 4625 3850
 $EndSCHEMATC

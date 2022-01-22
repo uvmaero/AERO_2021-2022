@@ -330,12 +330,12 @@ $EndComp
 $Comp
 L Device:Fuse F8
 U 1 1 6219EA74
-P 10025 3050
-F 0 "F8" V 9925 2950 50  0000 C CNN
-F 1 "2A" V 9925 3150 50  0000 C CNN
-F 2 "AERO_Footprints:Fuseholder_Blade_Mini_Keystone_3568" V 9955 3050 50  0001 C CNN
-F 3 "~" H 10025 3050 50  0001 C CNN
-	1    10025 3050
+P 9900 4000
+F 0 "F8" V 9800 3900 50  0000 C CNN
+F 1 "2A" V 9800 4100 50  0000 C CNN
+F 2 "AERO_Footprints:Fuseholder_Blade_Mini_Keystone_3568" V 9830 4000 50  0001 C CNN
+F 3 "~" H 9900 4000 50  0001 C CNN
+	1    9900 4000
 	0    1    1    0   
 $EndComp
 $Comp
@@ -363,7 +363,7 @@ Text Label 9325 2550 0    50   ~ 0
 PUMP_12V
 Text Label 9325 2800 0    50   ~ 0
 SPARE
-Text Label 9325 3050 0    50   ~ 0
+Text Label 9325 4000 0    50   ~ 0
 TSV
 $Comp
 L Device:Fuse F10
@@ -393,7 +393,7 @@ Wire Wire Line
 Wire Wire Line
 	9325 2800 9875 2800
 Wire Wire Line
-	9325 3050 9875 3050
+	9325 4000 9750 4000
 Wire Wire Line
 	10375 3550 10175 3550
 Wire Wire Line
@@ -402,15 +402,10 @@ Connection ~ 10375 3300
 Wire Wire Line
 	10375 3300 10375 3550
 Wire Wire Line
-	10175 3050 10375 3050
-Connection ~ 10375 3050
-Wire Wire Line
-	10375 3050 10375 3300
+	10050 4000 10375 4000
 Wire Wire Line
 	10175 2800 10375 2800
 Connection ~ 10375 2800
-Wire Wire Line
-	10375 2800 10375 3050
 Wire Wire Line
 	10175 2550 10375 2550
 Connection ~ 10375 2550
@@ -756,4 +751,8 @@ F 3 "~" H 750 2225 50  0001 C CNN
 	1    750  2225
 	-1   0    0    -1  
 $EndComp
+Wire Wire Line
+	10375 2800 10375 3300
+Text Label 10375 4000 2    50   ~ 0
+SSOK
 $EndSCHEMATC

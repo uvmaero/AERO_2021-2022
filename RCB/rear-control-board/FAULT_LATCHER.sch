@@ -56,14 +56,14 @@ Wire Wire Line
 	5000 2650 4350 2650
 Wire Wire Line
 	5100 2650 5325 2650
-Text HLabel 3250 1750 0    50   Input ~ 0
+Text HLabel 3125 1750 0    50   Input ~ 0
 LOOP_IN
 Wire Wire Line
-	3250 1750 3500 1750
-Text HLabel 6250 1850 2    50   Output ~ 0
+	3125 1750 3500 1750
+Text HLabel 6500 1850 2    50   Output ~ 0
 LOOP_OUT
 Wire Wire Line
-	6250 1850 6000 1850
+	6500 1850 6000 1850
 Text HLabel 6150 2250 2    50   Input ~ 0
 IMD_FAULT_SIG
 Wire Wire Line
@@ -249,4 +249,8 @@ Text Notes 5375 1325 0    50   ~ 0
 IMD\nHIGH Clear, LOW Fault\nIMD_IND is LOW when clear, \npulled HIGH when fault
 Text Label 4350 2650 0    50   ~ 0
 12V
+Text Label 3175 1750 0    50   ~ 0
+Loop_IN
+Text Label 6375 1850 2    50   ~ 0
+Loop_Out
 $EndSCHEMATC
