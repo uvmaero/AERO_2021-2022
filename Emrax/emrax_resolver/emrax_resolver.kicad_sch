@@ -1,0 +1,20 @@
+(kicad_sch (version 20211123) (generator eeschema)
+
+  (uuid e63e39d7-6ac0-4ffd-8aa3-1841a4541b55)
+
+  (paper "A4")
+
+  (lib_symbols
+  )
+
+
+  (text "Emrax Resolver Breakout Board: \n\n1 8 pin for output\n1 6 pin for resolver input\n1 2 pin for resolver temp input"
+    (at 179.07 177.8 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 6762c669-2824-49a2-8bd4-3f19091dd75a)
+  )
+
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)
