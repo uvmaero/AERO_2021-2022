@@ -32,6 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define START_BUTTON;     // add numbers
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
