@@ -386,7 +386,7 @@
       "idf": "",
       "netlist": "",
       "specctra_dsn": "",
-      "step": "high-voltage-board.step",
+      "step": "Model/high-voltage-board.step",
       "vrml": ""
     },
     "page_layout_descr_file": ""

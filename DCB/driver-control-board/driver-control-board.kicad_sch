@@ -2378,8 +2378,8 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 24b72b0d-63b8-4e06-89d0-e94dcf39a600)
   )
-  (text "Ran out of ADC pins, \nso ignoring Steering sensor for now"
-    (at 143.51 142.875 0)
+  (text "Ran out of ADC pins, \nso ignoring Steering sensor for now\nIn the future, use another ADC chip\nand communicate over I2C\n"
+    (at 142.875 144.78 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 9bc2643b-65d2-44cf-9d90-6a9423574f85)
   )

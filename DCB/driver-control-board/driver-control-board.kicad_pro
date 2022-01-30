@@ -385,7 +385,7 @@
       "idf": "",
       "netlist": "",
       "specctra_dsn": "",
-      "step": "",
+      "step": "Model/driver-control-board.step",
       "vrml": ""
     },
     "page_layout_descr_file": ""
