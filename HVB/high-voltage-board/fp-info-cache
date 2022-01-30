@@ -1,4 +1,4 @@
-19973388135223945
+19981603919995041
 AERO_Footprints
 1-770966-0
 
@@ -84,6 +84,13 @@ AMPSEAL 776266-1 14-PIN
 14
 14
 AERO_Footprints
+BL-HJXGXBX32M
+
+
+0
+4
+4
+AERO_Footprints
 Bell_0ADKP1000-RE
 
 
@@ -103,6 +110,13 @@ CONV_PDQE15-Q24-S24-D
 
 0
 6
+6
+AERO_Footprints
+CUS-14TB
+
+
+0
+12
 6
 AERO_Footprints
 DCM4623TD2J13D0T70
@@ -251,6 +265,13 @@ G2RL
 0
 5
 5
+AERO_Footprints
+IN_S128TATRGB
+
+
+0
+4
+4
 AERO_Footprints
 JST_PHD_B10B-PHDSS_2x05_P2.00mm_Vertical
 JST PHD series connector, B10B-PHDSS (http://www.jst-mfg.com/product/pdf/eng/ePHD.pdf), generated with kicad-footprint-generator
@@ -412,6 +433,13 @@ SMD SMT ceramic resonator filter
 0
 3
 3
+AERO_Footprints
+SK_14D01
+
+
+0
+6
+6
 AERO_Footprints
 SRF4532-220Y
 
@@ -608,6 +636,13 @@ Wire_16AWG
 0
 1
 1
+AERO_Footprints
+button_12mm
+
+
+0
+4
+4
 AERO_Footprints
 hvlightningsymbol
 
