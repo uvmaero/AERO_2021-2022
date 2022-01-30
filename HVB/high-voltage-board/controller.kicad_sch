@@ -1690,7 +1690,7 @@
     (uuid 00000000-0000-0000-0000-0000618b3473)
     (property "Reference" "U5" (id 0) (at 82.55 123.19 0))
     (property "Value" "STM32F413CGUx" (id 1) (at 83.82 119.38 0))
-    (property "Footprint" "Package_DFN_QFN:QFN-48-1EP_7x7mm_P0.5mm_EP5.3x5.3mm_ThermalVias" (id 2) (at 67.31 170.18 0)
+    (property "Footprint" "Package_DFN_QFN:QFN-48-1EP_7x7mm_P0.5mm_EP5.3x5.3mm" (id 2) (at 67.31 170.18 0)
       (effects (font (size 1.27 1.27)) (justify right) hide)
     )
     (property "Datasheet" "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00282249.pdf" (id 3) (at 82.55 132.08 0)
