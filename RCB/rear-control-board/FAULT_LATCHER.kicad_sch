@@ -998,12 +998,12 @@
     (effects (font (size 1.27 1.27)) (justify right bottom))
     (uuid 16d5bf81-590a-4149-97e0-64f3b3ad6f52)
   )
-  (text "IMD\nHIGH Clear, LOW Fault\nIMD_IND is LOW when clear, \npulled HIGH when fault"
+  (text "IMD\nIMD_FAULT_SIG is HIGH Clear, LOW Fault\nIMD_IND is LOW when clear, \npulled HIGH when fault"
     (at 136.525 33.655 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 7806469b-c133-4e19-b2d5-f2b690b4b2f3)
   )
-  (text "BMS\nLOW Clear, HIGH Fault\nBMS_IND is HIGH when clear, \npulled low when fault"
+  (text "BMS\nBMS_FAULT_SIG is LOW Clear, HIGH Fault\nBMS_IND is HIGH when clear, \npulled low when fault"
     (at 85.725 33.655 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 90fa0465-7fe5-474b-8e7c-9f955c02a0f6)
