@@ -1493,7 +1493,7 @@
   (symbol (lib_id "Mechanical:MountingHole") (at 262.255 162.56 0) (unit 1)
     (in_bom yes) (on_board yes) (fields_autoplaced)
     (uuid 245952d0-0e97-4e26-9005-0024054bd321)
-    (property "Reference" "H?" (id 0) (at 264.795 161.6515 0)
+    (property "Reference" "H4" (id 0) (at 264.795 161.6515 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "MountingHole" (id 1) (at 264.795 164.4266 0)
@@ -2024,7 +2024,7 @@
       (reference "H3") (unit 1) (value "MountingHole") (footprint "MountingHole:MountingHole_3.2mm_M3")
     )
     (path "/245952d0-0e97-4e26-9005-0024054bd321"
-      (reference "H?") (unit 1) (value "MountingHole") (footprint "MountingHole:MountingHole_3.2mm_M3")
+      (reference "H4") (unit 1) (value "MountingHole") (footprint "MountingHole:MountingHole_3.2mm_M3")
     )
     (path "/00000000-0000-0000-0000-00005c830583"
       (reference "J1") (unit 1) (value "Conn_01x23") (footprint "AERO_Footprints:TE_1-776087-1")
