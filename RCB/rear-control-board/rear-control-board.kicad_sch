@@ -2828,17 +2828,20 @@
     (path "/f6ce4a47-cf8e-4daa-94d2-539ca95b196e"
       (reference "#PWR0141") (unit 1) (value "VDD") (footprint "")
     )
+    (path "/00000000-0000-0000-0000-000061ef11ea/4f4a74aa-747c-4ed9-b7db-21034bc95331"
+      (reference "#PWR?") (unit 1) (value "+3.3V") (footprint "")
+    )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-0000619407fe"
       (reference "C1") (unit 1) (value "20p") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-000061900e9f"
-      (reference "C2") (unit 1) (value "C") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
+      (reference "C2") (unit 1) (value "2.2") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-000061902b5d"
-      (reference "C3") (unit 1) (value "C") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
+      (reference "C3") (unit 1) (value ".1") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
     )
-    (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-000061957677"
-      (reference "C4") (unit 1) (value "CP1") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
+    (path "/00000000-0000-0000-0000-000061ef11ea/e40bc09d-1671-4017-a62c-99784323a785"
+      (reference "C4") (unit 1) (value "2.2") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-000061925e38"
       (reference "C5") (unit 1) (value "0.1u") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
@@ -2869,6 +2872,9 @@
     )
     (path "/b43c9583-cb45-4598-a041-47334281b54c"
       (reference "C14") (unit 1) (value "C") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
+    )
+    (path "/00000000-0000-0000-0000-000061ef11ea/7472afc6-478c-4280-a853-a12b980df696"
+      (reference "C?") (unit 1) (value "4.7u") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-000061903c93"
       (reference "D1") (unit 1) (value "D_Schottky") (footprint "Diode_SMD:D_SMB")
@@ -2967,16 +2973,13 @@
       (reference "Q5") (unit 1) (value "Q_PMOS_GDSD") (footprint "Package_TO_SOT_SMD:TO-252-3_TabPin4")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-000061906ac6"
-      (reference "R1") (unit 1) (value "R") (footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder")
+      (reference "R1") (unit 1) (value "220") (footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-000062099633"
       (reference "R2") (unit 1) (value "10k") (footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-0000620a726e"
       (reference "R3") (unit 1) (value "10k") (footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder")
-    )
-    (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-00006194a728"
-      (reference "R4") (unit 1) (value "R") (footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-000061a3faeb"
       (reference "R5") (unit 1) (value "1k") (footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder")
@@ -2986,6 +2989,9 @@
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/017806c7-156b-41db-a3af-7b7871a27194"
       (reference "R7") (unit 1) (value "10k") (footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder")
+    )
+    (path "/00000000-0000-0000-0000-000061ef11ea/071b73ea-8ca8-4b51-981d-71989c4312c5"
+      (reference "SW?") (unit 1) (value "SW_DPST") (footprint "")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-0000618b3473"
       (reference "U1") (unit 1) (value "STM32F413CGUx") (footprint "Package_DFN_QFN:QFN-48-1EP_7x7mm_P0.5mm_EP5.6x5.6mm")
