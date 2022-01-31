@@ -1,2 +1,5 @@
 # ignore kicad backup files
 **/*backups
+
+# ignore vscode settings
+.vscode
