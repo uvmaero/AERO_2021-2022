@@ -2835,13 +2835,10 @@
       (reference "C1") (unit 1) (value "20p") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-000061900e9f"
-      (reference "C2") (unit 1) (value "2.2") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
+      (reference "C2") (unit 1) (value ".1u") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-000061902b5d"
-      (reference "C3") (unit 1) (value ".1") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
-    )
-    (path "/00000000-0000-0000-0000-000061ef11ea/e40bc09d-1671-4017-a62c-99784323a785"
-      (reference "C4") (unit 1) (value "2.2") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
+      (reference "C3") (unit 1) (value "10u") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-000061925e38"
       (reference "C5") (unit 1) (value "0.1u") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
@@ -2989,9 +2986,6 @@
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/017806c7-156b-41db-a3af-7b7871a27194"
       (reference "R7") (unit 1) (value "10k") (footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder")
-    )
-    (path "/00000000-0000-0000-0000-000061ef11ea/071b73ea-8ca8-4b51-981d-71989c4312c5"
-      (reference "SW?") (unit 1) (value "SW_DPST") (footprint "")
     )
     (path "/00000000-0000-0000-0000-000061ef11ea/00000000-0000-0000-0000-0000618b3473"
       (reference "U1") (unit 1) (value "STM32F413CGUx") (footprint "Package_DFN_QFN:QFN-48-1EP_7x7mm_P0.5mm_EP5.6x5.6mm")
