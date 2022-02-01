@@ -61,6 +61,10 @@
 #define PIN_CAN_PLUS					32		// positive CAN wire
 #define PIN_CAN_MINUS					33		// negative CAN wire
 
+// precharge
+#define PRECHARGE_COEFFICIENT			0.9		
+
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -72,6 +76,26 @@
 CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
+
+// inputs
+uint16_t coastRegen, brakeRegen;
+bool cooling, RTDButton, direction;
+uint8_t coastMap, brakeMap;
+
+// precharge
+bool readyToDrive = false;
+bool buzzer = false;
+bool prechargeStateEnter = false;
+
+enum prechargeState
+{
+	PRECHARGE_OFF,
+	PRECHARGE_ON,
+	PRECHARGE_DONE,
+	PRECHARGE_ERROR
+};
+prechargeState = PRECHARGE_OFF;
+
 
 /* USER CODE END PV */
 
@@ -104,6 +128,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  
 
   /* USER CODE END Init */
 
