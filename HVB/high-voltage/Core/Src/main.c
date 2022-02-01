@@ -32,6 +32,18 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+// inputs
+#define PIN_DC_DC_FAULT       // DC DC fault indicator pin
+#define PIN_VICOR_TEMP        // temperature inside vicore
+
+// outputs 
+#define PIN_DC_DC_ENABLE      // DC DC control pin
+
+// CAN
+#define PIN_CAN_PLUS          // positve CAN wire
+#define PIN_CAN_MINUS         // negative CAN wire
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
