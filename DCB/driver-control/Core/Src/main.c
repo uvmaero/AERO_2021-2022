@@ -32,7 +32,35 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define START_BUTTON;     // add numbers
+
+// inputs
+#define PIN_START_BUTTON;				28    	// ready to drive button
+#define PIN_DRIVE_DIRECTION				26		// drive direction toggle
+#define PIN_BRAKE_REGEN					19		// brake regeneration
+#define PIN_COAST_REGEN					18		// coast regeneration
+#define PIN_COOLING_TOGGLE				25		// toggle the cooling 
+#define PIN_FRONT_RIGHT_WHEEL			11		// front right wheel speed sensor
+#define PIN_FRONT_LEFT_WHEEL			10		// front left wheel speed sensor
+#define PIN_FRONT_RIGHT_SUSPENSION		13		// front right suspension
+#define PIN_FRONT_LEFT_SUSPENSION		12		// front left suspension
+#define PIN_PEDAL_0						16		// go pedal sensor 1
+#define PIN_PEDAL_1						17		// go pedal sensor 2
+#define PIN_BRAKE_0						14		// brake sensor 1
+#define PIN_BRAKE_1						15		// brake sensor 2
+#define PIN_STEERING					34		// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
+
+// outputs
+#define PIN_LCD_SDA						29		// LCD sda
+#define PIN_LCD_SCL						30		// LCD scl
+#define PIN_LCD_BUTTON					27		// LCD control button
+#define PIN_RTD							45		// RTD Fault LED
+#define PIN_IHD							20		// IHD Fault LED
+#define PIN_AMS							31		// AMS LED
+
+// CAN
+#define PIN_CAN_PLUS					32		// positive CAN wire
+#define PIN_CAN_MINUS					33		// negative CAN wire
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
