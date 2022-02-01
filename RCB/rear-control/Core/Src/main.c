@@ -116,7 +116,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+ //comment
     /* USER CODE BEGIN 3 */
 
     //get CAN messages 
