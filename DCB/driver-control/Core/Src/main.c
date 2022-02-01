@@ -555,7 +555,7 @@ void rideSettings()
   lcd_send_string("-");                 // print the "-"
 
   lcd_put_cur(14, 2);                   // set cursor for wheelspeed value
-  lcd_send_data(int wheelspeed2);       // print value
+  lcd_send_data(int wheelspeed4);       // print value
 
   // coast regen
   lcd_put_cur(7, 0);                    // set cursor for CR text
