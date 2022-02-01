@@ -94,14 +94,24 @@ bool buzzer = false;						      // buzzer is buzzing state
 uint16_t timeSinceBuzzerStart = 0;		// counter to time buzzer buzz
 bool prechargeStateEnter = false;			// allowed to enter precharge
 
-enum prechargeState
+// precharge states
+enum prechargeStates
 {
 	PRECHARGE_OFF,
 	PRECHARGE_ON,
 	PRECHARGE_DONE,
 	PRECHARGE_ERROR
 };
-prechargeState = PRECHARGE_OFF;				// set intial precharge state to OFF
+int prechargeState = PRECHARGE_OFF;				// set intial precharge state to OFF
+
+// power modes
+enum powerModes
+{
+  TUTORIAL,           // 50% throttle power, for beginner AERO drivers
+  ECO,                // 80% throttle power, battery savings 
+  EXPERT              // 100% throttle power, max speed and acceleration 
+}
+int powerMode = EXPERT;
 
 
 /* USER CODE END PV */
@@ -113,7 +123,11 @@ static void MX_CAN1_Init(void);
 
 /* USER CODE BEGIN PFP */
 void prechargeControl();
-void RTDButtonChange(); 
+void RTDButtonChange();
+void welcomeScreen();
+void racingHUD();
+void electricalSettings():
+void rideSettings();
 
 /* USER CODE END PFP */
 
@@ -159,6 +173,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // start up LCD display
+    welcomeScreen();
+
     // precharge loop omg no way i used a do-while loop insane programming skills XD
     do
     {
@@ -334,6 +351,7 @@ void prechargeControl()
 	}
 }
 
+
 /**
  * @brief 
  * 
@@ -345,10 +363,122 @@ void RTDButtonChange()
 	{
     // turn off the indicator button in the RTD button
 		HAL_GPIO_WritePin(GPIOB, PIN_RTD_LED, GPIO_PIN_SET);
-    
+
 		buzzer = true;				    // turn on the buzzer
 		timeSinceBuzzerStart = 0;	// reset buzzer timer
 	}
+}
+
+
+// welcome & boot screen
+void welcomeScreen()
+{
+  lcd.begin(16, 2);               // init lcd with screen dimensions
+  lcd.clear();                    // clear the screen
+  lcd.noCursor();                 // idk
+  lcd.setCursor(1, 0);            // set the cursor
+  lcd.print("welcome AERO");      // print
+  lcd.setCursor(2, 0);            // next line
+  lcd.print("booting up");        // print
+}
+
+
+// racing hud: mph(est), battery%, drive direction, coast regen, brake regen
+/**
+ * @brief 
+ * 
+ */
+void racingHUD()
+{
+  // clear display 
+  lcd.clear();
+
+  // drive direction
+  lcd.setCursor(1, 0);                // position of drive direction
+  if (direction) lcd.print("FWD");    // print drive direction
+  else lcd.print("BCK");
+
+  // battery percentage
+  lcd.setCursor(12, 0);               // set cursor for battery percentage value
+  lcd.print("%d%%", int batPer = 56); // MAKE THIS A THING THAT WORKS
+  lcd.setCursor(15, 0);               // set cursor for % sign
+  lcd.print("%%");                    // print % sign
+
+  // speedometer
+  lcd.setCursor(6, 1);                // set cursor for mph value
+  lcd.print("%d", int mph = 15);      // need to do wheel speed math with wheel diameter to get mph
+  lcd.setCursor(9, 1);                // set cursor for units
+  lcd.print("mph");                   // print units
+
+  // coast regen
+  lcd.setCursor(1, 2);                // set cursor for CR
+  lcd.print("CR:");                   // print CR for coast regen
+  lcd.setCursor(4, 2);                // set cursor for coast regen value 
+  lcd.print("%d", int coastRegenPer = 70);  // print coast regen value 
+  lcd.setCursor(6, 2);                // set cursor for percent sign
+  lcd.print("%%");                    // print percent sign 
+
+  // brake regen
+  lcd.setCursor(10, 2);               // set cursor for BR
+  lcd.print("BR:");                   // print BR for brake regen
+  lcd.setCursor(12, 2);               // set cursor for brake regen value 
+  lcd.print("%d", int brakeRegenPre = 40);  // print brake regen value 
+  lcd.setCursor(14, 2);               // set cursor for percent sign
+  lcd.print("%%");                    // print percent sign
+}
+
+
+// battery state, bus voltage, rinehart voltage, power mode
+/**
+ * @brief 
+ * 
+ */
+void electricalSettings()
+{
+  // battery percentage
+  lcd.setCursor(1, 0);                // set cursor for battery percentage value
+  lcd.print("%d%%", int batPer = 56); // MAKE THIS A THING THAT WORKS
+  lcd.setCursor(4, 0);                // set cursor for % sign
+  lcd.print("%%");                    // print % sign
+
+  // bus voltage
+  lcd.setCursor(1, 1);                 // set cursor for battery percentage value
+  lcd.print("%d%%", int busVolt = 56); // MAKE THIS A THING THAT WORKS
+  lcd.setCursor(4, 0);                 // set cursor for units
+  lcd.print("V");                      // print units
+
+  // rinehart voltage
+  lcd.setCursor(12, 0);                 // set cursor for rinehart voltage value
+  lcd.print("%d%%", int rineVolt = 56); // MAKE THIS A THING THAT WORKS
+  lcd.setCursor(15, 0);                 // set cursor for units
+  lcd.print("V");                       // print % sign
+
+  // power mode
+  lcd.setCursor(1, 2);               // set cursor for mode text
+  lcd.print("Mode:");                // print mode text
+  lcd.setCursor(8, 2);               // set cursor current mode setting
+  // print the current mode
+  if (powerMode == 1) lcd.print("Tutorial");
+  if (powerMode == 2) lcd.print("Eco");
+  if (powerMode == 3) lcd.print("Expert");
+}
+
+
+// ride height, wheel rpm, coast regen, brake regen
+/**
+ * @brief 
+ * 
+ */
+void rideSettings()
+{
+  // not sure what to do for suspension values yet so
+
+  // wheel speed
+
+  // coast regen
+
+  // brake regen
+
 }
 
 
