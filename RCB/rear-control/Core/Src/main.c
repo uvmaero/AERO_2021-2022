@@ -32,6 +32,25 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+// inputs
+#define PIN_WATER_TEMP					17		// water temperauture sensor
+#define PIN_REAR_RIGHT_WHEEL			11		// rear right wheel speed sensor
+#define PIN_REAR_LEFT_WHEEL				10		// rear left wheel speed sensor
+#define PIN_REAR_RIGHT_SUSPENSION		13		// rear right suspension sensor
+#define PIN_REAR_LEFT_SUSPENSION		12		// rear left suspension sensor
+#define PIN_IMD_FAULT					18		// IMD fault line
+#define PIN_BMS_FAULT					19		// BMS fault line
+
+// outputs
+#define PIN_BRAKE_LIGHT					14		// brake light
+#define PIN_FAN_CONTROL					15		// fan speed/on/off control
+#define PIN_PUMP_CONTROL				16		// pump speed/on/off control
+
+// CAN
+#define PIN_CAN_PLUS					31		// positive CAN wire
+#define PIN_CAN_MINUS					33		// negative CAN wire
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
