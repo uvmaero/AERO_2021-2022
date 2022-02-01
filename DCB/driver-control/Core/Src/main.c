@@ -104,6 +104,15 @@ enum prechargeStates
 };
 int prechargeState = PRECHARGE_OFF;				// set intial precharge state to OFF
 
+// screen enum
+enum screens
+{
+  RACING_HUD,               // for driving the car
+  RIDE_SETTINGS,            // view all ride style settings
+  ELECTRICAL_SETTINGS       // view all electrical information
+}
+int currentScreen = RACING_HUD;
+
 // power modes
 enum powerModes
 {
@@ -165,7 +174,18 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_CAN1_Init();
+
+
   /* USER CODE BEGIN 2 */
+
+  // start up LCD display
+  welcomeScreen();
+
+  // precharge loop omg no way i used a do-while loop insane programming skills XD
+  do
+  {
+    prechargeControl();
+  } while (prechargeState != PRECHARGE_DONE);
 
   /* USER CODE END 2 */
 
@@ -173,24 +193,41 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // start up LCD display
-    welcomeScreen();
-
-    // precharge loop omg no way i used a do-while loop insane programming skills XD
-    do
-    {
-      prechargeControl();
-    } while (prechargeState != PRECHARGE_DONE);
-
-
-    // update display
-    
-
+    // *** CAN *** //
     // read CAN messages
 
 
     // send CAN messages
 
+
+    // *** LCD *** //
+    // look for LCD button press 
+    if (HAL_ADC_GetValue(PIN_LCD_BUTTON)) 
+    {
+      currentScreen++;                                // move to next screen
+      if (currentScreen == 4) currentScreen = 1;      // loop back at max screen value
+    }
+
+    // update display
+    switch (currentScreen)
+    {
+      case RACING_HUD:
+        racingHUD();
+      break;
+
+      case RIDE_SETTINGS:
+        rideSettings();
+      break;
+
+      case ELECTRICAL_SETTINGS:
+        electricalSettings();
+      break;
+
+      default:
+        // fallback state, there was an error, return to racing HUD
+        currentScreen = RACING_HUD;
+      break;
+    }
   }
   /* USER CODE END 3 */
 }
@@ -271,10 +308,10 @@ static void MX_CAN1_Init(void)
   {
     Error_Handler();
   }
+
+  // *** we're not using a second CAN bus so ignore this *** //
   /* USER CODE BEGIN CAN1_Init 2 */
-
   /* USER CODE END CAN1_Init 2 */
-
 }
 
 /**
