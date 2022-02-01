@@ -328,6 +328,7 @@ static void MX_GPIO_Init(void)
 
 }
 
+
 /* USER CODE BEGIN 4 */
 
 // *** functions *** //
@@ -408,14 +409,18 @@ void RTDButtonChange()
 
 
 // welcome & boot screen
+/**
+ * @brief 
+ * 
+ */
 void welcomeScreen()
 {
-  lcd_init();                         // init lcd with screen dimensions
+  lcd_init();                         // init lcd
   lcd_clear();                        // clear the screen
   lcd_put_cur(1, 0);                  // set the cursor
   lcd_send_string("welcome AERO");    // print
   lcd_put_cur(2, 0);                  // next line
-  lcd_send_string("booting up");      // print
+  lcd_send_string("booting up...");   // print
 }
 
 
@@ -508,13 +513,63 @@ void electricalSettings()
 void rideSettings()
 {
   // not sure what to do for suspension values yet so
+  lcd_put_cur(6, 1);                    // ride height percentage text
+  lcd_send_string("Ride %%");           // print text
+
+  lcd_put_cur(1, 0);                    // set cursor for wheel speed value
+  lcd_send_data(int ride1);             // MAKE THIS A THING THAT WORKS
+
+  lcd_put_cur(3, 0);                    // set cursor for "-"
+  lcd_send_string("-");                 // print the "-"
+
+  lcd_put_cur(5, 0);                    // set cursor for wheelspeed value
+  lcd_send_data(int ride2);             // print value
+
+  lcd_put_cur(1, 2);                    // set cursor for wheelspeed value
+  lcd_send_data(int ride3);             // print value
+
+  lcd_put_cur(3, 2);                    // set cursor for "-"
+  lcd_send_string("-");                 // print the "-"
+
+  lcd_put_cur(5, 2);                    // set cursor for wheelspeed value
+  lcd_send_data(int ride4);             // print value
+
 
   // wheel speed
+  lcd_put_cur(10, 1);                   // set cursor for RPM text
+  lcd_send_string("RPM");               // print RPM
+
+  lcd_put_cur(10, 0);                   // set cursor for wheel speed value
+  lcd_send_data(int wheelSpeed1);       // MAKE THIS A THING THAT WORKS
+
+  lcd_put_cur(12, 0);                   // set cursor for "-"
+  lcd_send_string("-");                 // print the "-"
+
+  lcd_put_cur(14, 0);                   // set cursor for wheelspeed value
+  lcd_send_data(int wheelspeed2);       // print value
+
+  lcd_put_cur(10, 2);                   // set cursor for wheelspeed value
+  lcd_send_data(int wheelspeed3);       // print value
+
+  lcd_put_cur(12, 2);                   // set cursor for "-"
+  lcd_send_string("-");                 // print the "-"
+
+  lcd_put_cur(14, 2);                   // set cursor for wheelspeed value
+  lcd_send_data(int wheelspeed2);       // print value
 
   // coast regen
+  lcd_put_cur(7, 0);                    // set cursor for CR text
+  lcd_send_string("CR:");               // print "CR:" for coast regen
+  lcd_send_data(int coastRegen);        // print coast regen value
+  lcd_put_cur(9, 0);                    // set cursor for "%"
+  lcd_send_string("%%");                // print "%"
 
   // brake regen
-
+  lcd_put_cur(7, 2);                    // set cursor for BR text
+  lcd_send_string("BR:");               // print "BR:" for brake regen
+  lcd_send_data(int brakeRegen);        // print brake regen value
+  lcd_put_cur(9, 2);                    // set cursor for "%"
+  lcd_send_string("%%");                // print "%"
 }
 
 
