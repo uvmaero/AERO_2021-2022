@@ -476,6 +476,9 @@ void racingHUD()
  */
 void electricalSettings()
 {
+  // clear screen
+  lcd_clear();
+
   // battery percentage
   lcd_put_cur(1, 0);                // set cursor for battery percentage value
   lcd_send_data(int batPer = 56);   // MAKE THIS A THING THAT WORKS
@@ -512,6 +515,9 @@ void electricalSettings()
  */
 void rideSettings()
 {
+  // clear screen
+  lcd_clear();
+  
   // not sure what to do for suspension values yet so
   lcd_put_cur(6, 1);                    // ride height percentage text
   lcd_send_string("Ride %%");           // print text
