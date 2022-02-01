@@ -34,38 +34,38 @@
 /* USER CODE BEGIN PD */
 
 // inputs
-#define PIN_START_BUTTON;				28    	// ready to drive button
-#define PIN_DRIVE_DIRECTION				26		// drive direction toggle
-#define PIN_BRAKE_REGEN					19		// brake regeneration
-#define PIN_COAST_REGEN					18		// coast regeneration
-#define PIN_COOLING_TOGGLE				25		// toggle the cooling 
-#define PIN_FRONT_RIGHT_WHEEL			11		// front right wheel speed sensor
-#define PIN_FRONT_LEFT_WHEEL			10		// front left wheel speed sensor
+#define PIN_START_BUTTON;             28    // ready to drive button
+#define PIN_DRIVE_DIRECTION           26		// drive direction toggle
+#define PIN_BRAKE_REGEN					      19		// brake regeneration
+#define PIN_COAST_REGEN					      18		// coast regeneration
+#define PIN_COOLING_TOGGLE			    	25		// toggle the cooling 
+#define PIN_FRONT_RIGHT_WHEEL			    11		// front right wheel speed sensor
+#define PIN_FRONT_LEFT_WHEEL			    10		// front left wheel speed sensor
 #define PIN_FRONT_RIGHT_SUSPENSION		13		// front right suspension
-#define PIN_FRONT_LEFT_SUSPENSION		12		// front left suspension
-#define PIN_PEDAL_0						16		// go pedal sensor 1
-#define PIN_PEDAL_1						17		// go pedal sensor 2
-#define PIN_BRAKE_0						14		// brake sensor 1
-#define PIN_BRAKE_1						15		// brake sensor 2
-#define PIN_STEERING					34		// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
+#define PIN_FRONT_LEFT_SUSPENSION		  12		// front left suspension
+#define PIN_PEDAL_0					          16		// go pedal sensor 1
+#define PIN_PEDAL_1					          17		// go pedal sensor 2
+#define PIN_BRAKE_0					          14		// brake sensor 1
+#define PIN_BRAKE_1					          15		// brake sensor 2
+#define PIN_STEERING				          34		// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
 
 // outputs
-#define PIN_LCD_SDA						29		// LCD sda
-#define PIN_LCD_SCL						30		// LCD scl
-#define PIN_LCD_BUTTON					27		// LCD control button
-#define PIN_RTD							45		// RTD button LED
-#define PIN_IHD							20		// IHD Fault LED
-#define PIN_AMS							31		// AMS LED
-#define PIN_RTD_BUZZER					00		// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
-#define BUZZER_PERIOD					2000	// in milliseconds
+#define PIN_LCD_SDA						        29		// LCD sda
+#define PIN_LCD_SCL						        30		// LCD scl
+#define PIN_LCD_BUTTON					      27		// LCD control button
+#define PIN_RTD							          45		// RTD button LED
+#define PIN_IHD							          20		// IHD Fault LED
+#define PIN_AMS							          31		// AMS LED
+#define PIN_RTD_BUZZER					      00		// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
+#define BUZZER_PERIOD					        2000	// in milliseconds
 
 
 // CAN
-#define PIN_CAN_PLUS					32		// positive CAN wire
-#define PIN_CAN_MINUS					33		// negative CAN wire
+#define PIN_CAN_PLUS					        32		// positive CAN wire
+#define PIN_CAN_MINUS					        33		// negative CAN wire
 
 // precharge
-#define PRECHARGE_COEFFICIENT			0.9		// 90% complete with precharge so it's probably safe to continue
+#define PRECHARGE_COEFFICIENT			    0.9		// 90% complete with precharge so it's probably safe to continue
 
 /* USER CODE END PD */
 
@@ -81,18 +81,18 @@ CAN_HandleTypeDef hcan1;
 
 // inputs
 uint16_t coastRegen, brakeRegen;			// coast and brake regen values 
-bool cooling, RTDButton, direction;			// cooling toggle, RTD button state, drive direction
-uint8_t coastMap, brakeMap;					// maps for coast and brake regen
+bool cooling, RTDButton, direction;		// cooling toggle, RTD button state, drive direction
+uint8_t coastMap, brakeMap;					  // maps for coast and brake regen
 
 // rinehart & emus
-uint16_t rinehartVoltage = 0;				// voltage in rinehart
-uint16_t emusVoltage = 265.0;				// emus bus voltage
+uint16_t rinehartVoltage = 0;				  // voltage in rinehart
+uint16_t emusVoltage = 265.0;				  // emus bus voltage
 
 // precharge
-bool readyToDrive = false;					// car is ready to drive
-bool RTDLED = false;						// indicator LED in start button
-bool buzzer = false;						// buzzer is buzzing state
-uint16_t timeSinceBuzzerStart = 0;			// counter to time buzzer buzz
+bool readyToDrive = false;					  // car is ready to drive
+bool RTDLED = false;						      // indicator LED in start button
+bool buzzer = false;						      // buzzer is buzzing state
+uint16_t timeSinceBuzzerStart = 0;		// counter to time buzzer buzz
 bool prechargeStateEnter = false;			// allowed to enter precharge
 
 enum prechargeState
