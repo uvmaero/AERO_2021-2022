@@ -53,17 +53,19 @@
 #define PIN_LCD_SDA						29		// LCD sda
 #define PIN_LCD_SCL						30		// LCD scl
 #define PIN_LCD_BUTTON					27		// LCD control button
-#define PIN_RTD							45		// RTD Fault LED
+#define PIN_RTD							45		// RTD button LED
 #define PIN_IHD							20		// IHD Fault LED
 #define PIN_AMS							31		// AMS LED
+#define PIN_RTD_BUZZER					00		// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
+#define BUZZER_PERIOD					2000	// in milliseconds
+
 
 // CAN
 #define PIN_CAN_PLUS					32		// positive CAN wire
 #define PIN_CAN_MINUS					33		// negative CAN wire
 
 // precharge
-#define PRECHARGE_COEFFICIENT			0.9		
-
+#define PRECHARGE_COEFFICIENT			0.9		// 90% complete with precharge so it's probably safe to continue
 
 /* USER CODE END PD */
 
@@ -78,14 +80,20 @@ CAN_HandleTypeDef hcan1;
 /* USER CODE BEGIN PV */
 
 // inputs
-uint16_t coastRegen, brakeRegen;
-bool cooling, RTDButton, direction;
-uint8_t coastMap, brakeMap;
+uint16_t coastRegen, brakeRegen;			// coast and brake regen values 
+bool cooling, RTDButton, direction;			// cooling toggle, RTD button state, drive direction
+uint8_t coastMap, brakeMap;					// maps for coast and brake regen
+
+// rinehart & emus
+uint16_t rinehartVoltage = 0;				// voltage in rinehart
+uint16_t emusVoltage = 265.0;				// emus bus voltage
 
 // precharge
-bool readyToDrive = false;
-bool buzzer = false;
-bool prechargeStateEnter = false;
+bool readyToDrive = false;					// car is ready to drive
+bool RTDLED = false;						// indicator LED in start button
+bool buzzer = false;						// buzzer is buzzing state
+uint16_t timeSinceBuzzerStart = 0;			// counter to time buzzer buzz
+bool prechargeStateEnter = false;			// allowed to enter precharge
 
 enum prechargeState
 {
@@ -94,7 +102,7 @@ enum prechargeState
 	PRECHARGE_DONE,
 	PRECHARGE_ERROR
 };
-prechargeState = PRECHARGE_OFF;
+prechargeState = PRECHARGE_OFF;				// set intial precharge state to OFF
 
 
 /* USER CODE END PV */
@@ -103,7 +111,10 @@ prechargeState = PRECHARGE_OFF;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
+
 /* USER CODE BEGIN PFP */
+void prechargeControl();
+void RTDButtonChange(); 
 
 /* USER CODE END PFP */
 
@@ -128,7 +139,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  
 
   /* USER CODE END Init */
 
@@ -254,6 +264,59 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+// *** functions *** //
+
+void prechargeControl()
+{
+	switch (prechargeState)
+	{
+		case (PRECHARGE_OFF):
+			// set ready to drive to false
+			readyToDrive = false;
+		break;
+
+		case (PRECHARGE_ON):
+		// ensure voltages are above correct values
+			if (rinehartVoltage >= (emusVoltage * 0.9))
+			{
+				// turn on ready to drive light
+
+				// move to precharge done state
+				prechargeState = PRECHARGE_DONE;
+			}
+		break;
+
+		case (PRECHARGE_DONE):
+			// now that precharge is complete we can drive the car
+			readyToDrive = true;
+		break;
+
+		case (PRECHARGE_ERROR):
+			// the car is most definitly not ready to drive
+			// requires hard reboot of systems to clear this state
+			readyToDrive = false;
+		break;
+
+		default:
+			prechargeState = PRECHARGE_ERROR;
+		break;
+	}
+}
+
+void RTDButtonChange()
+{
+	if (prechargeState == PRECHARGE_DONE && RTDLED)
+	{
+		RTDLED = false;				// turn off the indicator button in the RTD button
+		buzzer = true;				// turn on the buzzer
+		timeSinceBuzzerStart = 0;	// reset buzzer timer
+	}
+}
+
+
+
+
 
 /* USER CODE END 4 */
 
