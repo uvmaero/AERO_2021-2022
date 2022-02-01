@@ -410,13 +410,12 @@ void RTDButtonChange()
 // welcome & boot screen
 void welcomeScreen()
 {
-  lcd.begin(16, 2);               // init lcd with screen dimensions
-  lcd.clear();                    // clear the screen
-  lcd.noCursor();                 // idk
-  lcd.setCursor(1, 0);            // set the cursor
-  lcd.print("welcome AERO");      // print
-  lcd.setCursor(2, 0);            // next line
-  lcd.print("booting up");        // print
+  lcd_init();                         // init lcd with screen dimensions
+  lcd_clear();                        // clear the screen
+  lcd_put_cur(1, 0);                  // set the cursor
+  lcd_send_string("welcome AERO");    // print
+  lcd_put_cur(2, 0);                  // next line
+  lcd_send_string("booting up");      // print
 }
 
 
@@ -431,37 +430,37 @@ void racingHUD()
   lcd.clear();
 
   // drive direction
-  lcd.setCursor(1, 0);                // position of drive direction
-  if (direction) lcd.print("FWD");    // print drive direction
-  else lcd.print("BCK");
+  lcd_put_cur(1, 0);                        // position of drive direction
+  if (direction) lcd_send_string("FWD");    // print drive direction
+  else lcd_send_string("BCK");
 
   // battery percentage
-  lcd.setCursor(12, 0);               // set cursor for battery percentage value
-  lcd.print("%d%%", int batPer = 56); // MAKE THIS A THING THAT WORKS
-  lcd.setCursor(15, 0);               // set cursor for % sign
-  lcd.print("%%");                    // print % sign
+  lcd_put_cur(12, 0);                       // set cursor for battery percentage value
+  lcd_send_data(int batPer = 56);           // MAKE THIS A THING THAT WORKS
+  lcd_put_cur(15, 0);                       // set cursor for % sign
+  lcd_send_string("%%");                    // print % sign
 
   // speedometer
-  lcd.setCursor(6, 1);                // set cursor for mph value
-  lcd.print("%d", int mph = 15);      // need to do wheel speed math with wheel diameter to get mph
-  lcd.setCursor(9, 1);                // set cursor for units
-  lcd.print("mph");                   // print units
+  lcd_put_cur(6, 1);                        // set cursor for mph value
+  lcd_send_data(int mph = 15);              // need to do wheel speed math with wheel diameter to get mph
+  lcd_put_cur(9, 1);                        // set cursor for units
+  lcd_send_string("mph");                   // print units
 
   // coast regen
-  lcd.setCursor(1, 2);                // set cursor for CR
-  lcd.print("CR:");                   // print CR for coast regen
-  lcd.setCursor(4, 2);                // set cursor for coast regen value 
-  lcd.print("%d", int coastRegenPer = 70);  // print coast regen value 
-  lcd.setCursor(6, 2);                // set cursor for percent sign
-  lcd.print("%%");                    // print percent sign 
+  lcd_put_cur(1, 2);                        // set cursor for CR
+  lcd_send_string("CR:");                   // print CR for coast regen
+  lcd_put_cur(4, 2);                        // set cursor for coast regen value 
+  lcd_send_data(int coastRegenPer = 70);    // print coast regen value 
+  lcd_put_cur(6, 2);                        // set cursor for percent sign
+  lcd_send_string("%%");                    // print percent sign 
 
   // brake regen
-  lcd.setCursor(10, 2);               // set cursor for BR
-  lcd.print("BR:");                   // print BR for brake regen
-  lcd.setCursor(12, 2);               // set cursor for brake regen value 
-  lcd.print("%d", int brakeRegenPre = 40);  // print brake regen value 
-  lcd.setCursor(14, 2);               // set cursor for percent sign
-  lcd.print("%%");                    // print percent sign
+  lcd_put_cur(10, 2);                       // set cursor for BR
+  lcd_send_string("BR:");                   // print BR for brake regen
+  lcd_put_cur(12, 2);                       // set cursor for brake regen value 
+  lcd_send_data(int brakeRegenPre = 40);    // print brake regen value 
+  lcd_put_cur(14, 2);                       // set cursor for percent sign
+  lcd_send_string("%%");                    // print percent sign
 }
 
 
@@ -473,31 +472,31 @@ void racingHUD()
 void electricalSettings()
 {
   // battery percentage
-  lcd.setCursor(1, 0);                // set cursor for battery percentage value
-  lcd.print("%d%%", int batPer = 56); // MAKE THIS A THING THAT WORKS
-  lcd.setCursor(4, 0);                // set cursor for % sign
-  lcd.print("%%");                    // print % sign
+  lcd_put_cur(1, 0);                // set cursor for battery percentage value
+  lcd_send_data(int batPer = 56);   // MAKE THIS A THING THAT WORKS
+  lcd_put_cur(4, 0);                // set cursor for % sign
+  lcd_send_string("%%");            // print % sign
 
   // bus voltage
-  lcd.setCursor(1, 1);                 // set cursor for battery percentage value
-  lcd.print("%d%%", int busVolt = 56); // MAKE THIS A THING THAT WORKS
-  lcd.setCursor(4, 0);                 // set cursor for units
-  lcd.print("V");                      // print units
+  lcd_put_cur(1, 1);                // set cursor for battery percentage value
+  lcd_send_data(emusVoltage);       // MAKE THIS A THING THAT WORKS
+  lcd_put_cur(4, 0);                // set cursor for units
+  lcd_send_string("V");             // print units
 
   // rinehart voltage
-  lcd.setCursor(12, 0);                 // set cursor for rinehart voltage value
-  lcd.print("%d%%", int rineVolt = 56); // MAKE THIS A THING THAT WORKS
-  lcd.setCursor(15, 0);                 // set cursor for units
-  lcd.print("V");                       // print % sign
+  lcd_put_cur(12, 0);               // set cursor for rinehart voltage value
+  lcd_send_data(int rineVolt = 56); // MAKE THIS A THING THAT WORKS
+  lcd_put_cur(15, 0);               // set cursor for units
+  lcd_send_string("V");             // print % sign
 
   // power mode
-  lcd.setCursor(1, 2);               // set cursor for mode text
-  lcd.print("Mode:");                // print mode text
-  lcd.setCursor(8, 2);               // set cursor current mode setting
+  lcd_put_cur(1, 2);               // set cursor for mode text
+  lcd_send_string("Mode:");        // print mode text
+  lcd_put_cur(8, 2);               // set cursor current mode setting
   // print the current mode
-  if (powerMode == 1) lcd.print("Tutorial");
-  if (powerMode == 2) lcd.print("Eco");
-  if (powerMode == 3) lcd.print("Expert");
+  if (powerMode == 1) lcd_send_string("Tutorial");
+  if (powerMode == 2) lcd_send_string("Eco");
+  if (powerMode == 3) lcd_send_string("Expert");
 }
 
 
