@@ -53,11 +53,11 @@
 #define PIN_LCD_SDA						        29		// LCD sda
 #define PIN_LCD_SCL						        30		// LCD scl
 #define PIN_LCD_BUTTON					      27		// LCD control button
-#define PIN_RTD							          45		// RTD button LED
+#define PIN_RTD_LED							      45		// RTD button LED
 #define PIN_IHD							          20		// IHD Fault LED
 #define PIN_AMS							          31		// AMS LED
 #define PIN_RTD_BUZZER					      00		// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
-#define BUZZER_PERIOD					        2000	// in milliseconds
+#define BUZZER_PERIOD					        2000	// time the buzzer is supposed to be on in milliseconds
 
 // CAN
 #define PIN_CAN_PLUS					        32		// positive CAN wire
@@ -280,7 +280,8 @@ void prechargeControl()
 			if (rinehartVoltage >= (emusVoltage * 0.9))
 			{
 				// turn on ready to drive light
-
+        HAL_GPIO_WritePin(GPIOB, PIN_RTD_LED, GPIO_PIN_SET);
+        
 				// move to precharge done state
 				prechargeState = PRECHARGE_DONE;
 			}
