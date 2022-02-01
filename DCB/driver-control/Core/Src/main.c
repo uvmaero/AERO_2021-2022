@@ -59,7 +59,6 @@
 #define PIN_RTD_BUZZER					      00		// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
 #define BUZZER_PERIOD					        2000	// in milliseconds
 
-
 // CAN
 #define PIN_CAN_PLUS					        32		// positive CAN wire
 #define PIN_CAN_MINUS					        33		// negative CAN wire
