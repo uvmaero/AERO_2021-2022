@@ -374,11 +374,6 @@ void prechargeControl()
 			readyToDrive = false;
 
       // flash the RTD button LED to indicate we are in PRECHARGE_ERROR
-      while (true)
-      {
-        HAL_GPIO_TogglePin(GPIOB, PIN_RTD_LED);
-        HAL_Delay(50);
-      }
 		break;
 
 		default:
@@ -400,7 +395,7 @@ void RTDButtonChange()
 	if (prechargeState == PRECHARGE_DONE && RTDLED)
 	{
     // turn off the indicator button in the RTD button
-		HAL_GPIO_WritePin(GPIOB, PIN_RTD_LED, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOB, PIN_RTD_LED, GPIO_PIN_RESET);
 
 		buzzer = true;				    // turn on the buzzer
 		timeSinceBuzzerStart = 0;	// reset buzzer timer
@@ -493,7 +488,7 @@ void electricalSettings()
 
   // rinehart voltage
   lcd_put_cur(12, 0);               // set cursor for rinehart voltage value
-  lcd_send_data(int rineVolt = 56); // MAKE THIS A THING THAT WORKS
+  lcd_send_data(int rineVolt = 65); // MAKE THIS A THING THAT WORKS
   lcd_put_cur(15, 0);               // set cursor for units
   lcd_send_string("V");             // print % sign
 
@@ -502,9 +497,9 @@ void electricalSettings()
   lcd_send_string("Mode:");        // print mode text
   lcd_put_cur(8, 2);               // set cursor current mode setting
   // print the current mode
-  if (powerMode == 1) lcd_send_string("Tutorial");
-  if (powerMode == 2) lcd_send_string("Eco");
-  if (powerMode == 3) lcd_send_string("Expert");
+  if (powerMode == TUTORIAL) lcd_send_string("Tutorial");
+  if (powerMode == ECO) lcd_send_string("Eco");
+  if (powerMode == EXPERT) lcd_send_string("Expert");
 }
 
 
@@ -517,7 +512,7 @@ void rideSettings()
 {
   // clear screen
   lcd_clear();
-  
+
   // not sure what to do for suspension values yet so
   lcd_put_cur(6, 1);                    // ride height percentage text
   lcd_send_string("Ride %%");           // print text
