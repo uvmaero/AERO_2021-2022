@@ -32,7 +32,40 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define START_BUTTON;     // add numbers
+
+// inputs
+#define PIN_START_BUTTON;             28    // ready to drive button
+#define PIN_DRIVE_DIRECTION           26		// drive direction toggle
+#define PIN_BRAKE_REGEN					      19		// brake regeneration
+#define PIN_COAST_REGEN					      18		// coast regeneration
+#define PIN_COOLING_TOGGLE			    	25		// toggle the cooling 
+#define PIN_FRONT_RIGHT_WHEEL			    11		// front right wheel speed sensor
+#define PIN_FRONT_LEFT_WHEEL			    10		// front left wheel speed sensor
+#define PIN_FRONT_RIGHT_SUSPENSION		13		// front right suspension
+#define PIN_FRONT_LEFT_SUSPENSION		  12		// front left suspension
+#define PIN_PEDAL_0					          16		// go pedal sensor 1
+#define PIN_PEDAL_1					          17		// go pedal sensor 2
+#define PIN_BRAKE_0					          14		// brake sensor 1
+#define PIN_BRAKE_1					          15		// brake sensor 2
+#define PIN_STEERING				          34		// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
+
+// outputs
+#define PIN_LCD_SDA						        29		// LCD sda
+#define PIN_LCD_SCL						        30		// LCD scl
+#define PIN_LCD_BUTTON					      27		// LCD control button
+#define PIN_RTD_LED							      45		// RTD button LED
+#define PIN_IHD							          20		// IHD Fault LED
+#define PIN_AMS							          31		// AMS LED
+#define PIN_RTD_BUZZER					      00		// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
+#define BUZZER_PERIOD					        2000	// time the buzzer is supposed to be on in milliseconds
+
+// CAN
+#define PIN_CAN_PLUS					        32		// positive CAN wire
+#define PIN_CAN_MINUS					        33		// negative CAN wire
+
+// precharge
+#define PRECHARGE_COEFFICIENT			    0.9		// 90% complete with precharge so it's probably safe to continue
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -45,13 +78,65 @@ CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
 
+// inputs
+uint16_t coastRegen, brakeRegen;			// coast and brake regen values 
+bool cooling, RTDButton, direction;		// cooling toggle, RTD button state, drive direction
+uint8_t coastMap, brakeMap;					  // maps for coast and brake regen
+
+// rinehart & emus
+uint16_t rinehartVoltage = 0;				  // voltage in rinehart
+uint16_t emusVoltage = 265.0;				  // emus bus voltage
+
+// precharge
+bool readyToDrive = false;					  // car is ready to drive
+bool RTDLED = false;						      // indicator LED in start button
+bool buzzer = false;						      // buzzer is buzzing state
+uint16_t timeSinceBuzzerStart = 0;		// counter to time buzzer buzz
+bool prechargeStateEnter = false;			// allowed to enter precharge
+
+// precharge states
+enum prechargeStates
+{
+	PRECHARGE_OFF,
+	PRECHARGE_ON,
+	PRECHARGE_DONE,
+	PRECHARGE_ERROR
+};
+int prechargeState = PRECHARGE_OFF;				// set intial precharge state to OFF
+
+// screen enum
+enum screens
+{
+  RACING_HUD,               // for driving the car
+  RIDE_SETTINGS,            // view all ride style settings
+  ELECTRICAL_SETTINGS       // view all electrical information
+}
+int currentScreen = RACING_HUD;
+
+// power modes
+enum powerModes
+{
+  TUTORIAL,           // 50% throttle power, for beginner AERO drivers
+  ECO,                // 80% throttle power, battery savings 
+  EXPERT              // 100% throttle power, max speed and acceleration 
+}
+int powerMode = EXPERT;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
+
 /* USER CODE BEGIN PFP */
+void prechargeControl();
+void RTDButtonChange();
+void welcomeScreen();
+void racingHUD();
+void electricalSettings():
+void rideSettings();
 
 /* USER CODE END PFP */
 
@@ -89,7 +174,18 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_CAN1_Init();
+
+
   /* USER CODE BEGIN 2 */
+
+  // start up LCD display
+  welcomeScreen();
+
+  // precharge loop omg no way i used a do-while loop insane programming skills XD
+  do
+  {
+    prechargeControl();
+  } while (prechargeState != PRECHARGE_DONE);
 
   /* USER CODE END 2 */
 
@@ -97,9 +193,41 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+    // *** CAN *** //
+    // read CAN messages
 
-    /* USER CODE BEGIN 3 */
+
+    // send CAN messages
+
+
+    // *** LCD *** //
+    // look for LCD button press 
+    if (HAL_ADC_GetValue(PIN_LCD_BUTTON)) 
+    {
+      currentScreen++;                                // move to next screen
+      if (currentScreen == 4) currentScreen = 1;      // loop back at max screen value
+    }
+
+    // update display
+    switch (currentScreen)
+    {
+      case RACING_HUD:
+        racingHUD();
+      break;
+
+      case RIDE_SETTINGS:
+        rideSettings();
+      break;
+
+      case ELECTRICAL_SETTINGS:
+        electricalSettings();
+      break;
+
+      default:
+        // fallback state, there was an error, return to racing HUD
+        currentScreen = RACING_HUD;
+      break;
+    }
   }
   /* USER CODE END 3 */
 }
@@ -180,10 +308,10 @@ static void MX_CAN1_Init(void)
   {
     Error_Handler();
   }
+
+  // *** we're not using a second CAN bus so ignore this *** //
   /* USER CODE BEGIN CAN1_Init 2 */
-
   /* USER CODE END CAN1_Init 2 */
-
 }
 
 /**
@@ -200,7 +328,251 @@ static void MX_GPIO_Init(void)
 
 }
 
+
 /* USER CODE BEGIN 4 */
+
+// *** functions *** //
+
+/**
+ * @brief 
+ * 
+ */
+void prechargeControl()
+{
+	switch (prechargeState)
+	{
+		case (PRECHARGE_OFF):
+			// set ready to drive to false
+			readyToDrive = false;
+      // move to PRECHARGE_ON due to this specific condition that doesn't exist yet
+      // write that^ specific condition here
+		break;
+
+		case (PRECHARGE_ON):
+		  // ensure voltages are above correct values
+			if (rinehartVoltage >= (emusVoltage * 0.9))
+			{
+				// turn on ready to drive light
+        HAL_GPIO_WritePin(GPIOB, PIN_RTD_LED, GPIO_PIN_SET);
+        
+				// move to precharge done state
+				prechargeState = PRECHARGE_DONE;
+			}
+		break;
+
+		case (PRECHARGE_DONE):
+      // turn off the RTD Button LED
+      HAL_GPIO_WritePin(GPIOB, PIN_RTD_LED, GPIO_PIN_RESET);
+
+			// now that precharge is complete we can drive the car
+			readyToDrive = true;
+		break;
+
+		case (PRECHARGE_ERROR):
+			// the car is most definitly not ready to drive
+			// requires hard reboot of systems to clear this state
+			readyToDrive = false;
+
+      // flash the RTD button LED to indicate we are in PRECHARGE_ERROR
+		break;
+
+		default:
+      // fallback state, this indicates we did some undefined action that brought us here
+      // we will move to PRECHARGE_ERROR to ensure readyToDrive stays false :)
+			prechargeState = PRECHARGE_ERROR;
+		break;
+	}
+}
+
+
+/**
+ * @brief 
+ * 
+ */
+void RTDButtonChange()
+{
+  // if the precharge state is done and the button is being depressed
+	if (prechargeState == PRECHARGE_DONE && RTDLED)
+	{
+    // turn off the indicator button in the RTD button
+		HAL_GPIO_WritePin(GPIOB, PIN_RTD_LED, GPIO_PIN_RESET);
+
+		buzzer = true;				    // turn on the buzzer
+		timeSinceBuzzerStart = 0;	// reset buzzer timer
+	}
+}
+
+
+// welcome & boot screen
+/**
+ * @brief 
+ * 
+ */
+void welcomeScreen()
+{
+  lcd_init();                         // init lcd
+  lcd_clear();                        // clear the screen
+  lcd_put_cur(1, 0);                  // set the cursor
+  lcd_send_string("welcome AERO");    // print
+  lcd_put_cur(2, 0);                  // next line
+  lcd_send_string("booting up...");   // print
+}
+
+
+// racing hud: mph(est), battery%, drive direction, coast regen, brake regen
+/**
+ * @brief 
+ * 
+ */
+void racingHUD()
+{
+  // clear display 
+  lcd.clear();
+
+  // drive direction
+  lcd_put_cur(1, 0);                        // position of drive direction
+  if (direction) lcd_send_string("FWD");    // print drive direction
+  else lcd_send_string("BCK");
+
+  // battery percentage
+  lcd_put_cur(12, 0);                       // set cursor for battery percentage value
+  lcd_send_data(int batPer = 56);           // MAKE THIS A THING THAT WORKS
+  lcd_put_cur(15, 0);                       // set cursor for % sign
+  lcd_send_string("%%");                    // print % sign
+
+  // speedometer
+  lcd_put_cur(6, 1);                        // set cursor for mph value
+  lcd_send_data(int mph = 15);              // need to do wheel speed math with wheel diameter to get mph
+  lcd_put_cur(9, 1);                        // set cursor for units
+  lcd_send_string("mph");                   // print units
+
+  // coast regen
+  lcd_put_cur(1, 2);                        // set cursor for CR
+  lcd_send_string("CR:");                   // print CR for coast regen
+  lcd_put_cur(4, 2);                        // set cursor for coast regen value 
+  lcd_send_data(int coastRegenPer = 70);    // print coast regen value 
+  lcd_put_cur(6, 2);                        // set cursor for percent sign
+  lcd_send_string("%%");                    // print percent sign 
+
+  // brake regen
+  lcd_put_cur(10, 2);                       // set cursor for BR
+  lcd_send_string("BR:");                   // print BR for brake regen
+  lcd_put_cur(12, 2);                       // set cursor for brake regen value 
+  lcd_send_data(int brakeRegenPre = 40);    // print brake regen value 
+  lcd_put_cur(14, 2);                       // set cursor for percent sign
+  lcd_send_string("%%");                    // print percent sign
+}
+
+
+// battery state, bus voltage, rinehart voltage, power mode
+/**
+ * @brief 
+ * 
+ */
+void electricalSettings()
+{
+  // clear screen
+  lcd_clear();
+
+  // battery percentage
+  lcd_put_cur(1, 0);                // set cursor for battery percentage value
+  lcd_send_data(int batPer = 56);   // MAKE THIS A THING THAT WORKS
+  lcd_put_cur(4, 0);                // set cursor for % sign
+  lcd_send_string("%%");            // print % sign
+
+  // bus voltage
+  lcd_put_cur(1, 1);                // set cursor for battery percentage value
+  lcd_send_data(emusVoltage);       // MAKE THIS A THING THAT WORKS
+  lcd_put_cur(4, 0);                // set cursor for units
+  lcd_send_string("V");             // print units
+
+  // rinehart voltage
+  lcd_put_cur(12, 0);               // set cursor for rinehart voltage value
+  lcd_send_data(int rineVolt = 65); // MAKE THIS A THING THAT WORKS
+  lcd_put_cur(15, 0);               // set cursor for units
+  lcd_send_string("V");             // print % sign
+
+  // power mode
+  lcd_put_cur(1, 2);               // set cursor for mode text
+  lcd_send_string("Mode:");        // print mode text
+  lcd_put_cur(8, 2);               // set cursor current mode setting
+  // print the current mode
+  if (powerMode == TUTORIAL) lcd_send_string("Tutorial");
+  if (powerMode == ECO) lcd_send_string("Eco");
+  if (powerMode == EXPERT) lcd_send_string("Expert");
+}
+
+
+// ride height, wheel rpm, coast regen, brake regen
+/**
+ * @brief 
+ * 
+ */
+void rideSettings()
+{
+  // clear screen
+  lcd_clear();
+
+  // not sure what to do for suspension values yet so
+  lcd_put_cur(6, 1);                    // ride height percentage text
+  lcd_send_string("Ride %%");           // print text
+
+  lcd_put_cur(1, 0);                    // set cursor for wheel speed value
+  lcd_send_data(int ride1);             // MAKE THIS A THING THAT WORKS
+
+  lcd_put_cur(3, 0);                    // set cursor for "-"
+  lcd_send_string("-");                 // print the "-"
+
+  lcd_put_cur(5, 0);                    // set cursor for wheelspeed value
+  lcd_send_data(int ride2);             // print value
+
+  lcd_put_cur(1, 2);                    // set cursor for wheelspeed value
+  lcd_send_data(int ride3);             // print value
+
+  lcd_put_cur(3, 2);                    // set cursor for "-"
+  lcd_send_string("-");                 // print the "-"
+
+  lcd_put_cur(5, 2);                    // set cursor for wheelspeed value
+  lcd_send_data(int ride4);             // print value
+
+
+  // wheel speed
+  lcd_put_cur(10, 1);                   // set cursor for RPM text
+  lcd_send_string("RPM");               // print RPM
+
+  lcd_put_cur(10, 0);                   // set cursor for wheel speed value
+  lcd_send_data(int wheelSpeed1);       // MAKE THIS A THING THAT WORKS
+
+  lcd_put_cur(12, 0);                   // set cursor for "-"
+  lcd_send_string("-");                 // print the "-"
+
+  lcd_put_cur(14, 0);                   // set cursor for wheelspeed value
+  lcd_send_data(int wheelspeed2);       // print value
+
+  lcd_put_cur(10, 2);                   // set cursor for wheelspeed value
+  lcd_send_data(int wheelspeed3);       // print value
+
+  lcd_put_cur(12, 2);                   // set cursor for "-"
+  lcd_send_string("-");                 // print the "-"
+
+  lcd_put_cur(14, 2);                   // set cursor for wheelspeed value
+  lcd_send_data(int wheelspeed4);       // print value
+
+  // coast regen
+  lcd_put_cur(7, 0);                    // set cursor for CR text
+  lcd_send_string("CR:");               // print "CR:" for coast regen
+  lcd_send_data(int coastRegen);        // print coast regen value
+  lcd_put_cur(9, 0);                    // set cursor for "%"
+  lcd_send_string("%%");                // print "%"
+
+  // brake regen
+  lcd_put_cur(7, 2);                    // set cursor for BR text
+  lcd_send_string("BR:");               // print "BR:" for brake regen
+  lcd_send_data(int brakeRegen);        // print brake regen value
+  lcd_put_cur(9, 2);                    // set cursor for "%"
+  lcd_send_string("%%");                // print "%"
+}
+
 
 /* USER CODE END 4 */
 
