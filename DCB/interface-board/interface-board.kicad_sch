@@ -1149,7 +1149,7 @@
     (property "Value" "LED" (id 1) (at 120.142 61.9252 90)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder" (id 2) (at 118.11 60.96 0)
+    (property "Footprint" "LED_THT:LED_D5.0mm" (id 2) (at 118.11 60.96 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 118.11 60.96 0)
@@ -1168,7 +1168,7 @@
     (property "Value" "LED" (id 1) (at 139.192 61.9252 90)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder" (id 2) (at 137.16 60.96 0)
+    (property "Footprint" "LED_THT:LED_D5.0mm" (id 2) (at 137.16 60.96 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 137.16 60.96 0)
@@ -1443,10 +1443,10 @@
       (reference "#PWR0109") (unit 1) (value "GND") (footprint "")
     )
     (path "/00000000-0000-0000-0000-000062083cc8"
-      (reference "D1") (unit 1) (value "LED") (footprint "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder")
+      (reference "D1") (unit 1) (value "LED") (footprint "LED_THT:LED_D5.0mm")
     )
     (path "/00000000-0000-0000-0000-0000620840b4"
-      (reference "D2") (unit 1) (value "LED") (footprint "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder")
+      (reference "D2") (unit 1) (value "LED") (footprint "LED_THT:LED_D5.0mm")
     )
     (path "/f1084b0d-b992-4d4c-9074-1c148a908ad5"
       (reference "H1") (unit 1) (value "MountingHole") (footprint "MountingHole:MountingHole_3.2mm_M3")
