@@ -61,6 +61,12 @@
 #define PIN_CAN_PLUS					        32		// positive CAN wire
 #define PIN_CAN_MINUS					        33		// negative CAN wire
 
+// wheel diameter
+#define WHEEL_DIAMETER                16    // diameter of the wheels in inches
+
+// pack voltage
+#define MAX_PACK_VOLTAGE              265   // max pack voltage for calculating pack percentage
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -73,9 +79,17 @@ CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
 
+// rinehart & emus
+uint16_t rinehartVoltage = 0;				  // voltage in rinehart
+uint16_t emusVoltage = 265.0;				  // emus bus voltage
+
 // inputs
 uint16_t coastRegen, brakeRegen;			// coast and brake regen values 
 uint8_t coastMap, brakeMap;					  // maps for coast and brake regen
+float wheelSpeedFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL);
+float wheelSpeedFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL);
+float wheelSpeedBR = 0;               // this needs to be retrived from CAN
+float wheelSpeedBL = 0;               // this needs to be retrived from CAN
 
 // outputs
 bool RTDButtonLED = 0;                   // RTD button LED toggle (0 is off)
@@ -166,7 +180,8 @@ int main(void)
   {
     // *** CAN *** //
     // read CAN messages
-
+    // wheelSpeedBR
+    // wheelSpeedBL
 
     // send CAN messages
 
@@ -255,7 +270,6 @@ void SystemClock_Config(void)
   */
 static void MX_CAN1_Init(void)
 {
-
   /* USER CODE BEGIN CAN1_Init 0 */
 
   /* USER CODE END CAN1_Init 0 */
@@ -279,7 +293,6 @@ static void MX_CAN1_Init(void)
   {
     Error_Handler();
   }
-
   // *** we're not using a second CAN bus so ignore this *** //
   /* USER CODE BEGIN CAN1_Init 2 */
   /* USER CODE END CAN1_Init 2 */
@@ -292,11 +305,9 @@ static void MX_CAN1_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
-
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-
 }
 
 
@@ -327,6 +338,13 @@ void welcomeScreen()
  */
 void racingHUD()
 {
+  // get current MPH
+  float averageWheelSpeed = (HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL) + HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL)) / 2;
+  float currentMPH = averageWheelSpeed * WHEEL_DIAMETER * (3.14159) * 60 / 63360;
+
+  // get battery percentage
+  float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
+
   // clear display 
   lcd.clear();
 
@@ -337,13 +355,13 @@ void racingHUD()
 
   // battery percentage
   lcd_put_cur(12, 0);                       // set cursor for battery percentage value
-  lcd_send_data(int batPer = 56);           // MAKE THIS A THING THAT WORKS
+  lcd_send_data(batteryPercentage);         // MAKE THIS A THING THAT WORKS
   lcd_put_cur(15, 0);                       // set cursor for % sign
   lcd_send_string("%%");                    // print % sign
 
   // speedometer
   lcd_put_cur(6, 1);                        // set cursor for mph value
-  lcd_send_data(int mph = 15);              // need to do wheel speed math with wheel diameter to get mph
+  lcd_send_data((int)currentMPH);           // print the current speed in MPH, cast to int to round to whole number
   lcd_put_cur(9, 1);                        // set cursor for units
   lcd_send_string("mph");                   // print units
 
@@ -372,32 +390,34 @@ void racingHUD()
  */
 void electricalSettings()
 {
+  // get battery percentage
+  float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
+
   // clear screen
   lcd_clear();
 
   // battery percentage
-  lcd_put_cur(1, 0);                // set cursor for battery percentage value
-  lcd_send_data(int batPer = 56);   // MAKE THIS A THING THAT WORKS
-  lcd_put_cur(4, 0);                // set cursor for % sign
-  lcd_send_string("%%");            // print % sign
+  lcd_put_cur(1, 0);                                        // set cursor for battery percentage value
+  lcd_send_data(batteryPercentage);                         // print the current battery percentage value
+  lcd_put_cur(4, 0);                                        // set cursor for % sign
+  lcd_send_string("%%");                                    // print % sign
 
-  // bus voltage
-  lcd_put_cur(1, 1);                // set cursor for battery percentage value
-  lcd_send_data(emusVoltage);       // MAKE THIS A THING THAT WORKS
-  lcd_put_cur(4, 0);                // set cursor for units
-  lcd_send_string("V");             // print units
+  // bus voltage                        
+  lcd_put_cur(1, 1);                                        // set cursor for battery percentage value
+  lcd_send_data(emusVoltage);                               // print the emus voltage value
+  lcd_put_cur(4, 0);                                        // set cursor for units
+  lcd_send_string("V");                                     // print units
 
-  // rinehart voltage
-  lcd_put_cur(12, 0);               // set cursor for rinehart voltage value
-  lcd_send_data(int rineVolt = 65); // MAKE THIS A THING THAT WORKS
-  lcd_put_cur(15, 0);               // set cursor for units
-  lcd_send_string("V");             // print % sign
+  // rinehart voltage                       
+  lcd_put_cur(12, 0);                                       // set cursor for rinehart voltage value
+  lcd_send_data(rinehartVoltage);                           // print the rinehart voltage value
+  lcd_put_cur(15, 0);                                       // set cursor for units
+  lcd_send_string("V");                                     // print % sign
 
-  // power mode
-  lcd_put_cur(1, 2);               // set cursor for mode text
-  lcd_send_string("Mode:");        // print mode text
-  lcd_put_cur(8, 2);               // set cursor current mode setting
-  // print the current mode
+  // power mode                       
+  lcd_put_cur(1, 2);                                        // set cursor for mode text
+  lcd_send_string("Mode:");                                 // print mode text
+  lcd_put_cur(8, 2);                                        // set cursor current mode setting
   if (powerMode == TUTORIAL) lcd_send_string("Tutorial");
   if (powerMode == ECO) lcd_send_string("Eco");
   if (powerMode == EXPERT) lcd_send_string("Expert");
@@ -413,6 +433,9 @@ void rideSettings()
 {
   // clear screen
   lcd_clear();
+
+  // TODO:
+  // add some suspension percentage calculations here
 
   // not sure what to do for suspension values yet so
   lcd_put_cur(6, 1);                    // ride height percentage text
@@ -438,26 +461,30 @@ void rideSettings()
 
 
   // wheel speed
+  // get the current wheel speeds 
+  float wheelSpeedFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL);
+  float wheelSpeedFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL);
+
   lcd_put_cur(10, 1);                   // set cursor for RPM text
-  lcd_send_string("RPM");               // print RPM
+  lcd_send_string("RPM");               // print RPM text
 
   lcd_put_cur(10, 0);                   // set cursor for wheel speed value
-  lcd_send_data(int wheelSpeed1);       // MAKE THIS A THING THAT WORKS
+  lcd_send_data((int)wheelSpeedFR);     // print value for front left
 
   lcd_put_cur(12, 0);                   // set cursor for "-"
   lcd_send_string("-");                 // print the "-"
 
   lcd_put_cur(14, 0);                   // set cursor for wheelspeed value
-  lcd_send_data(int wheelspeed2);       // print value
+  lcd_send_data((int)wheelSpeedFL);     // print value for front right
 
   lcd_put_cur(10, 2);                   // set cursor for wheelspeed value
-  lcd_send_data(int wheelspeed3);       // print value
+  lcd_send_data((int)wheelSpeedBL);     // print value rear left
 
   lcd_put_cur(12, 2);                   // set cursor for "-"
   lcd_send_string("-");                 // print the "-"
 
   lcd_put_cur(14, 2);                   // set cursor for wheelspeed value
-  lcd_send_data(int wheelspeed4);       // print value
+  lcd_send_data((int)wheelSpeedBR);     // print value for rear right
 
   // coast regen
   lcd_put_cur(7, 0);                    // set cursor for CR text
