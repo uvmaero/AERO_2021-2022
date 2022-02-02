@@ -870,7 +870,7 @@
   (symbol (lib_id "Device:Battery") (at 43.18 113.03 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f906b7f)
-    (property "Reference" "BT?" (id 0) (at 45.9232 111.8616 0)
+    (property "Reference" "BT1" (id 0) (at 45.9232 111.8616 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Value" "GLV Battery" (id 1) (at 29.21 113.03 0)
@@ -889,7 +889,7 @@
   (symbol (lib_id "Device:Fuse") (at 43.18 102.87 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f906fdf)
-    (property "Reference" "F?" (id 0) (at 44.704 101.7016 0)
+    (property "Reference" "F1" (id 0) (at 44.704 101.7016 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Value" "GLV Main Fuse" (id 1) (at 44.45 101.6 0)
@@ -908,7 +908,7 @@
   (symbol (lib_id "Switch:SW_SPST") (at 43.18 92.71 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f907b1f)
-    (property "Reference" "SW?" (id 0) (at 45.4152 91.5416 90)
+    (property "Reference" "SW3" (id 0) (at 45.4152 91.5416 90)
       (effects (font (size 1.27 1.27)) (justify right) hide)
     )
     (property "Value" "GLVMS" (id 1) (at 33.02 91.44 90)
@@ -927,7 +927,7 @@
   (symbol (lib_id "Switch:SW_SPST") (at 68.58 57.15 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f90ab42)
-    (property "Reference" "SW?" (id 0) (at 68.58 51.181 0)
+    (property "Reference" "SW4" (id 0) (at 68.58 51.181 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "Brake Overtravel" (id 1) (at 68.58 53.5178 0))
@@ -944,7 +944,7 @@
   (symbol (lib_id "Relay:DIPxx-1Axx-11x") (at 90.17 62.23 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f90d5e4)
-    (property "Reference" "K?" (id 0) (at 90.17 50.3682 90)
+    (property "Reference" "K1" (id 0) (at 90.17 50.3682 90)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "BMS Fault" (id 1) (at 90.17 52.705 90))
@@ -965,7 +965,7 @@
   (symbol (lib_id "Relay:DIPxx-1Axx-11x") (at 116.84 62.23 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f91092b)
-    (property "Reference" "K?" (id 0) (at 116.84 50.3682 90)
+    (property "Reference" "K2" (id 0) (at 116.84 50.3682 90)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "IMD Fault" (id 1) (at 116.84 52.705 90))
@@ -986,7 +986,7 @@
   (symbol (lib_id "Relay:DIPxx-1Axx-11x") (at 141.605 62.23 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f91138d)
-    (property "Reference" "K?" (id 0) (at 141.605 50.3682 90)
+    (property "Reference" "K3" (id 0) (at 141.605 50.3682 90)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "TMS Fault" (id 1) (at 141.605 52.705 90))
@@ -1007,7 +1007,7 @@
   (symbol (lib_id "Switch:SW_SPST") (at 167.005 62.23 270) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f912643)
-    (property "Reference" "SW?" (id 0) (at 169.4942 61.0616 90)
+    (property "Reference" "SW5" (id 0) (at 169.4942 61.0616 90)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Value" "Pack Connector Interlock" (id 1) (at 169.4942 62.23 90)
@@ -1026,7 +1026,7 @@
   (symbol (lib_id "Switch:SW_SPST") (at 167.005 72.39 270) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f912ee1)
-    (property "Reference" "SW?" (id 0) (at 169.4942 71.2216 90)
+    (property "Reference" "SW6" (id 0) (at 169.4942 71.2216 90)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Value" "Pack Connector Interlock" (id 1) (at 169.4942 72.39 90)
@@ -1045,7 +1045,7 @@
   (symbol (lib_id "Connector_Generic:Conn_01x01") (at 176.53 82.55 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f913410)
-    (property "Reference" "J?" (id 0) (at 178.562 81.4832 0)
+    (property "Reference" "J2" (id 0) (at 178.562 81.4832 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Value" "SSOK" (id 1) (at 178.562 82.6516 0)
@@ -1063,7 +1063,7 @@
   (symbol (lib_id "Switch:SW_Push_Open") (at 167.005 92.71 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f914dc3)
-    (property "Reference" "SW?" (id 0) (at 168.3258 91.5416 90)
+    (property "Reference" "SW7" (id 0) (at 168.3258 91.5416 90)
       (effects (font (size 1.27 1.27)) (justify right) hide)
     )
     (property "Value" "Cockpit BRB" (id 1) (at 168.3258 92.71 90)
@@ -1082,7 +1082,7 @@
   (symbol (lib_id "Switch:SW_Push_Open") (at 43.18 82.55 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f91550d)
-    (property "Reference" "SW?" (id 0) (at 44.5262 81.3816 90)
+    (property "Reference" "SW2" (id 0) (at 44.5262 81.3816 90)
       (effects (font (size 1.27 1.27)) (justify right) hide)
     )
     (property "Value" "Side BRB 1" (id 1) (at 29.21 82.55 90)
@@ -1101,7 +1101,7 @@
   (symbol (lib_id "Switch:SW_Push_Open") (at 43.18 73.66 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f916017)
-    (property "Reference" "SW?" (id 0) (at 44.5262 72.4916 90)
+    (property "Reference" "SW1" (id 0) (at 44.5262 72.4916 90)
       (effects (font (size 1.27 1.27)) (justify right) hide)
     )
     (property "Value" "Side BRB 2" (id 1) (at 30.48 73.66 90)
@@ -1120,7 +1120,7 @@
   (symbol (lib_id "Switch:SW_SPST") (at 167.005 102.87 270) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f91af7c)
-    (property "Reference" "SW?" (id 0) (at 169.4942 101.7016 90)
+    (property "Reference" "SW8" (id 0) (at 169.4942 101.7016 90)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Value" "TMS" (id 1) (at 169.4942 102.87 90)
@@ -1139,7 +1139,7 @@
   (symbol (lib_id "Connector_Generic:Conn_01x01") (at 177.165 111.76 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f91b70e)
-    (property "Reference" "J?" (id 0) (at 179.197 110.6932 0)
+    (property "Reference" "J4" (id 0) (at 179.197 110.6932 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Value" "AIR Supply" (id 1) (at 179.197 111.8616 0)
@@ -1157,7 +1157,7 @@
   (symbol (lib_id "power:GND") (at 43.18 118.11 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f91c3aa)
-    (property "Reference" "#PWR?" (id 0) (at 43.18 124.46 0)
+    (property "Reference" "#PWR0106" (id 0) (at 43.18 124.46 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (id 1) (at 43.307 122.5042 0))
@@ -1173,7 +1173,7 @@
   (symbol (lib_id "power:GND") (at 100.33 72.39 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f91c8b2)
-    (property "Reference" "#PWR?" (id 0) (at 100.33 78.74 0)
+    (property "Reference" "#PWR0103" (id 0) (at 100.33 78.74 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (id 1) (at 100.457 76.7842 0))
@@ -1189,7 +1189,7 @@
   (symbol (lib_id "power:GND") (at 127.635 72.39 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f91ccf1)
-    (property "Reference" "#PWR?" (id 0) (at 127.635 78.74 0)
+    (property "Reference" "#PWR0102" (id 0) (at 127.635 78.74 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (id 1) (at 127.762 76.7842 0))
@@ -1205,7 +1205,7 @@
   (symbol (lib_id "power:GND") (at 152.4 71.755 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f91d0ec)
-    (property "Reference" "#PWR?" (id 0) (at 152.4 78.105 0)
+    (property "Reference" "#PWR0101" (id 0) (at 152.4 78.105 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (id 1) (at 152.527 76.1492 0))
@@ -1221,7 +1221,7 @@
   (symbol (lib_id "Device:Fuse") (at 53.975 111.125 180) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f92a12a)
-    (property "Reference" "F?" (id 0) (at 58.9788 111.125 90)
+    (property "Reference" "F2" (id 0) (at 58.9788 111.125 90)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "DC/DC Fuse" (id 1) (at 54.61 106.045 0))
@@ -1238,7 +1238,7 @@
   (symbol (lib_id "Connector_Generic:Conn_01x01") (at 53.975 121.285 270) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f92a6d1)
-    (property "Reference" "J?" (id 0) (at 55.0418 123.317 0)
+    (property "Reference" "J1" (id 0) (at 55.0418 123.317 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Value" "DC/DC Output" (id 1) (at 48.895 124.46 90)
@@ -1256,7 +1256,7 @@
   (symbol (lib_id "Connector_Generic:Conn_01x01") (at 176.53 86.36 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00005f93d847)
-    (property "Reference" "J?" (id 0) (at 178.562 85.2932 0)
+    (property "Reference" "J3" (id 0) (at 178.562 85.2932 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Value" "SSOK" (id 1) (at 178.562 86.4616 0)
@@ -1274,7 +1274,7 @@
   (symbol (lib_id "power:+12V") (at 29.21 54.61 0) (unit 1)
     (in_bom yes) (on_board yes) (fields_autoplaced)
     (uuid 324b1796-8836-4c6e-9a9f-9688b8ffe73f)
-    (property "Reference" "#PWR?" (id 0) (at 29.21 58.42 0)
+    (property "Reference" "#PWR0105" (id 0) (at 29.21 58.42 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+12V" (id 1) (at 29.21 49.53 0))
@@ -1290,7 +1290,7 @@
   (symbol (lib_id "AERO_Symbols:T9VV1K15-12S") (at 50.8 62.23 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 6a1261e7-abf9-48a0-9772-dde95aebc4a2)
-    (property "Reference" "k?" (id 0) (at 53.34 48.26 90)
+    (property "Reference" "k1" (id 0) (at 53.34 48.26 90)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "GLV Supply" (id 1) (at 54.61 52.07 90)
@@ -1311,7 +1311,7 @@
   (symbol (lib_id "power:GND") (at 62.23 72.39 0) (unit 1)
     (in_bom yes) (on_board yes) (fields_autoplaced)
     (uuid 723ed54e-2a9a-4eea-b52d-018639b277b9)
-    (property "Reference" "#PWR?" (id 0) (at 62.23 78.74 0)
+    (property "Reference" "#PWR0104" (id 0) (at 62.23 78.74 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (id 1) (at 62.23 77.47 0))
@@ -1324,85 +1324,234 @@
     (pin "1" (uuid 28e83d78-b236-4c46-b61c-d8786cd5674f))
   )
 
+  (sheet (at 29.21 24.13) (size 73.66 12.7) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid) (color 0 0 0 0))
+    (fill (color 0 0 0 0.0000))
+    (uuid 93f0c4e8-9d67-428c-9664-8fa4164531ef)
+    (property "Sheet name" "Battery layout" (id 0) (at 29.21 23.4184 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheet file" "Battery_Layout.kicad_sch" (id 1) (at 29.21 37.4146 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+  )
+
   (sheet_instances
     (path "/" (page "1"))
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef" (page "2"))
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/d8e564fc-43ea-4662-b768-438e61798147" (page "3"))
   )
 
   (symbol_instances
-    (path "/00000000-0000-0000-0000-00005f91c3aa"
-      (reference "#PWR?") (unit 1) (value "GND") (footprint "")
-    )
-    (path "/00000000-0000-0000-0000-00005f91c8b2"
-      (reference "#PWR?") (unit 1) (value "GND") (footprint "")
+    (path "/00000000-0000-0000-0000-00005f91d0ec"
+      (reference "#PWR0101") (unit 1) (value "GND") (footprint "")
     )
     (path "/00000000-0000-0000-0000-00005f91ccf1"
-      (reference "#PWR?") (unit 1) (value "GND") (footprint "")
+      (reference "#PWR0102") (unit 1) (value "GND") (footprint "")
     )
-    (path "/00000000-0000-0000-0000-00005f91d0ec"
-      (reference "#PWR?") (unit 1) (value "GND") (footprint "")
-    )
-    (path "/324b1796-8836-4c6e-9a9f-9688b8ffe73f"
-      (reference "#PWR?") (unit 1) (value "+12V") (footprint "")
+    (path "/00000000-0000-0000-0000-00005f91c8b2"
+      (reference "#PWR0103") (unit 1) (value "GND") (footprint "")
     )
     (path "/723ed54e-2a9a-4eea-b52d-018639b277b9"
-      (reference "#PWR?") (unit 1) (value "GND") (footprint "")
+      (reference "#PWR0104") (unit 1) (value "GND") (footprint "")
+    )
+    (path "/324b1796-8836-4c6e-9a9f-9688b8ffe73f"
+      (reference "#PWR0105") (unit 1) (value "+12V") (footprint "")
+    )
+    (path "/00000000-0000-0000-0000-00005f91c3aa"
+      (reference "#PWR0106") (unit 1) (value "GND") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/d97a62e1-189c-4f84-9411-88cf6c1c9d3f"
+      (reference "#PWR0107") (unit 1) (value "Earth") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/395790cd-a9a6-4c31-8836-1df05321448d"
+      (reference "#PWR0108") (unit 1) (value "Earth") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/02952b73-4643-43f6-b87e-eeea733c8cf9"
+      (reference "BP1S1") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/b6edf34b-0aae-40cb-b05f-95cb0faef2e9"
+      (reference "BP1S2") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/5c10d2b3-2c11-49a0-87b3-4f05559c45ba"
+      (reference "BP1S3") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/e63f0a47-d832-4a2e-a14c-157f3010af47"
+      (reference "BP1S4") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/4727ce39-35e6-4e38-a433-3eba9653e8a6"
+      (reference "BP1S5") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/b2c5bf14-750b-4b63-aaa3-f9558114a964"
+      (reference "BP1S6") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/770ca063-7b0e-4786-8528-96ad12001785"
+      (reference "BP1S7") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/6d6eff34-ab81-4dae-9ef1-349440b139ed"
+      (reference "BP1S8") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/53a0a1bc-7fff-4e7e-b22a-874975e11f6f"
+      (reference "BP1S9") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/6350bc4d-5383-4059-bc27-fe904395eecb"
+      (reference "BP1S10") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/c5e504a4-2152-42cc-80cb-ff526a1c466b"
+      (reference "BP1S11") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/f4dae320-065b-4987-9395-7df63cf90b53"
+      (reference "BP1S12") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/89cf6010-dc16-4a5a-8bf3-80ffb9409568"
+      (reference "BP1S13") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/d01ac0e1-684b-47c4-8f2d-86c13ffa4033"
+      (reference "BP1S14") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/4adae0b2-250d-479a-b110-cd56eb3fc773"
+      (reference "BP1S15") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/1f401950-6c43-42d3-bb37-a14b36e40489"
+      (reference "BP1S16") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/cc9d5d0e-f059-42cb-897c-a4f69e837892"
+      (reference "BP1S17") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/8928303e-283b-4fa0-ac50-be50f085e82d"
+      (reference "BP1S18") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/6f43db46-5779-4b94-b7e9-985bc70adf5e"
+      (reference "BP1S19") (unit 1) (value "Li4P25RT") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/b6151bcb-301b-42c2-a84d-76e1473ff1c9"
+      (reference "BP1S20") (unit 1) (value "Li4P25RT") (footprint "")
     )
     (path "/00000000-0000-0000-0000-00005f906b7f"
-      (reference "BT?") (unit 1) (value "GLV Battery") (footprint "")
+      (reference "BT1") (unit 1) (value "GLV Battery") (footprint "")
     )
     (path "/00000000-0000-0000-0000-00005f906fdf"
-      (reference "F?") (unit 1) (value "GLV Main Fuse") (footprint "")
+      (reference "F1") (unit 1) (value "GLV Main Fuse") (footprint "")
     )
     (path "/00000000-0000-0000-0000-00005f92a12a"
-      (reference "F?") (unit 1) (value "DC/DC Fuse") (footprint "")
+      (reference "F2") (unit 1) (value "DC/DC Fuse") (footprint "")
     )
-    (path "/00000000-0000-0000-0000-00005f913410"
-      (reference "J?") (unit 1) (value "SSOK") (footprint "")
-    )
-    (path "/00000000-0000-0000-0000-00005f91b70e"
-      (reference "J?") (unit 1) (value "AIR Supply") (footprint "")
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/b7f8e358-1d98-4c2c-834d-6a80dd75a23d"
+      (reference "F3") (unit 1) (value "F1 150A") (footprint "")
     )
     (path "/00000000-0000-0000-0000-00005f92a6d1"
-      (reference "J?") (unit 1) (value "DC/DC Output") (footprint "")
+      (reference "J1") (unit 1) (value "DC/DC Output") (footprint "")
+    )
+    (path "/00000000-0000-0000-0000-00005f913410"
+      (reference "J2") (unit 1) (value "SSOK") (footprint "")
     )
     (path "/00000000-0000-0000-0000-00005f93d847"
-      (reference "J?") (unit 1) (value "SSOK") (footprint "")
+      (reference "J3") (unit 1) (value "SSOK") (footprint "")
+    )
+    (path "/00000000-0000-0000-0000-00005f91b70e"
+      (reference "J4") (unit 1) (value "AIR Supply") (footprint "")
     )
     (path "/00000000-0000-0000-0000-00005f90d5e4"
-      (reference "K?") (unit 1) (value "BMS Fault") (footprint "Relay_THT:Relay_StandexMeder_DIP_LowProfile")
+      (reference "K1") (unit 1) (value "BMS Fault") (footprint "Relay_THT:Relay_StandexMeder_DIP_LowProfile")
     )
     (path "/00000000-0000-0000-0000-00005f91092b"
-      (reference "K?") (unit 1) (value "IMD Fault") (footprint "Relay_THT:Relay_StandexMeder_DIP_LowProfile")
+      (reference "K2") (unit 1) (value "IMD Fault") (footprint "Relay_THT:Relay_StandexMeder_DIP_LowProfile")
     )
     (path "/00000000-0000-0000-0000-00005f91138d"
-      (reference "K?") (unit 1) (value "TMS Fault") (footprint "Relay_THT:Relay_StandexMeder_DIP_LowProfile")
+      (reference "K3") (unit 1) (value "TMS Fault") (footprint "Relay_THT:Relay_StandexMeder_DIP_LowProfile")
     )
-    (path "/00000000-0000-0000-0000-00005f907b1f"
-      (reference "SW?") (unit 1) (value "GLVMS") (footprint "")
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/7745ae53-2db5-46b5-a486-e19c0557578e"
+      (reference "K4") (unit 1) (value "AIR 1 GV200") (footprint "AERO-footprints:RELAY_T9VV1K15-12S")
     )
-    (path "/00000000-0000-0000-0000-00005f90ab42"
-      (reference "SW?") (unit 1) (value "Brake Overtravel") (footprint "")
-    )
-    (path "/00000000-0000-0000-0000-00005f912643"
-      (reference "SW?") (unit 1) (value "Pack Connector Interlock") (footprint "")
-    )
-    (path "/00000000-0000-0000-0000-00005f912ee1"
-      (reference "SW?") (unit 1) (value "Pack Connector Interlock") (footprint "")
-    )
-    (path "/00000000-0000-0000-0000-00005f914dc3"
-      (reference "SW?") (unit 1) (value "Cockpit BRB") (footprint "")
-    )
-    (path "/00000000-0000-0000-0000-00005f91550d"
-      (reference "SW?") (unit 1) (value "Side BRB 1") (footprint "")
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/9e9af72c-36cd-4137-88d9-d05214970ed2"
+      (reference "K5") (unit 1) (value "AIR 2 GV200") (footprint "AERO-footprints:RELAY_T9VV1K15-12S")
     )
     (path "/00000000-0000-0000-0000-00005f916017"
-      (reference "SW?") (unit 1) (value "Side BRB 2") (footprint "")
+      (reference "SW1") (unit 1) (value "Side BRB 2") (footprint "")
+    )
+    (path "/00000000-0000-0000-0000-00005f91550d"
+      (reference "SW2") (unit 1) (value "Side BRB 1") (footprint "")
+    )
+    (path "/00000000-0000-0000-0000-00005f907b1f"
+      (reference "SW3") (unit 1) (value "GLVMS") (footprint "")
+    )
+    (path "/00000000-0000-0000-0000-00005f90ab42"
+      (reference "SW4") (unit 1) (value "Brake Overtravel") (footprint "")
+    )
+    (path "/00000000-0000-0000-0000-00005f912643"
+      (reference "SW5") (unit 1) (value "Pack Connector Interlock") (footprint "")
+    )
+    (path "/00000000-0000-0000-0000-00005f912ee1"
+      (reference "SW6") (unit 1) (value "Pack Connector Interlock") (footprint "")
+    )
+    (path "/00000000-0000-0000-0000-00005f914dc3"
+      (reference "SW7") (unit 1) (value "Cockpit BRB") (footprint "")
     )
     (path "/00000000-0000-0000-0000-00005f91af7c"
-      (reference "SW?") (unit 1) (value "TMS") (footprint "")
+      (reference "SW8") (unit 1) (value "TMS") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/03ecbf17-7748-470a-a136-4523300ee6e3"
+      (reference "U1") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/310431aa-cd1f-4697-a5fa-89347f333bff"
+      (reference "U2") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/8c217e3e-ce94-4556-b468-e6993e06cafb"
+      (reference "U3") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/1539bb1d-fd34-4c67-b21d-dd609ba3e4d7"
+      (reference "U4") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/0489e8a8-356a-479d-bee3-992b9f5fc401"
+      (reference "U5") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/50bbba3b-d7dc-4345-b280-6f0b38340322"
+      (reference "U6") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/cbf55411-ac90-42c7-a9d6-87f36911926c"
+      (reference "U7") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/97f0eb70-8af4-4c31-809e-40eddc50af37"
+      (reference "U8") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/bc28e747-5783-43de-804e-c0defb1a2381"
+      (reference "U9") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/701438e8-dd4b-463f-84a5-a423cf31ed7e"
+      (reference "U10") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/00f8290a-5c24-48f9-8dae-b4b7fd8cd39b"
+      (reference "U11") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/f22d1a5d-0a21-4217-951e-f1263219189d"
+      (reference "U12") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/1b31abbc-2709-4d0f-9fc3-9f71be02c733"
+      (reference "U13") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/22cc376a-c79a-4c97-b64f-07f8c501370f"
+      (reference "U14") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/1f86695f-410d-43e9-88b3-6a759fe9ace5"
+      (reference "U15") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/3e40dc3c-74b9-4b88-b3a0-3e8a7eec7efc"
+      (reference "U16") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/92909312-d0c0-4092-9948-ff68dbfafeef"
+      (reference "U17") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/50b02b60-c848-4bbf-913a-54b3529fbc67"
+      (reference "U18") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/c0f9192e-d68e-4c52-979b-3a9738cf0735"
+      (reference "U19") (unit 1) (value "UD") (footprint "")
+    )
+    (path "/93f0c4e8-9d67-428c-9664-8fa4164531ef/693414c7-3c08-43ca-b23f-bee712568b4e"
+      (reference "U20") (unit 1) (value "UD") (footprint "")
     )
     (path "/6a1261e7-abf9-48a0-9772-dde95aebc4a2"
-      (reference "k?") (unit 1) (value "GLV Supply") (footprint "AERO-footprints:RELAY_T9VV1K15-12S")
+      (reference "k1") (unit 1) (value "GLV Supply") (footprint "AERO-footprints:RELAY_T9VV1K15-12S")
     )
   )
 )
