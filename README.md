@@ -28,3 +28,8 @@ Code descrpitions can be found in [Firmware Descriptions](Firmware_Descriptions.
 ## Wireless Transceiver Information
 
 There's also a wireless project. More information to come.
+
+## Willem Review Notes: 
+
+@Willem -> put any notes you have regarding boards here. 
+Please review RCB, DCB, HVB, PAM
