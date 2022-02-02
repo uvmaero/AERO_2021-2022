@@ -1261,7 +1261,7 @@
     (uuid 00000000-0000-0000-0000-00005c830583)
     (property "Reference" "J1" (id 0) (at 23.622 132.9182 0))
     (property "Value" "Conn_01x23" (id 1) (at 23.622 135.2296 0))
-    (property "Footprint" "AERO_Footprints:TE_1-776087-1" (id 2) (at 21.59 166.37 0)
+    (property "Footprint" "AERO_Footprints:TE_1-770669-1_23pin_Horizontal" (id 2) (at 21.59 166.37 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 21.59 166.37 0)
@@ -1404,7 +1404,7 @@
     (property "Value" "HV+" (id 1) (at 50.4952 34.925 90)
       (effects (font (size 1.27 1.27)) (justify right))
     )
-    (property "Footprint" "Connector_TE-Connectivity:TE_MATE-N-LOK_1-770870-x_1x03_P4.14mm_Vertical" (id 2) (at 45.72 31.75 0)
+    (property "Footprint" "AERO_Footprints:TE_MATE-N-LOK_1-770870-x_1x03_P4.14mm_Vertical" (id 2) (at 45.72 31.75 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 45.72 31.75 0)
@@ -1420,7 +1420,7 @@
     (uuid 00000000-0000-0000-0000-00005c830602)
     (property "Reference" "J6" (id 0) (at 51.435 48.26 90))
     (property "Value" "HV-" (id 1) (at 52.07 45.72 90))
-    (property "Footprint" "Connector_TE-Connectivity:TE_MATE-N-LOK_1-770870-x_1x03_P4.14mm_Vertical" (id 2) (at 45.72 48.26 0)
+    (property "Footprint" "AERO_Footprints:TE_MATE-N-LOK_1-770870-x_1x03_P4.14mm_Vertical" (id 2) (at 45.72 48.26 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 45.72 48.26 0)
@@ -1662,7 +1662,7 @@
     (uuid 980ee780-2ccd-48d0-81e9-943616a2d3fc)
     (property "Reference" "J7" (id 0) (at 67.945 185.8985 0))
     (property "Value" "Conn_01x02" (id 1) (at 67.945 188.6736 0))
-    (property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical" (id 2) (at 67.945 193.675 0)
+    (property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical" (id 2) (at 67.945 193.675 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 67.945 193.675 0)
@@ -2030,7 +2030,7 @@
       (reference "H4") (unit 1) (value "MountingHole") (footprint "MountingHole:MountingHole_3.2mm_M3")
     )
     (path "/00000000-0000-0000-0000-00005c830583"
-      (reference "J1") (unit 1) (value "Conn_01x23") (footprint "AERO_Footprints:TE_1-776087-1")
+      (reference "J1") (unit 1) (value "Conn_01x23") (footprint "AERO_Footprints:TE_1-770669-1_23pin_Horizontal")
     )
     (path "/00000000-0000-0000-0000-00005c830507"
       (reference "J2") (unit 1) (value "HECS") (footprint "Connector_JST:JST_XH_B5B-XH-A_1x05_P2.50mm_Vertical")
@@ -2042,13 +2042,13 @@
       (reference "J4") (unit 1) (value "HV-") (footprint "Connector_Hirose:Hirose_DF63M-1P-3.96DSA_1x01_P3.96mm_Vertical")
     )
     (path "/00000000-0000-0000-0000-00005c8305f3"
-      (reference "J5") (unit 1) (value "HV+") (footprint "Connector_TE-Connectivity:TE_MATE-N-LOK_1-770870-x_1x03_P4.14mm_Vertical")
+      (reference "J5") (unit 1) (value "HV+") (footprint "AERO_Footprints:TE_MATE-N-LOK_1-770870-x_1x03_P4.14mm_Vertical")
     )
     (path "/00000000-0000-0000-0000-00005c830602"
-      (reference "J6") (unit 1) (value "HV-") (footprint "Connector_TE-Connectivity:TE_MATE-N-LOK_1-770870-x_1x03_P4.14mm_Vertical")
+      (reference "J6") (unit 1) (value "HV-") (footprint "AERO_Footprints:TE_MATE-N-LOK_1-770870-x_1x03_P4.14mm_Vertical")
     )
     (path "/980ee780-2ccd-48d0-81e9-943616a2d3fc"
-      (reference "J7") (unit 1) (value "Conn_01x02") (footprint "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical")
+      (reference "J7") (unit 1) (value "Conn_01x02") (footprint "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
     )
     (path "/14999d0e-4e0c-4ec9-a7cb-88c272b22a6c"
       (reference "J8") (unit 1) (value "HV+") (footprint "Connector_Hirose:Hirose_DF63M-1P-3.96DSA_1x01_P3.96mm_Vertical")
