@@ -116,8 +116,35 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+ //comment
     /* USER CODE BEGIN 3 */
+
+    //get CAN messages 
+
+    //sample thermistor 
+
+    //sample wheels
+    //using hall effect 
+
+    //sample suspension 
+    //using potentiometer 
+
+    //control break light
+    //using mosfet
+
+    //control fan
+    //using mosfet
+
+    //control pump
+    //using mosfet
+
+    //fault imd
+    //using transistor
+
+    //fault bms
+    //using transistor 
+
+    //send CAN messages
   }
   /* USER CODE END 3 */
 }
