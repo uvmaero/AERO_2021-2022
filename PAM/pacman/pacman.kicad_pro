@@ -378,7 +378,9 @@
     "meta": {
       "version": 2
     },
-    "net_colors": null
+    "net_colors": {
+      "/BMS_CAN+": "rgb(255, 236, 49)"
+    }
   },
   "pcbnew": {
     "last_paths": {
