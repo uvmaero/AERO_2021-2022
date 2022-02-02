@@ -56,15 +56,10 @@
 #define PIN_RTD_LED							      45		// RTD button LED
 #define PIN_IHD							          20		// IHD Fault LED
 #define PIN_AMS							          31		// AMS LED
-#define PIN_RTD_BUZZER					      00		// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
-#define BUZZER_PERIOD					        2000	// time the buzzer is supposed to be on in milliseconds
 
 // CAN
 #define PIN_CAN_PLUS					        32		// positive CAN wire
 #define PIN_CAN_MINUS					        33		// negative CAN wire
-
-// precharge
-#define PRECHARGE_COEFFICIENT			    0.9		// 90% complete with precharge so it's probably safe to continue
 
 /* USER CODE END PD */
 
@@ -80,29 +75,12 @@ CAN_HandleTypeDef hcan1;
 
 // inputs
 uint16_t coastRegen, brakeRegen;			// coast and brake regen values 
-bool cooling, RTDButton, direction;		// cooling toggle, RTD button state, drive direction
 uint8_t coastMap, brakeMap;					  // maps for coast and brake regen
 
-// rinehart & emus
-uint16_t rinehartVoltage = 0;				  // voltage in rinehart
-uint16_t emusVoltage = 265.0;				  // emus bus voltage
-
-// precharge
-bool readyToDrive = false;					  // car is ready to drive
-bool RTDLED = false;						      // indicator LED in start button
-bool buzzer = false;						      // buzzer is buzzing state
-uint16_t timeSinceBuzzerStart = 0;		// counter to time buzzer buzz
-bool prechargeStateEnter = false;			// allowed to enter precharge
-
-// precharge states
-enum prechargeStates
-{
-	PRECHARGE_OFF,
-	PRECHARGE_ON,
-	PRECHARGE_DONE,
-	PRECHARGE_ERROR
-};
-int prechargeState = PRECHARGE_OFF;				// set intial precharge state to OFF
+// outputs
+bool RTDButtonLED = 0;                   // RTD button LED toggle (0 is off)
+bool cooling = 0;                     // cooling toggle (0 is off)
+bool direction = 0;		                // drive direction (0 is forwards)
 
 // screen enum
 enum screens
@@ -131,8 +109,6 @@ static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
 
 /* USER CODE BEGIN PFP */
-void prechargeControl();
-void RTDButtonChange();
 void welcomeScreen();
 void racingHUD();
 void electricalSettings():
@@ -180,12 +156,7 @@ int main(void)
 
   // start up LCD display
   welcomeScreen();
-
-  // precharge loop omg no way i used a do-while loop insane programming skills XD
-  do
-  {
-    prechargeControl();
-  } while (prechargeState != PRECHARGE_DONE);
+  HAL_Delay(3000);      // just a little delay to give time to read the welcome screen
 
   /* USER CODE END 2 */
 
@@ -332,76 +303,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 // *** functions *** //
-
-/**
- * @brief 
- * 
- */
-void prechargeControl()
-{
-	switch (prechargeState)
-	{
-		case (PRECHARGE_OFF):
-			// set ready to drive to false
-			readyToDrive = false;
-      // move to PRECHARGE_ON due to this specific condition that doesn't exist yet
-      // write that^ specific condition here
-		break;
-
-		case (PRECHARGE_ON):
-		  // ensure voltages are above correct values
-			if (rinehartVoltage >= (emusVoltage * 0.9))
-			{
-				// turn on ready to drive light
-        HAL_GPIO_WritePin(GPIOB, PIN_RTD_LED, GPIO_PIN_SET);
-        
-				// move to precharge done state
-				prechargeState = PRECHARGE_DONE;
-			}
-		break;
-
-		case (PRECHARGE_DONE):
-      // turn off the RTD Button LED
-      HAL_GPIO_WritePin(GPIOB, PIN_RTD_LED, GPIO_PIN_RESET);
-
-			// now that precharge is complete we can drive the car
-			readyToDrive = true;
-		break;
-
-		case (PRECHARGE_ERROR):
-			// the car is most definitly not ready to drive
-			// requires hard reboot of systems to clear this state
-			readyToDrive = false;
-
-      // flash the RTD button LED to indicate we are in PRECHARGE_ERROR
-		break;
-
-		default:
-      // fallback state, this indicates we did some undefined action that brought us here
-      // we will move to PRECHARGE_ERROR to ensure readyToDrive stays false :)
-			prechargeState = PRECHARGE_ERROR;
-		break;
-	}
-}
-
-
-/**
- * @brief 
- * 
- */
-void RTDButtonChange()
-{
-  // if the precharge state is done and the button is being depressed
-	if (prechargeState == PRECHARGE_DONE && RTDLED)
-	{
-    // turn off the indicator button in the RTD button
-		HAL_GPIO_WritePin(GPIOB, PIN_RTD_LED, GPIO_PIN_RESET);
-
-		buzzer = true;				    // turn on the buzzer
-		timeSinceBuzzerStart = 0;	// reset buzzer timer
-	}
-}
-
 
 // welcome & boot screen
 /**
