@@ -998,12 +998,12 @@
     (effects (font (size 1.27 1.27)) (justify right bottom))
     (uuid 16d5bf81-590a-4149-97e0-64f3b3ad6f52)
   )
-  (text "IMD\nHIGH Clear, LOW Fault\nIMD_IND is LOW when clear, \npulled HIGH when fault"
+  (text "IMD\nIMD_FAULT_SIG is HIGH Clear, LOW Fault\nIMD_IND is LOW when clear, \npulled HIGH when fault"
     (at 136.525 33.655 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 7806469b-c133-4e19-b2d5-f2b690b4b2f3)
   )
-  (text "BMS\nLOW Clear, HIGH Fault\nBMS_IND is HIGH when clear, \npulled low when fault"
+  (text "BMS\nBMS_FAULT_SIG is LOW Clear, HIGH Fault\nBMS_IND is HIGH when clear, \npulled low when fault"
     (at 85.725 33.655 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 90fa0465-7fe5-474b-8e7c-9f955c02a0f6)
@@ -1184,7 +1184,7 @@
     (uuid 00000000-0000-0000-0000-000062074109)
     (property "Reference" "D5" (id 0) (at 144.78 78.9432 0))
     (property "Value" "1N4148" (id 1) (at 144.78 81.2546 0))
-    (property "Footprint" "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal" (id 2) (at 144.78 88.9 0)
+    (property "Footprint" "Diode_SMD:D_SOD-123" (id 2) (at 144.78 88.9 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/1N4148_1N4448.pdf" (id 3) (at 144.78 84.455 0)
@@ -1199,7 +1199,7 @@
     (uuid 00000000-0000-0000-0000-0000620751eb)
     (property "Reference" "D4" (id 0) (at 96.52 74.4982 0))
     (property "Value" "1N4148" (id 1) (at 96.52 76.8096 0))
-    (property "Footprint" "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal" (id 2) (at 96.52 75.565 0)
+    (property "Footprint" "Diode_SMD:D_SOD-123" (id 2) (at 96.52 75.565 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/1N4148_1N4448.pdf" (id 3) (at 96.52 80.01 0)

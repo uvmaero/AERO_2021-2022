@@ -1,4 +1,4 @@
-19981603919995041
+19979088533138331
 AERO_Footprints
 1-770966-0
 
@@ -77,12 +77,12 @@ AERO_Logo_50x20mm
 0
 0
 AERO_Footprints
-AMPSEAL 776266-1 14-PIN
+BL-HJXGXBX32M
 
 
 0
-14
-14
+4
+4
 AERO_Footprints
 BL-HJXGXBX32M
 
@@ -659,13 +659,6 @@ luxeon-pm01
 3
 AERO_Footprints
 pacman-logo-silkscreen
-
-
-0
-0
-0
-AERO_Footprints
-try2
 
 
 0
