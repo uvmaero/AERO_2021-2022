@@ -223,7 +223,7 @@ int main(void)
 
     // *** LCD *** //
     // look for LCD button press 
-    if (HAL_ADC_GetValue(PIN_LCD_BUTTON) == 0) 		  // change this depending on pull up or pull down
+    if (HAL_ADC_GetValue(PIN_LCD_BUTTON)) 		      // change this depending on pull up or pull down
     {
       currentScreen++;                                // move to next screen
       if (currentScreen == 3) currentScreen = 0;      // loop back at max screen value
