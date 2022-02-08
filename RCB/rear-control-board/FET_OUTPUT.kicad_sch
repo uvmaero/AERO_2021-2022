@@ -220,6 +220,12 @@
     (uuid fefe2f15-09ed-49c1-bd41-0906cbab46b4)
   )
 
+  (text "Check which Mosfet we're\nusing and that the drive\nvoltage can be <= 3.3V"
+    (at 52.07 54.61 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid f6e6334b-cddf-4290-9123-eb77ded7ed3d)
+  )
+
   (hierarchical_label "FAN_12V" (shape input) (at 58.42 78.105 180)
     (effects (font (size 1.27 1.27)) (justify right))
     (uuid 093ec4a0-0ee4-4594-8bdb-2d21e6fbf11f)
