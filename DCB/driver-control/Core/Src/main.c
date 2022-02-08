@@ -219,7 +219,7 @@ int main(void)
     // send CAN messages
     // outgoing message layout: {wheelSpeedFR, wheelSpeedFL, rideHeightFR, , , , , }
     uint8_t csend[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}; // Tx Buffer
-    HAL_CAN_AddTxMessage(&hcan,&txHeader,csend,&canMailbox); // Send Message
+    HAL_CAN_AddTxMessage(&hcan, &txHeader, csend, &canMailbox); // Send Message
 
     // *** LCD *** //
     // look for LCD button press 
