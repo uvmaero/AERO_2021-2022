@@ -33,12 +33,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-/**
- * @brief TODO
- * - change all the incorrect CAN params
- * - 
- */
-
 // inputs
 #define PIN_START_BUTTON;             28    // ready to drive button
 #define PIN_DRIVE_DIRECTION           26		// drive direction toggle
@@ -96,6 +90,10 @@ float wheelSpeedFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL);
 float wheelSpeedFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL);
 float wheelSpeedBR = 0;               // this needs to be retrived from CAN
 float wheelSpeedBL = 0;               // this needs to be retrived from CAN
+float rideHeightFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_SUSPENSION);
+float rideHeightFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_SUSPENSION);
+float rideHeightBR = 0;               // this needs to be retrived from CAN
+float rideHeightBL = 0;               // this needs to be retrived from CAN
 
 // outputs
 bool RTDButtonLED = 0;                   // RTD button LED toggle (0 is off)
@@ -150,11 +148,11 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   // CAN
-  CAN_RxHeaderTypeDef rxHeader; //CAN Bus Transmit Header
-  CAN_TxHeaderTypeDef txHeader; //CAN Bus Receive Header
-  uint8_t canRX[8] = {0,0,0,0,0,0,0,0};  //CAN Bus Receive Buffer
-  CAN_FilterTypeDef canFilter; //CAN Bus Filter
-  uint32_t canMailbox; //CAN Bus Mail box variable
+  CAN_RxHeaderTypeDef rxHeader; // CAN Bus Transmit Header
+  CAN_TxHeaderTypeDef txHeader; // CAN Bus Receive Header
+  uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0};  // CAN Bus Receive Buffer
+  CAN_FilterTypeDef canFilter; // CAN Bus Filter
+  uint32_t canMailbox; // CAN Bus Mail box variable
 
   canFilter.FilterBank = 0;
   canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
@@ -174,9 +172,9 @@ int main(void)
   txHeader.ExtId = 0x02;
   txHeader.TransmitGlobalTime = DISABLE;
 
-  HAL_CAN_ConfigFilter(&hcan,&canFilter); //Initialize CAN Filter
-  HAL_CAN_Start(&hcan); //Initialize CAN Bus
-  HAL_CAN_ActivateNotification(&hcan,CAN_IT_RX_FIFO0_MSG_PENDING);// Initialize CAN Bus Rx Interrupt
+  HAL_CAN_ConfigFilter(&hcan, &canFilter); // Initialize CAN Filter
+  HAL_CAN_Start(&hcan); // Initialize CAN Bus
+  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
 
   /* USER CODE END 1 */
 
@@ -205,7 +203,7 @@ int main(void)
 
   // start up LCD display
   welcomeScreen();
-  HAL_Delay(3000);      // just a little delay to give time to read the welcome screen
+  HAL_Delay(3000);      // just a little delay to give allow for some time to read the welcome screen
 
   /* USER CODE END 2 */
 
@@ -219,6 +217,7 @@ int main(void)
     // wheelSpeedBL
 
     // send CAN messages
+    // outgoing message layout: {wheelSpeedFR, wheelSpeedFL, rideHeightFR, , , , , }
     uint8_t csend[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}; // Tx Buffer
     HAL_CAN_AddTxMessage(&hcan,&txHeader,csend,&canMailbox); // Send Message
 
@@ -227,7 +226,7 @@ int main(void)
     if (HAL_ADC_GetValue(PIN_LCD_BUTTON)) 
     {
       currentScreen++;                                // move to next screen
-      if (currentScreen == 4) currentScreen = 1;      // loop back at max screen value
+      if (currentScreen == 3) currentScreen = 0;      // loop back at max screen value
     }
 
     // update display
@@ -386,7 +385,7 @@ void racingHUD()
 {
   // get current MPH
   float averageWheelSpeed = (HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL) + HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL)) / 2;
-  float currentMPH = averageWheelSpeed * WHEEL_DIAMETER * (3.14159) * 60 / 63360;
+  float currentMPH = averageWheelSpeed * WHEEL_DIAMETER * (3.14159) * 60 / 63360; // pi and inches in a mile
 
   // get battery percentage
   float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
@@ -401,7 +400,7 @@ void racingHUD()
 
   // battery percentage
   lcd_put_cur(12, 0);                       // set cursor for battery percentage value
-  lcd_send_data(batteryPercentage);         // MAKE THIS A THING THAT WORKS
+  lcd_send_data(batteryPercentage);         // print the battery percentage vaule
   lcd_put_cur(15, 0);                       // set cursor for % sign
   lcd_send_string("%%");                    // print % sign
 
@@ -486,22 +485,22 @@ void rideSettings()
   lcd_send_string("Ride %%");           // print text
 
   lcd_put_cur(1, 0);                    // set cursor for wheel speed value
-  lcd_send_data(int ride1);             // MAKE THIS A THING THAT WORKS
+  lcd_send_data((int)rideHeightFL);     // print front left ride height value 
 
   lcd_put_cur(3, 0);                    // set cursor for "-"
   lcd_send_string("-");                 // print the "-"
 
   lcd_put_cur(5, 0);                    // set cursor for wheelspeed value
-  lcd_send_data(int ride2);             // print value
+  lcd_send_data((int)rideHeightFR);     // print front right ride height value
 
   lcd_put_cur(1, 2);                    // set cursor for wheelspeed value
-  lcd_send_data(int ride3);             // print value
+  lcd_send_data((int)rideHeightBL);     // print back left ride height value
 
   lcd_put_cur(3, 2);                    // set cursor for "-"
   lcd_send_string("-");                 // print the "-"
 
   lcd_put_cur(5, 2);                    // set cursor for wheelspeed value
-  lcd_send_data(int ride4);             // print value
+  lcd_send_data((int)rideHeightBR);     // print back right ride height value
 
 
   // wheel speed
