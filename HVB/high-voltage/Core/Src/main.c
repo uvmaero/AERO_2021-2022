@@ -66,11 +66,11 @@ uint16_t rinehartVoltage = 0;				  // voltage in rinehart
 uint16_t emusVoltage = 265.0;				  // emus bus voltage
 
 // precharge
-bool readyToDrive = false;					  // car is ready to drive
-bool RTDLED = false;						      // indicator LED in start button
-bool buzzer = false;						      // buzzer is buzzing state
-uint16_t timeSinceBuzzerStart = 0;		// counter to time buzzer buzz
-bool prechargeStateEnter = false;			// allowed to enter precharge
+int readyToDrive = 0;					    // car is ready to drive
+int RTDLED = 0;						        // indicator LED in start button
+int buzzer = 0;						        // buzzer is buzzing state
+uint16_t timeSinceBuzzerStart = 0;	     	// counter to time buzzer buzz
+int prechargeStateEnter = 0;			    // allowed to enter precharge
 
 // precharge states
 enum prechargeStates
@@ -254,7 +254,7 @@ void prechargeControl()
 	{
 		case (PRECHARGE_OFF):
 			// set ready to drive to false
-			readyToDrive = false;
+			readyToDrive = 0;
       // move to PRECHARGE_ON due to this specific condition that doesn't exist yet
       // write that^ specific condition here
 		break;
@@ -264,7 +264,7 @@ void prechargeControl()
 			if (rinehartVoltage >= (emusVoltage * 0.9))
 			{
 				// turn on ready to drive light
-        HAL_GPIO_WritePin(GPIOB, RTDButtonLED, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOB, RTDLED, GPIO_PIN_SET);
         
 				// move to precharge done state
 				prechargeState = PRECHARGE_DONE;
@@ -273,16 +273,16 @@ void prechargeControl()
 
 		case (PRECHARGE_DONE):
       // turn off the RTD Button LED
-      HAL_GPIO_WritePin(GPIOB, RTDButtonLED, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOB, RTDLED, GPIO_PIN_RESET);
 
 			// now that precharge is complete we can drive the car
-			readyToDrive = true;
+			readyToDrive = 1;
 		break;
 
 		case (PRECHARGE_ERROR):
 			// the car is most definitly not ready to drive
 			// requires hard reboot of systems to clear this state
-			readyToDrive = false;
+			readyToDrive = 0;
 
       // flash the RTD button LED to indicate we are in PRECHARGE_ERROR
 		break;
@@ -306,9 +306,9 @@ void RTDButtonChange()
 	if (prechargeState == PRECHARGE_DONE && RTDLED)
 	{
     // turn off the indicator button in the RTD button
-		HAL_GPIO_WritePin(GPIOB, RTDButtonLED, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOB, RTDLED, GPIO_PIN_RESET);
 
-		buzzer = true;				    // turn on the buzzer
+		buzzer = 1;				    // turn on the buzzer
 		timeSinceBuzzerStart = 0;	// reset buzzer timer
 	}
 }
