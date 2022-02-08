@@ -75,7 +75,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-CAN_HandleTypeDef hcan;
+ADC_HandleTypeDef hadc1;
+CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
 
@@ -132,6 +133,7 @@ int powerMode = EXPERT;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
+static void MX_ADC1_Init(void);
 
 /* USER CODE BEGIN PFP */
 void welcomeScreen();
@@ -153,7 +155,6 @@ void rideSettings();
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
   canFilter.FilterBank = 0;
   canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
   canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
@@ -197,8 +198,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_CAN1_Init();
-
-
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
   // start up LCD display
@@ -211,44 +211,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // *** CAN *** //
-    // read CAN messages
-    // wheelSpeedBR
-    // wheelSpeedBL
+    /* USER CODE END WHILE */
 
-    // send CAN messages
-    // outgoing message layout: {wheelSpeedFR, wheelSpeedFL, rideHeightFR, , , , , }
-    uint8_t csend[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}; // Tx Buffer
-    HAL_CAN_AddTxMessage(&hcan, &txHeader, csend, &canMailbox); // Send Message
-
-    // *** LCD *** //
-    // look for LCD button press 
-    if (HAL_ADC_GetValue(PIN_LCD_BUTTON)) 		      // change this depending on pull up or pull down
-    {
-      currentScreen++;                                // move to next screen
-      if (currentScreen == 3) currentScreen = 0;      // loop back at max screen value
-    }
-
-    // update display
-    switch (currentScreen)
-    {
-      case RACING_HUD:
-        racingHUD();
-      break;
-
-      case RIDE_SETTINGS:
-        rideSettings();
-      break;
-
-      case ELECTRICAL_SETTINGS:
-        electricalSettings();
-      break;
-
-      default:
-        // fallback state, there was an error, return to racing HUD
-        currentScreen = RACING_HUD;
-      break;
-    }
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
@@ -299,12 +264,63 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
   * @brief CAN1 Initialization Function
   * @param None
   * @retval None
   */
 static void MX_CAN1_Init(void)
 {
+
   /* USER CODE BEGIN CAN1_Init 0 */
 
   /* USER CODE END CAN1_Init 0 */
@@ -312,25 +328,25 @@ static void MX_CAN1_Init(void)
   /* USER CODE BEGIN CAN1_Init 1 */
 
   /* USER CODE END CAN1_Init 1 */
-  hcan.Instance = CAN1;
-  hcan.Init.Prescaler = 5;
-  hcan.Init.Mode = CAN_MODE_NORMAL;
-  hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan.Init.TimeSeg1 = CAN_BS1_14TQ;
-  hcan.Init.TimeSeg2 = CAN_BS2_5TQ;
-  hcan.Init.TimeTriggeredMode = DISABLE;
-  hcan.Init.AutoBusOff = DISABLE;
-  hcan.Init.AutoWakeUp = DISABLE;
-  hcan.Init.AutoRetransmission = DISABLE;
-  hcan.Init.ReceiveFifoLocked = DISABLE;
-  hcan.Init.TransmitFifoPriority = DISABLE;
-  if (HAL_CAN_Init(&hcan) != HAL_OK)
+  hcan1.Instance = CAN1;
+  hcan1.Init.Prescaler = 5;
+  hcan1.Init.Mode = CAN_MODE_NORMAL;
+  hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_14TQ;
+  hcan1.Init.TimeSeg2 = CAN_BS2_5TQ;
+  hcan1.Init.TimeTriggeredMode = DISABLE;
+  hcan1.Init.AutoBusOff = DISABLE;
+  hcan1.Init.AutoWakeUp = DISABLE;
+  hcan1.Init.AutoRetransmission = DISABLE;
+  hcan1.Init.ReceiveFifoLocked = DISABLE;
+  hcan1.Init.TransmitFifoPriority = DISABLE;
+  if (HAL_CAN_Init(&hcan1) != HAL_OK)
   {
     Error_Handler();
   }
-  // *** we're not using a second CAN bus so ignore this *** //
   /* USER CODE BEGIN CAN1_Init 2 */
   /* USER CODE END CAN1_Init 2 */
+
 }
 
 /**
@@ -340,11 +356,13 @@ static void MX_CAN1_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-}
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
+}
 
 /* USER CODE BEGIN 4 */
 
@@ -366,193 +384,193 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
  * @brief welcome & boot screen
  * 
  */
-void welcomeScreen()
-{
-  lcd_init();                         // init lcd
-  lcd_clear();                        // clear the screen
-  lcd_put_cur(1, 0);                  // set the cursor
-  lcd_send_string("welcome AERO!");   // print
-  lcd_put_cur(2, 0);                  // next line
-  lcd_send_string("booting up...");   // print
-}
-
-
-/**
- * @brief racing hud: mph(est), battery%, drive direction, coast regen, brake regen
- * 
- */
-void racingHUD()
-{
-  // get current MPH
-  float averageWheelSpeed = (HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL) + HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL)) / 2;
-  float currentMPH = averageWheelSpeed * WHEEL_DIAMETER * (3.14159) * 60 / 63360; // pi and inches in a mile
-
-  // get battery percentage
-  float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
-
-  // get coast regen and brake regen values
-  float coastRegen = HAL_ADC_GetValue(PIN_COAST_REGEN);
-  float brakeRegen = HAL_ADC_GetValue(PIN_BRAKE_REGEN);
-
-  // clear display 
-  lcd_clear();
-
-  // drive direction
-  lcd_put_cur(1, 0);                        // position of drive direction
-  if (direction) lcd_send_string("FWD");    // print drive direction
-  else lcd_send_string("BCK");
-
-  // battery percentage
-  lcd_put_cur(12, 0);                       // set cursor for battery percentage value
-  lcd_send_data((int)batteryPercentage);    // print the battery percentage value
-  lcd_put_cur(15, 0);                       // set cursor for % sign
-  lcd_send_string("%%");                    // print % sign
-
-  // speedometer
-  lcd_put_cur(6, 1);                        // set cursor for mph value
-  lcd_send_data((int)currentMPH);           // print the current speed in MPH, cast to int to round to whole number
-  lcd_put_cur(9, 1);                        // set cursor for units
-  lcd_send_string("mph");                   // print units
-
-  // coast regen
-  lcd_put_cur(1, 2);                        // set cursor for CR
-  lcd_send_string("CR:");                   // print CR for coast regen
-  lcd_put_cur(4, 2);                        // set cursor for coast regen value 
-  lcd_send_data((int)coastRegen);    				// print coast regen value
-  lcd_put_cur(6, 2);                        // set cursor for percent sign
-  lcd_send_string("%%");                    // print percent sign 
-
-  // brake regen
-  lcd_put_cur(10, 2);                       // set cursor for BR
-  lcd_send_string("BR:");                   // print BR for brake regen
-  lcd_put_cur(12, 2);                       // set cursor for brake regen value 
-  lcd_send_data((int)brakeRegen);    				// print brake regen value
-  lcd_put_cur(14, 2);                       // set cursor for percent sign
-  lcd_send_string("%%");                    // print percent sign
-}
+//void welcomeScreen()
+//{
+//  lcd_init();                         // init lcd
+//  lcd_clear();                        // clear the screen
+//  lcd_put_cur(1, 0);                  // set the cursor
+//  lcd_send_string("welcome AERO!");   // print
+//  lcd_put_cur(2, 0);                  // next line
+//  lcd_send_string("booting up...");   // print
+//}
+//
+//
+///**
+// * @brief racing hud: mph(est), battery%, drive direction, coast regen, brake regen
+// *
+// */
+//void racingHUD()
+//{
+//  // get current MPH
+//  float averageWheelSpeed = (HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL) + HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL)) / 2;
+//  float currentMPH = averageWheelSpeed * WHEEL_DIAMETER * (3.14159) * 60 / 63360; // pi and inches in a mile
+//
+//  // get battery percentage
+//  float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
+//
+//  // get coast regen and brake regen values
+//  float coastRegen = HAL_ADC_GetValue(PIN_COAST_REGEN);
+//  float brakeRegen = HAL_ADC_GetValue(PIN_BRAKE_REGEN);
+//
+//  // clear display
+//  lcd_clear();
+//
+//  // drive direction
+//  lcd_put_cur(1, 0);                        // position of drive direction
+//  if (direction) lcd_send_string("FWD");    // print drive direction
+//  else lcd_send_string("BCK");
+//
+//  // battery percentage
+//  lcd_put_cur(12, 0);                       // set cursor for battery percentage value
+//  lcd_send_data((int)batteryPercentage);    // print the battery percentage value
+//  lcd_put_cur(15, 0);                       // set cursor for % sign
+//  lcd_send_string("%%");                    // print % sign
+//
+//  // speedometer
+//  lcd_put_cur(6, 1);                        // set cursor for mph value
+//  lcd_send_data((int)currentMPH);           // print the current speed in MPH, cast to int to round to whole number
+//  lcd_put_cur(9, 1);                        // set cursor for units
+//  lcd_send_string("mph");                   // print units
+//
+//  // coast regen
+//  lcd_put_cur(1, 2);                        // set cursor for CR
+//  lcd_send_string("CR:");                   // print CR for coast regen
+//  lcd_put_cur(4, 2);                        // set cursor for coast regen value
+//  lcd_send_data((int)coastRegen);    				// print coast regen value
+//  lcd_put_cur(6, 2);                        // set cursor for percent sign
+//  lcd_send_string("%%");                    // print percent sign
+//
+//  // brake regen
+//  lcd_put_cur(10, 2);                       // set cursor for BR
+//  lcd_send_string("BR:");                   // print BR for brake regen
+//  lcd_put_cur(12, 2);                       // set cursor for brake regen value
+//  lcd_send_data((int)brakeRegen);    				// print brake regen value
+//  lcd_put_cur(14, 2);                       // set cursor for percent sign
+//  lcd_send_string("%%");                    // print percent sign
+//}
 
 
 /**
  * @brief battery state, bus voltage, rinehart voltage, power mode
  * 
  */
-void electricalSettings()
-{
-  // get battery percentage
-  float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
-
-  // clear screen
-  lcd_clear();
-
-  // battery percentage
-  lcd_put_cur(1, 0);                                        // set cursor for battery percentage value
-  lcd_send_data(batteryPercentage);                         // print the current battery percentage value
-  lcd_put_cur(4, 0);                                        // set cursor for % sign
-  lcd_send_string("%%");                                    // print % sign
-
-  // bus voltage                        
-  lcd_put_cur(1, 1);                                        // set cursor for battery percentage value
-  lcd_send_data(emusVoltage);                               // print the emus voltage value
-  lcd_put_cur(4, 0);                                        // set cursor for units
-  lcd_send_string("V");                                     // print units
-
-  // rinehart voltage                       
-  lcd_put_cur(12, 0);                                       // set cursor for rinehart voltage value
-  lcd_send_data(rinehartVoltage);                           // print the rinehart voltage value
-  lcd_put_cur(15, 0);                                       // set cursor for units
-  lcd_send_string("V");                                     // print % sign
-
-  // power mode                       
-  lcd_put_cur(1, 2);                                        // set cursor for mode text
-  lcd_send_string("Mode:");                                 // print mode text
-  lcd_put_cur(8, 2);                                        // set cursor current mode setting
-  if (powerMode == TUTORIAL) lcd_send_string("Tutorial");
-  if (powerMode == ECO) lcd_send_string("Eco");
-  if (powerMode == EXPERT) lcd_send_string("Expert");
-}
-
-
-/**
- * @brief ride height, wheel rpm, coast regen, brake regen
- * 
- */
-void rideSettings()
-{
-  // clear screen
-  lcd_clear();
-
-  // get suspension values
-  rideHeightFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_SUSPENSION);
-  rideHeightFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_SUSPENSION);
-
-  // get coast regen and brake regen values
-  float coastRegen = HAL_ADC_GetValue(PIN_COAST_REGEN);
-  float brakeRegen = HAL_ADC_GetValue(PIN_BRAKE_REGEN);
-
-  // not sure what to do for suspension values yet so
-  lcd_put_cur(6, 1);                    // ride height percentage text
-  lcd_send_string("Ride %%");           // print text
-
-  lcd_put_cur(1, 0);                    // set cursor for wheel speed value
-  lcd_send_data((int)rideHeightFL);     // print front left ride height value 
-
-  lcd_put_cur(3, 0);                    // set cursor for "-"
-  lcd_send_string("-");                 // print the "-"
-
-  lcd_put_cur(5, 0);                    // set cursor for wheelspeed value
-  lcd_send_data((int)rideHeightFR);     // print front right ride height value
-
-  lcd_put_cur(1, 2);                    // set cursor for wheelspeed value
-  lcd_send_data((int)rideHeightBL);     // print back left ride height value
-
-  lcd_put_cur(3, 2);                    // set cursor for "-"
-  lcd_send_string("-");                 // print the "-"
-
-  lcd_put_cur(5, 2);                    // set cursor for wheelspeed value
-  lcd_send_data((int)rideHeightBR);     // print back right ride height value
-
-
-  // wheel speed
-  // get the current wheel speeds 
-  float wheelSpeedFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL);
-  float wheelSpeedFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL);
-
-  lcd_put_cur(10, 1);                   // set cursor for RPM text
-  lcd_send_string("RPM");               // print RPM text
-
-  lcd_put_cur(10, 0);                   // set cursor for wheel speed value
-  lcd_send_data((int)wheelSpeedFR);     // print value for front left
-
-  lcd_put_cur(12, 0);                   // set cursor for "-"
-  lcd_send_string("-");                 // print the "-"
-
-  lcd_put_cur(14, 0);                   // set cursor for wheelspeed value
-  lcd_send_data((int)wheelSpeedFL);     // print value for front right
-
-  lcd_put_cur(10, 2);                   // set cursor for wheelspeed value
-  lcd_send_data((int)wheelSpeedBL);     // print value rear left
-
-  lcd_put_cur(12, 2);                   // set cursor for "-"
-  lcd_send_string("-");                 // print the "-"
-
-  lcd_put_cur(14, 2);                   // set cursor for wheelspeed value
-  lcd_send_data((int)wheelSpeedBR);     // print value for rear right
-
-  // coast regen
-  lcd_put_cur(7, 0);                    // set cursor for CR text
-  lcd_send_string("CR:");               // print "CR:" for coast regen
-  lcd_send_data((int)coastRegen);       // print coast regen value
-  lcd_put_cur(9, 0);                    // set cursor for "%"
-  lcd_send_string("%%");                // print "%"
-
-  // brake regen
-  lcd_put_cur(7, 2);                    // set cursor for BR text
-  lcd_send_string("BR:");               // print "BR:" for brake regen
-  lcd_send_data((int)brakeRegen);       // print brake regen value
-  lcd_put_cur(9, 2);                    // set cursor for "%"
-  lcd_send_string("%%");                // print "%"
-}
-
+//void electricalSettings()
+//{
+//  // get battery percentage
+//  float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
+//
+//  // clear screen
+//  lcd_clear();
+//
+//  // battery percentage
+//  lcd_put_cur(1, 0);                                        // set cursor for battery percentage value
+//  lcd_send_data(batteryPercentage);                         // print the current battery percentage value
+//  lcd_put_cur(4, 0);                                        // set cursor for % sign
+//  lcd_send_string("%%");                                    // print % sign
+//
+//  // bus voltage
+//  lcd_put_cur(1, 1);                                        // set cursor for battery percentage value
+//  lcd_send_data(emusVoltage);                               // print the emus voltage value
+//  lcd_put_cur(4, 0);                                        // set cursor for units
+//  lcd_send_string("V");                                     // print units
+//
+//  // rinehart voltage
+//  lcd_put_cur(12, 0);                                       // set cursor for rinehart voltage value
+//  lcd_send_data(rinehartVoltage);                           // print the rinehart voltage value
+//  lcd_put_cur(15, 0);                                       // set cursor for units
+//  lcd_send_string("V");                                     // print % sign
+//
+//  // power mode
+//  lcd_put_cur(1, 2);                                        // set cursor for mode text
+//  lcd_send_string("Mode:");                                 // print mode text
+//  lcd_put_cur(8, 2);                                        // set cursor current mode setting
+//  if (powerMode == TUTORIAL) lcd_send_string("Tutorial");
+//  if (powerMode == ECO) lcd_send_string("Eco");
+//  if (powerMode == EXPERT) lcd_send_string("Expert");
+//}
+//
+//
+///**
+// * @brief ride height, wheel rpm, coast regen, brake regen
+// *
+// */
+//void rideSettings()
+//{
+//  // clear screen
+//  lcd_clear();
+//
+//  // get suspension values
+//  rideHeightFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_SUSPENSION);
+//  rideHeightFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_SUSPENSION);
+//
+//  // get coast regen and brake regen values
+//  float coastRegen = HAL_ADC_GetValue(PIN_COAST_REGEN);
+//  float brakeRegen = HAL_ADC_GetValue(PIN_BRAKE_REGEN);
+//
+//  // not sure what to do for suspension values yet so
+//  lcd_put_cur(6, 1);                    // ride height percentage text
+//  lcd_send_string("Ride %%");           // print text
+//
+//  lcd_put_cur(1, 0);                    // set cursor for wheel speed value
+//  lcd_send_data((int)rideHeightFL);     // print front left ride height value
+//
+//  lcd_put_cur(3, 0);                    // set cursor for "-"
+//  lcd_send_string("-");                 // print the "-"
+//
+//  lcd_put_cur(5, 0);                    // set cursor for wheelspeed value
+//  lcd_send_data((int)rideHeightFR);     // print front right ride height value
+//
+//  lcd_put_cur(1, 2);                    // set cursor for wheelspeed value
+//  lcd_send_data((int)rideHeightBL);     // print back left ride height value
+//
+//  lcd_put_cur(3, 2);                    // set cursor for "-"
+//  lcd_send_string("-");                 // print the "-"
+//
+//  lcd_put_cur(5, 2);                    // set cursor for wheelspeed value
+//  lcd_send_data((int)rideHeightBR);     // print back right ride height value
+//
+//
+//  // wheel speed
+//  // get the current wheel speeds
+//  float wheelSpeedFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL);
+//  float wheelSpeedFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL);
+//
+//  lcd_put_cur(10, 1);                   // set cursor for RPM text
+//  lcd_send_string("RPM");               // print RPM text
+//
+//  lcd_put_cur(10, 0);                   // set cursor for wheel speed value
+//  lcd_send_data((int)wheelSpeedFR);     // print value for front left
+//
+//  lcd_put_cur(12, 0);                   // set cursor for "-"
+//  lcd_send_string("-");                 // print the "-"
+//
+//  lcd_put_cur(14, 0);                   // set cursor for wheelspeed value
+//  lcd_send_data((int)wheelSpeedFL);     // print value for front right
+//
+//  lcd_put_cur(10, 2);                   // set cursor for wheelspeed value
+//  lcd_send_data((int)wheelSpeedBL);     // print value rear left
+//
+//  lcd_put_cur(12, 2);                   // set cursor for "-"
+//  lcd_send_string("-");                 // print the "-"
+//
+//  lcd_put_cur(14, 2);                   // set cursor for wheelspeed value
+//  lcd_send_data((int)wheelSpeedBR);     // print value for rear right
+//
+//  // coast regen
+//  lcd_put_cur(7, 0);                    // set cursor for CR text
+//  lcd_send_string("CR:");               // print "CR:" for coast regen
+//  lcd_send_data((int)coastRegen);       // print coast regen value
+//  lcd_put_cur(9, 0);                    // set cursor for "%"
+//  lcd_send_string("%%");                // print "%"
+//
+//  // brake regen
+//  lcd_put_cur(7, 2);                    // set cursor for BR text
+//  lcd_send_string("BR:");               // print "BR:" for brake regen
+//  lcd_send_data((int)brakeRegen);       // print brake regen value
+//  lcd_put_cur(9, 2);                    // set cursor for "%"
+//  lcd_send_string("%%");                // print "%"
+//}
+//
 
 /* USER CODE END 4 */
 
