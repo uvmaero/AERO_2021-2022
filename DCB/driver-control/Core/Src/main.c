@@ -104,7 +104,7 @@ float rideHeightBR = 0;               // this needs to be retrieved from CAN
 float rideHeightBL = 0;               // this needs to be retrieved from CAN
 
 // outputs
-int RTDButtonLED = 0;                   // RTD button LED toggle (0 is off)
+int RTDButtonLED = 0;                 // RTD button LED toggle (0 is off)
 int cooling = 0;                     	// cooling toggle (0 is off)
 int direction = 0;		                // drive direction (0 is forwards)
 
@@ -115,7 +115,7 @@ enum screens
   RIDE_SETTINGS,            // view all ride style settings
   ELECTRICAL_SETTINGS       // view all electrical information
 };
-int currentScreen = RACING_HUD;
+int currentScreen = RACING_HUD;   // set the default screen mode to the racing HUD
 
 // power modes
 enum powerModes
