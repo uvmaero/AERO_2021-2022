@@ -65,7 +65,7 @@
 #define WHEEL_DIAMETER                16    // diameter of the wheels in inches
 
 // pack voltage
-#define MAX_PACK_VOLTAGE              265   // max pack voltage for calculating pack percentage
+#define MAX_PACK_VOLTAGE              265   // max pack voltage for calculating pack capacity percentage
 
 /* USER CODE END PD */
 
@@ -76,7 +76,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-CAN_HandleTypeDef hcan1;
+CAN_HandleTypeDef hcan;
 
 /* USER CODE BEGIN PV */
 
@@ -105,7 +105,7 @@ float rideHeightBL = 0;               // this needs to be retrieved from CAN
 
 // outputs
 int RTDButtonLED = 0;                   // RTD button LED toggle (0 is off)
-int cooling = 0;                     // cooling toggle (0 is off)
+int cooling = 0;                     	// cooling toggle (0 is off)
 int direction = 0;		                // drive direction (0 is forwards)
 
 // screen enum
@@ -121,7 +121,7 @@ int currentScreen = RACING_HUD;
 enum powerModes
 {
   TUTORIAL,           // 50% throttle power, for beginner AERO drivers
-  ECO,                // 80% throttle power, battery savings 
+  ECO,                // 75% throttle power, battery savings
   EXPERT              // 100% throttle power, max speed and acceleration 
 };
 int powerMode = EXPERT;
@@ -328,19 +328,19 @@ static void MX_CAN1_Init(void)
   /* USER CODE BEGIN CAN1_Init 1 */
 
   /* USER CODE END CAN1_Init 1 */
-  hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 5;
-  hcan1.Init.Mode = CAN_MODE_NORMAL;
-  hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_14TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_5TQ;
-  hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = DISABLE;
-  hcan1.Init.AutoWakeUp = DISABLE;
-  hcan1.Init.AutoRetransmission = DISABLE;
-  hcan1.Init.ReceiveFifoLocked = DISABLE;
-  hcan1.Init.TransmitFifoPriority = DISABLE;
-  if (HAL_CAN_Init(&hcan1) != HAL_OK)
+  hcan.Instance = CAN1;
+  hcan.Init.Prescaler = 5;
+  hcan.Init.Mode = CAN_MODE_NORMAL;
+  hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
+  hcan.Init.TimeSeg1 = CAN_BS1_14TQ;
+  hcan.Init.TimeSeg2 = CAN_BS2_5TQ;
+  hcan.Init.TimeTriggeredMode = DISABLE;
+  hcan.Init.AutoBusOff = DISABLE;
+  hcan.Init.AutoWakeUp = DISABLE;
+  hcan.Init.AutoRetransmission = DISABLE;
+  hcan.Init.ReceiveFifoLocked = DISABLE;
+  hcan.Init.TransmitFifoPriority = DISABLE;
+  if (HAL_CAN_Init(&hcan) != HAL_OK)
   {
     Error_Handler();
   }

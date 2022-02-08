@@ -281,7 +281,7 @@ void prechargeControl()
 
 		case (PRECHARGE_ERROR):
 			// the car is most definitly not ready to drive
-			// requires hard reboot of systems to clear this state
+			// probably requires hard reboot of systems to clear this state idk ask george
 			readyToDrive = 0;
 
       // flash the RTD button LED to indicate we are in PRECHARGE_ERROR
