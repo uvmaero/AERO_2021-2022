@@ -34,7 +34,7 @@
 /* USER CODE BEGIN PD */
 
 // inputs
-#define PIN_START_BUTTON;             28    // ready to drive button
+#define PIN_START_BUTTON              28    // ready to drive button
 #define PIN_DRIVE_DIRECTION           26		// drive direction toggle
 #define PIN_BRAKE_REGEN					      19		// brake regeneration
 #define PIN_COAST_REGEN					      18		// coast regeneration
@@ -79,6 +79,13 @@ CAN_HandleTypeDef hcan;
 
 /* USER CODE BEGIN PV */
 
+// CAN
+CAN_RxHeaderTypeDef rxHeader; // CAN Bus Transmit Header
+CAN_TxHeaderTypeDef txHeader; // CAN Bus Receive Header
+uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0};  // CAN Bus Receive Buffer
+CAN_FilterTypeDef canFilter; // CAN Bus Filter
+uint32_t canMailbox; // CAN Bus Mail box variable
+
 // rinehart & emus
 uint16_t rinehartVoltage = 0;				  // voltage in rinehart
 uint16_t emusVoltage = 265.0;				  // emus bus voltage
@@ -86,19 +93,19 @@ uint16_t emusVoltage = 265.0;				  // emus bus voltage
 // inputs
 uint16_t coastRegen, brakeRegen;			// coast and brake regen values 
 uint8_t coastMap, brakeMap;					  // maps for coast and brake regen
-float wheelSpeedFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL);
-float wheelSpeedFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL);
-float wheelSpeedBR = 0;               // this needs to be retrived from CAN
-float wheelSpeedBL = 0;               // this needs to be retrived from CAN
-float rideHeightFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_SUSPENSION);
-float rideHeightFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_SUSPENSION);
-float rideHeightBR = 0;               // this needs to be retrived from CAN
-float rideHeightBL = 0;               // this needs to be retrived from CAN
+float wheelSpeedFR = 0;
+float wheelSpeedFL = 0;
+float wheelSpeedBR = 0;               // this needs to be retrieved from CAN
+float wheelSpeedBL = 0;               // this needs to be retrieved from CAN
+float rideHeightFR = 0;
+float rideHeightFL = 0;
+float rideHeightBR = 0;               // this needs to be retrieved from CAN
+float rideHeightBL = 0;               // this needs to be retrieved from CAN
 
 // outputs
-bool RTDButtonLED = 0;                   // RTD button LED toggle (0 is off)
-bool cooling = 0;                     // cooling toggle (0 is off)
-bool direction = 0;		                // drive direction (0 is forwards)
+int RTDButtonLED = 0;                   // RTD button LED toggle (0 is off)
+int cooling = 0;                     // cooling toggle (0 is off)
+int direction = 0;		                // drive direction (0 is forwards)
 
 // screen enum
 enum screens
@@ -106,7 +113,7 @@ enum screens
   RACING_HUD,               // for driving the car
   RIDE_SETTINGS,            // view all ride style settings
   ELECTRICAL_SETTINGS       // view all electrical information
-}
+};
 int currentScreen = RACING_HUD;
 
 // power modes
@@ -115,7 +122,7 @@ enum powerModes
   TUTORIAL,           // 50% throttle power, for beginner AERO drivers
   ECO,                // 80% throttle power, battery savings 
   EXPERT              // 100% throttle power, max speed and acceleration 
-}
+};
 int powerMode = EXPERT;
 
 
@@ -129,7 +136,7 @@ static void MX_CAN1_Init(void);
 /* USER CODE BEGIN PFP */
 void welcomeScreen();
 void racingHUD();
-void electricalSettings():
+void electricalSettings();
 void rideSettings();
 
 /* USER CODE END PFP */
@@ -146,13 +153,6 @@ void rideSettings();
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
-  // CAN
-  CAN_RxHeaderTypeDef rxHeader; // CAN Bus Transmit Header
-  CAN_TxHeaderTypeDef txHeader; // CAN Bus Receive Header
-  uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0};  // CAN Bus Receive Buffer
-  CAN_FilterTypeDef canFilter; // CAN Bus Filter
-  uint32_t canMailbox; // CAN Bus Mail box variable
 
   canFilter.FilterBank = 0;
   canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
@@ -223,7 +223,7 @@ int main(void)
 
     // *** LCD *** //
     // look for LCD button press 
-    if (HAL_ADC_GetValue(PIN_LCD_BUTTON)) 
+    if (HAL_ADC_GetValue(PIN_LCD_BUTTON) == 0) 		  // change this depending on pull up or pull down
     {
       currentScreen++;                                // move to next screen
       if (currentScreen == 3) currentScreen = 0;      // loop back at max screen value
@@ -358,7 +358,7 @@ static void MX_GPIO_Init(void)
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
 	HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rxHeader, canRX); //Receive CAN bus message to canRX buffer
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_3);// toggle PA3 LED
+	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_3);  // toggle PA3 LED
 }
 
 
@@ -371,7 +371,7 @@ void welcomeScreen()
   lcd_init();                         // init lcd
   lcd_clear();                        // clear the screen
   lcd_put_cur(1, 0);                  // set the cursor
-  lcd_send_string("welcome AERO");    // print
+  lcd_send_string("welcome AERO!");   // print
   lcd_put_cur(2, 0);                  // next line
   lcd_send_string("booting up...");   // print
 }
@@ -390,8 +390,12 @@ void racingHUD()
   // get battery percentage
   float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
 
+  // get coast regen and brake regen values
+  float coastRegen = HAL_ADC_GetValue(PIN_COAST_REGEN);
+  float brakeRegen = HAL_ADC_GetValue(PIN_BRAKE_REGEN);
+
   // clear display 
-  lcd.clear();
+  lcd_clear();
 
   // drive direction
   lcd_put_cur(1, 0);                        // position of drive direction
@@ -400,7 +404,7 @@ void racingHUD()
 
   // battery percentage
   lcd_put_cur(12, 0);                       // set cursor for battery percentage value
-  lcd_send_data(batteryPercentage);         // print the battery percentage vaule
+  lcd_send_data((int)batteryPercentage);    // print the battery percentage value
   lcd_put_cur(15, 0);                       // set cursor for % sign
   lcd_send_string("%%");                    // print % sign
 
@@ -414,7 +418,7 @@ void racingHUD()
   lcd_put_cur(1, 2);                        // set cursor for CR
   lcd_send_string("CR:");                   // print CR for coast regen
   lcd_put_cur(4, 2);                        // set cursor for coast regen value 
-  lcd_send_data(int coastRegenPer = 70);    // print coast regen value 
+  lcd_send_data((int)coastRegen);    				// print coast regen value
   lcd_put_cur(6, 2);                        // set cursor for percent sign
   lcd_send_string("%%");                    // print percent sign 
 
@@ -422,7 +426,7 @@ void racingHUD()
   lcd_put_cur(10, 2);                       // set cursor for BR
   lcd_send_string("BR:");                   // print BR for brake regen
   lcd_put_cur(12, 2);                       // set cursor for brake regen value 
-  lcd_send_data(int brakeRegenPre = 40);    // print brake regen value 
+  lcd_send_data((int)brakeRegen);    				// print brake regen value
   lcd_put_cur(14, 2);                       // set cursor for percent sign
   lcd_send_string("%%");                    // print percent sign
 }
@@ -477,8 +481,13 @@ void rideSettings()
   // clear screen
   lcd_clear();
 
-  // TODO:
-  // add some suspension percentage calculations here
+  // get suspension values
+  rideHeightFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_SUSPENSION);
+  rideHeightFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_SUSPENSION);
+
+  // get coast regen and brake regen values
+  float coastRegen = HAL_ADC_GetValue(PIN_COAST_REGEN);
+  float brakeRegen = HAL_ADC_GetValue(PIN_BRAKE_REGEN);
 
   // not sure what to do for suspension values yet so
   lcd_put_cur(6, 1);                    // ride height percentage text
@@ -532,14 +541,14 @@ void rideSettings()
   // coast regen
   lcd_put_cur(7, 0);                    // set cursor for CR text
   lcd_send_string("CR:");               // print "CR:" for coast regen
-  lcd_send_data(int coastRegen);        // print coast regen value
+  lcd_send_data((int)coastRegen);       // print coast regen value
   lcd_put_cur(9, 0);                    // set cursor for "%"
   lcd_send_string("%%");                // print "%"
 
   // brake regen
   lcd_put_cur(7, 2);                    // set cursor for BR text
   lcd_send_string("BR:");               // print "BR:" for brake regen
-  lcd_send_data(int brakeRegen);        // print brake regen value
+  lcd_send_data((int)brakeRegen);       // print brake regen value
   lcd_put_cur(9, 2);                    // set cursor for "%"
   lcd_send_string("%%");                // print "%"
 }
