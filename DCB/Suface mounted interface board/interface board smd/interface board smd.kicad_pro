@@ -239,7 +239,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "bms_passthrough.kicad_pro",
+    "filename": "interface board smd.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -318,7 +318,7 @@
   },
   "sheets": [
     [
-      "e63e39d7-6ac0-4ffd-8aa3-1841a4541b55",
+      "8b641929-9b2e-4337-9bbf-c366664cc31a",
       ""
     ]
   ],
