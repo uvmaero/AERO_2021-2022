@@ -157,10 +157,20 @@
     (uuid fc4f0835-889b-4d2e-876e-ca524c79ae62)
   )
 
+  (text "Add some currnet protection\n - Charge controller ic for protection"
+    (at 107.95 107.315 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid b8260e58-b159-4c23-8f40-b4e5b53ec58b)
+  )
   (text "Not really a charge controller, just a fuse and diode\n\nCrude, but functional implementation"
     (at 80.01 71.12 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid d70d1cd3-1668-4688-8eb7-f773efb7bb87)
+  )
+  (text "INA series chip to mointor current\nfor VICOR. this is if we wanted to do \nMCU"
+    (at 138.43 94.615 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid e4a58eb9-9a72-4c12-ba9b-d7c4a557ce0c)
   )
 
   (label "dcdc_fuse" (at 118.745 82.55 180)
