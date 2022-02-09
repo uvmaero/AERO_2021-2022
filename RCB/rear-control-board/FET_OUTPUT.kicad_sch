@@ -220,6 +220,15 @@
     (uuid fefe2f15-09ed-49c1-bd41-0906cbab46b4)
   )
 
+  (text "double check how p-channels work" (at 29.21 82.55 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 1d7cb0a7-7cd6-4610-9db6-2489ff348770)
+  )
+  (text "use fet that has control circuity that is\nn channel with high side switching. \nCheck to make sure it works"
+    (at 67.945 90.17 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid cb7c846d-7b17-4e4d-8328-919a92359c57)
+  )
   (text "Check which Mosfet we're\nusing and that the drive\nvoltage can be <= 3.3V"
     (at 52.07 54.61 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
