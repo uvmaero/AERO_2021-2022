@@ -218,48 +218,48 @@ int main(void)
 	/* USER CODE BEGIN WHILE */
 	while (1)
 	{
-    // poll sensor data
-    pollSensorData();
+		// poll sensor data
+		pollSensorData();
 
-    // read can messages
+		// read can messages
 
 
-    // send can messages
-    uint8_t csend[] = {wheelSpeedFR, wheelSpeedFL, rideHeightFR, rideHeightFL, 0x04, 0x05, 0x06, startButtonState}; // Tx Buffer
-    HAL_CAN_AddTxMessage(&hcan1, &txHeader, csend, &canMailbox); // Send Message
+		// send can messages
+		uint8_t csend[] = {wheelSpeedFR, wheelSpeedFL, rideHeightFR, rideHeightFL, 0x04, 0x05, 0x06, startButtonState}; // Tx Buffer
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader, csend, &canMailbox); // Send Message
 
-    // check for lcd button press to change screeens
-    if (HAL_GPIO_ReadPin(GPIOB, PIN_LCD_BUTTON) == 0)
-    {
-      currentScreen++;
-      // loop back the first screen after reaching the last one 
-      if (currentScreen > RIDE_SETTINGS) currentScreen = RACING_HUD;
-    }
+		// check for lcd button press to change screeens
+		if (HAL_GPIO_ReadPin(GPIOB, PIN_LCD_BUTTON) == 0)
+		{
+			currentScreen++;
+			// loop back the first screen after reaching the last one 
+			if (currentScreen > RIDE_SETTINGS) currentScreen = RACING_HUD;
+		}
 
-    // screen updates
-    switch (currentScreen)
-    {
-      case RACING_HUD:
-        racingHUD();
-      break;
+		// screen updates
+		switch (currentScreen)
+		{
+			case RACING_HUD:
+				racingHUD();
+			break;
 
-      case ELECTRICAL_SETTINGS:
-        electricalSettings();
-      break;
+			case ELECTRICAL_SETTINGS:
+				electricalSettings();
+			break;
 
-      case RIDE_SETTINGS:
-        rideSettings();
-      break;
-      
-      default:
-        // go to racing hud because were not supposed to be here
-        currentScreen = RACING_HUD;
-      break;
-    }
+			case RIDE_SETTINGS:
+				rideSettings();
+			break;
+			
+			default:
+				// go to racing hud because were not supposed to be here
+				currentScreen = RACING_HUD;
+			break;
+		}
 
-	/* USER CODE END WHILE */
+		/* USER CODE END WHILE */
 
-	/* USER CODE BEGIN 3 */
+		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
 }
