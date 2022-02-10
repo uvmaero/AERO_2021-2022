@@ -2,9 +2,11 @@
 /**
   ******************************************************************************
   * @file           : main.c
-  * @brief          : Main program body
+  * @brief          : Dash Control Board Firmware
   ******************************************************************************
   * @attention
+  * 
+  * ADD SOME STUFF HERE
   *
   * Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.
@@ -37,7 +39,7 @@
  * @brief TODO:
  * assign the lcd pins (4 pins)
  * 4 tx headers
- * figure rx stuff
+ * figure out rx stuff
  */
 
 
@@ -245,7 +247,6 @@ int main(void)
 
 	// start up LCD display
 	welcomeScreen();
-	HAL_Delay(3000);      // just a little delay to give allow for some time to read the welcome screen
 
 	/* USER CODE END 2 */
 
@@ -274,12 +275,16 @@ int main(void)
 
 
 		// check for lcd button press to change screeens
+		int oldScreen = currentScreen;
 		if (HAL_GPIO_ReadPin(GPIOB, PIN_LCD_BUTTON) == 0)
 		{
 			currentScreen++;
 			// loop back the first screen after reaching the last one 
 			if (currentScreen > RIDE_SETTINGS) currentScreen = RACING_HUD;
 		}
+
+		// clear screen if the screen mode has been changed
+		if (currentScreen != oldScreen) lcd.clear();
 
 		// screen updates
 		switch (currentScreen)
@@ -713,6 +718,8 @@ void welcomeScreen()
 	lcd.print("welcome AERO!");         // print
 	lcd.setCursor(2, 1);                // next line
 	lcd.print("booting up...");         // print
+	HAL_Delay(3000);					// delay 3 seconds so the screen can be read
+	lcd.clear();						// clear the display so the other screens can be printed
 }
 
 
@@ -722,46 +729,54 @@ void welcomeScreen()
  */
 void racingHUD()
 {
-	// get current MPH
+	// get wheel speed
 	float averageWheelSpeed = (wheelSpeedFR + wheelSpeedFL) / 2;
-	float currentMPH = averageWheelSpeed * WHEEL_DIAMETER * (3.14159) * 60 / 63360; // pi and inches in a mile
+	// get current mph from wheel speed
+	float currentMPH = ((averageWheelSpeed * WHEEL_DIAMETER) * (3.14159 * 60)) / 63360;
 
 	// get battery percentage
 	float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
 
-	// clear display
-	lcd.clear();
-
 	// drive direction
-	lcd.setCursor(1, 0);                      // position of drive direction
+	lcd.setCursor(0, 1);                      // position of drive direction
+	lcd.print("   ");						  // selective clear first 4 spaces
+	lcd.setCursor(0, 1);                      // position of drive direction
 	if (direction) lcd.print("FWD");          // print drive direction
 	else lcd.print("RVS");
 
 	// battery percentage
 	lcd.setCursor(12, 0);                     // set cursor for battery percentage value
+	lcd.print("  ");						  // selective clear 2 spaces
+	lcd.setCursor(12, 0);                     // set cursor for battery percentage value
 	lcd.print((int)batteryPercentage);        // print the battery percentage value
-	lcd.setCursor(15, 0);                     // set cursor for % sign
+	lcd.setCursor(14, 0);                     // set cursor for % sign
 	lcd.print("%%");                          // print % sign
 
 	// speedometer
-	lcd.setCursor(6, 0);                      // set cursor for mph value
+	lcd.setCursor(7, 0);                      // set cursor for mph value
+	lcd.print("  ");						  // selective clear 2 spaces
+	lcd.setCursor(7, 0);                      // set cursor for mph value
 	lcd.print((int)currentMPH);               // print the current speed in MPH, cast to int to round to whole number
-	lcd.setCursor(6, 1);                      // set cursor for units
+	lcd.setCursor(7, 1);                      // set cursor for units
 	lcd.print("mph");                         // print units
 
 	// coast regen
-	lcd.setCursor(1, 1);                      // set cursor for CR
-	lcd.print("CR:");                         // print CR for coast regen
-	lcd.setCursor(4, 1);                      // set cursor for coast regen value
-	lcd.print((int)coastRegen);    			    	// print coast regen value
-	lcd.setCursor(6, 1);                      // set cursor for percent sign
+	lcd.setCursor(0, 0);                      // set cursor for CR
+	lcd.print("C:");                          // print CR for coast regen
+	lcd.setCursor(2, 1);                      // set cursor for coast regen value
+	lcd.print("  ");						  // selective clear 2 spaces
+	lcd.setCursor(2, 1);                      // set cursor for coast regen value
+	lcd.print((int)coastRegen);    			  // print coast regen value
+	lcd.setCursor(4, 1);                      // set cursor for percent sign
 	lcd.print("%%");                          // print percent sign
 
 	// brake regen
-	lcd.setCursor(10, 1);                     // set cursor for BR
-	lcd.print("BR:");                         // print BR for brake regen
+	lcd.setCursor(11, 1);                     // set cursor for BR
+	lcd.print("B:");                          // print BR for brake regen
 	lcd.setCursor(12, 1);                     // set cursor for brake regen value
-	lcd.print((int)brakeRegen);    		    		// print brake regen value
+	lcd.print("  ");						  // selective clear 2 spaces 
+	lcd.setCursor(12, 1);                     // set cursor for brake regen value
+	lcd.print((int)brakeRegen);    		      // print brake regen value
 	lcd.setCursor(14, 1);                     // set cursor for percent sign
 	lcd.print("%%");                          // print percent sign
 }
@@ -776,34 +791,44 @@ void electricalSettings()
 	// get battery percentage
 	float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
 
-	// clear screen
-	lcd.clear();
-
 	// battery percentage
-	lcd.setCursor(1, 0);                                  // set cursor for battery percentage value
-	lcd.print(batteryPercentage);                         // print the current battery percentage value
-	lcd.setCursor(4, 0);                                  // set cursor for % sign
+	lcd.setCursor(0, 0);                                  // set cursor for battery title
+	lcd.print("Batt:");									  // print title
+	lcd.setCursor(5, 0);								  // set cursor for batter percentage value
+	lcd.print("  ");									  // selective clear 2 spaces
+	lcd.setCursor(5, 0);								  // set cursor for batter percentage value
+	lcd.print((int)batteryPercentage);                    // print the current battery percentage value
+	lcd.setCursor(7, 0);                                  // set cursor for % sign
 	lcd.print("%%");                                      // print % sign
 
 	// bus voltage
-	lcd.setCursor(1, 1);                                  // set cursor for battery percentage value
-	lcd.print(emusVoltage);                               // print the emus voltage value
-	lcd.setCursor(4, 1);                                  // set cursor for units
+	lcd.setCursor(11, 0);                                 // set cursor for bus voltage title
+	lcd.print("Bus:");									  // print title
+	lcd.setCursor(11, 1);								  // set cursor for bus voltage value
+	lcd.print("   ");									  // selective clear 3 spaces
+	lcd.setCursor(11, 1);								  // set cursor for bus voltage value
+	lcd.print((int)emusVoltage);                          // print the emus voltage value
+	lcd.setCursor(15, 1);                                 // set cursor for units
 	lcd.print("V");                                       // print units
 
+	/*	not planning on using this for the time being
 	// rinehart voltage
 	lcd.setCursor(12, 0);                                 // set cursor for rinehart voltage value
 	lcd.print(rinehartVoltage);                           // print the rinehart voltage value
 	lcd.setCursor(15, 0);                                 // set cursor for units
 	lcd.print("V");                                       // print % sign
+	*/
 
 	// power mode
-	lcd.setCursor(8, 1);                                  // set cursor for mode text
+	lcd.setCursor(0, 1);                                  // set cursor for mode text
 	lcd.print("Mode:");                                   // print mode text
-	lcd.setCursor(12, 1);                                  // set cursor current mode setting
-	if (powerMode == TUTORIAL) lcd.print("Tutorial");
-	if (powerMode == ECO) lcd.print("Eco");
-	if (powerMode == EXPERT) lcd.print("Expert");
+	lcd.setCursor(5, 1);                                  // set cursor current mode setting
+	lcd.print("    ");									  // selective clear 4 spaces
+	lcd.setCursor(5, 1);                                  // set cursor current mode setting
+	if (powerMode == TUTORIAL) lcd.print("TUTR");
+	if (powerMode == ECO) lcd.print("ECO");
+	if (powerMode == EXPERT) lcd.print("EXPT");
+	else lcd.print("ERR!");
 }
 
 
@@ -813,67 +838,65 @@ void electricalSettings()
  */
 void rideSettings()
 {
-	// clear screen
-	lcd.clear();
-
-	// not sure what to do for suspension values yet so
-	lcd.setCursor(6, 0);                  // ride height percentage text
-	lcd.print("Ride %%");                 // print text
-
-	lcd.setCursor(1, 0);                  // set cursor for wheel speed value
+	// ride height
+	lcd.setCursor(0, 0);                  // set cursor for front left ride height value
+	lcd.print("  ");					  // selective clearing 2 spaces
+	lcd.setCursor(0, 0);                  // set cursor for front left ride height value
 	lcd.print((int)rideHeightFL);         // print front left ride height value
 
-	lcd.setCursor(3, 0);                  // set cursor for "-"
-	lcd.print("-");                       // print the "-"
+	lcd.setCursor(2, 0);				  // spacer
+	lcd.print("-");						  // spacer
 
-	lcd.setCursor(5, 0);                  // set cursor for wheelspeed value
+	lcd.setCursor(3, 0);                  // set cursor for front right ride height value
+	lcd.print("  ");					  // selective clearing 2 spaces
+	lcd.setCursor(3, 0);                  // set cursor for front right ride height value
 	lcd.print((int)rideHeightFR);         // print front right ride height value
 
-	lcd.setCursor(1, 1);                  // set cursor for wheelspeed value
+	lcd.setCursor(5, 0);                  // set cursor for "<- Ride"
+	lcd.print("<-Ride");                  // print the "-"
+
+	lcd.setCursor(0, 1);                  // set cursor for back left ride height value
+	lcd.print("  ");					  // selective clearing 2 spaces
+	lcd.setCursor(0, 1);                  // set cursor for back left ride height value
 	lcd.print((int)rideHeightBL);         // print back left ride height value
 
-	lcd.setCursor(3, 1);                  // set cursor for "-"
-	lcd.print("-");                       // print the "-"
+	lcd.setCursor(2, 1);				  // spacer
+	lcd.print("-");						  // spacer
 
-	lcd.setCursor(5, 1);                  // set cursor for wheelspeed value
+	lcd.setCursor(3, 1);                  // set cursor for back right ride height value
+	lcd.print("  ");					  // selective clearing 2 spaces
+	lcd.setCursor(3, 1);                  // set cursor for back right ride height value
 	lcd.print((int)rideHeightBR);         // print back right ride height value
 
+	lcd.setCursor(6, 1);                  // set cursor for "RPM->"
+	lcd.print("RPM->");                   // print the "RPM->"
 
 	// wheel speed
-	lcd.setCursor(10, 0);                 // set cursor for RPM text
-	lcd.print("RPM");                     // print RPM text
+	lcd.setCursor(11, 0);                 // set cursor for front left wheelspeed value
+	lcd.print("  ");					  // selective clearing 2 spaces
+	lcd.setCursor(11, 0);                 // set cursor for front left wheelspeed value
+	lcd.print((int)wheelSpeedFL);         // print front left wheelspeed value
 
-	lcd.setCursor(10, 0);                 // set cursor for wheel speed value
-	lcd.print((int)wheelSpeedFR);         // print value for front left
+	lcd.setCursor(13, 0);				  // spacer
+	lcd.print("-");						  // spacer
 
-	lcd.setCursor(12, 0);                 // set cursor for "-"
+	lcd.setCursor(14, 0);                 // set cursor for front right wheelspeed value
+	lcd.print("  ");					  // selective clearing 2 spaces
+	lcd.setCursor(14, 0);                 // set cursor for front right wheelspeed value
+	lcd.print((int)wheelSpeedFR);         // print front right wheelspeed value
+
+	lcd.setCursor(11, 1);                 // set cursor for back left wheelspeed value
+	lcd.print("  ");					  // selective clearing 2 spaces
+	lcd.setCursor(11, 1);                 // set cursor for back left wheelspeed value
+	lcd.print((int)wheelSpeedBL);         // print back left wheelspeed value
+
+	lcd.setCursor(13, 1);                 // set cursor for "-"
 	lcd.print("-");                       // print the "-"
 
-	lcd.setCursor(14, 0);                 // set cursor for wheelspeed value
-	lcd.print((int)wheelSpeedFL);         // print value for front right
-
-	lcd.setCursor(10, 1);                 // set cursor for wheelspeed value
-	lcd.print((int)wheelSpeedBL);         // print value rear left
-
-	lcd.setCursor(12, 1);                 // set cursor for "-"
-	lcd.print("-");                       // print the "-"
-
-	lcd.setCursor(14, 1);                 // set cursor for wheelspeed value
-	lcd.print((int)wheelSpeedBR);         // print value for rear right
-
-	// coast regen
-	lcd.setCursor(7, 0);                  // set cursor for CR text
-	lcd.print("CR:");                     // print "CR:" for coast regen
-	lcd.print((int)coastRegen);           // print coast regen value
-	lcd.setCursor(9, 0);                  // set cursor for "%"
-	lcd.print("%%");                      // print "%"
-
-	// brake regen
-	lcd.setCursor(7, 1);                  // set cursor for BR text
-	lcd.print("BR:");                     // print "BR:" for brake regen
-	lcd.print((int)brakeRegen);           // print brake regen value
-	lcd.setCursor(9, 1);                  // set cursor for "%"
-	lcd.print("%%");                      // print "%"
+	lcd.setCursor(14, 1);                 // set cursor for back right wheelspeed value
+	lcd.print("  ");					  // selective clearing 2 spaces
+	lcd.setCursor(14, 1);                 // set cursor for back right wheelspeed value
+	lcd.print((int)wheelSpeedBR);         // print value for back right wheelspeed value
 }
 
 /* USER CODE END 4 */
