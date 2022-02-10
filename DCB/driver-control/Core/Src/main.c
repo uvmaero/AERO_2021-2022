@@ -223,8 +223,9 @@ int main(void)
 
     // read can messages
 
+
     // send can messages
-    uint8_t csend[] = {wheelSpeedFR, wheelSpeedFL, rideHeightFR, rideHeightFL, 0x00, 0x00, 0x00, startButtonState}; // Tx Buffer
+    uint8_t csend[] = {wheelSpeedFR, wheelSpeedFL, rideHeightFR, rideHeightFL, 0x04, 0x05, 0x06, startButtonState}; // Tx Buffer
     HAL_CAN_AddTxMessage(&hcan1, &txHeader, csend, &canMailbox); // Send Message
 
     // check for lcd button press to change screeens
@@ -232,7 +233,7 @@ int main(void)
     {
       currentScreen++;
       // loop back the first screen after reaching the last one 
-      if (currentScreen == 3) currentScreen = RACING_HUD;
+      if (currentScreen > RIDE_SETTINGS) currentScreen = RACING_HUD;
     }
 
     // screen updates
@@ -285,7 +286,7 @@ void SystemClock_Config(void)
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 	/** Initializes the CPU, AHB and APB buses clocks
 	*/
@@ -298,7 +299,7 @@ void SystemClock_Config(void)
 
 	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 }
 
@@ -335,7 +336,7 @@ static void MX_ADC1_Init(void)
 	hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
 	if (HAL_ADC_Init(&hadc1) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 	/** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
 	*/
@@ -363,7 +364,7 @@ void ADC_Select_CH_WSFL(void)
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 }
 
@@ -376,7 +377,7 @@ void ADC_Select_CH_WSFR(void)
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 }
 
@@ -389,7 +390,7 @@ void ADC_Select_CH_RHFL(void)
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 }
 
@@ -402,7 +403,7 @@ void ADC_Select_CH_RHFR(void)
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 }
 
@@ -415,7 +416,7 @@ void ADC_Select_CH_B0(void)
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 }
 
@@ -428,7 +429,7 @@ void ADC_Select_CH_B1(void)
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 }
 
@@ -441,7 +442,7 @@ void ADC_Select_CH_P0(void)
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 }
 
@@ -454,7 +455,7 @@ void ADC_Select_CH_P1(void)
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 }
 
@@ -467,7 +468,7 @@ void ADC_Select_CH_CR(void)
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 }
 
@@ -480,7 +481,7 @@ void ADC_Select_CH_BR(void)
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 }
 
@@ -513,7 +514,7 @@ static void MX_CAN1_Init(void)
 	hcan1.Init.TransmitFifoPriority = DISABLE;
 	if (HAL_CAN_Init(&hcan1) != HAL_OK)
 	{
-	Error_Handler();
+		Error_Handler();
 	}
 	/* USER CODE BEGIN CAN1_Init 2 */
 
@@ -574,74 +575,74 @@ static void MX_GPIO_Init(void)
 
 void pollSensorData()
 {
-  // get front right wheel speed
-  ADC_Select_CH_WSFR();
-  HAL_ADC_Start(&hadc1);
-  HAL_ADC_PollForConversion(&hadc1, 1000);
-  wheelSpeedFR = HAL_ADC_GetValue(&hadc1);
-  HAL_ADC_Stop(&hadc1);
+	// get front right wheel speed
+	ADC_Select_CH_WSFR();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	wheelSpeedFR = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 
-  // get front left wheel speed
-  ADC_Select_CH_WSFL();
-  HAL_ADC_Start(&hadc1);
-  HAL_ADC_PollForConversion(&hadc1, 1000);
-  wheelSpeedFL = HAL_ADC_GetValue(&hadc1);
-  HAL_ADC_Stop(&hadc1);
+	// get front left wheel speed
+	ADC_Select_CH_WSFL();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	wheelSpeedFL = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 
-  // get front right ride height
-  ADC_Select_CH_RHFR();
-  HAL_ADC_Start(&hadc1);
-  HAL_ADC_PollForConversion(&hadc1, 1000);
-  rideHeightFR = HAL_ADC_GetValue(&hadc1);
-  HAL_ADC_Stop(&hadc1);
+	// get front right ride height
+	ADC_Select_CH_RHFR();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	rideHeightFR = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 
-  // get front left ride height
-  ADC_Select_CH_RHFL();
-  HAL_ADC_Start(&hadc1);
-  HAL_ADC_PollForConversion(&hadc1, 1000);
-  rideHeightFL = HAL_ADC_GetValue(&hadc1);
-  HAL_ADC_Stop(&hadc1);
+	// get front left ride height
+	ADC_Select_CH_RHFL();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	rideHeightFL = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 
-  // get pedal 0
-  ADC_Select_CH_P0();
-  HAL_ADC_Start(&hadc1);
-  HAL_ADC_PollForConversion(&hadc1, 1000);
-  pedal0 = HAL_ADC_GetValue(&hadc1);
-  HAL_ADC_Stop(&hadc1);
+	// get pedal 0
+	ADC_Select_CH_P0();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	pedal0 = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 
-  // get pedal 1
-  ADC_Select_CH_P1();
-  HAL_ADC_Start(&hadc1);
-  HAL_ADC_PollForConversion(&hadc1, 1000);
-  pedal1 = HAL_ADC_GetValue(&hadc1);
-  HAL_ADC_Stop(&hadc1);
+	// get pedal 1
+	ADC_Select_CH_P1();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	pedal1 = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 
-  // get brake 0
-  ADC_Select_CH_B0();
-  HAL_ADC_PollForConversion(&hadc1, 1000);
-  brake0 = HAL_ADC_GetValue(&hadc1);
-  HAL_ADC_Stop(&hadc1);
+	// get brake 0
+	ADC_Select_CH_B0();
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	brake0 = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 
-  // get brake 1
-  ADC_Select_CH_B1();
-  HAL_ADC_Start(&hadc1);
-  HAL_ADC_PollForConversion(&hadc1, 1000);
-  brake1 = HAL_ADC_GetValue(&hadc1);
-  HAL_ADC_Stop(&hadc1);
+	// get brake 1
+	ADC_Select_CH_B1();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	brake1 = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 
-  // get coast regen
-  ADC_Select_CH_CR();
-  HAL_ADC_Start(&hadc1);
-  HAL_ADC_PollForConversion(&hadc1, 1000);
-  coastRegen = HAL_ADC_GetValue(&hadc1);
-  HAL_ADC_Stop(&hadc1);
+	// get coast regen
+	ADC_Select_CH_CR();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	coastRegen = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 
-  // get brake regen
-  ADC_Select_CH_BR();
-  HAL_ADC_Start(&hadc1);
-  HAL_ADC_PollForConversion(&hadc1, 1000);
-  brakeRegen = HAL_ADC_GetValue(&hadc1);
-  HAL_ADC_Stop(&hadc1);
+	// get brake regen
+	ADC_Select_CH_BR();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	brakeRegen = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 }
 
 /**
@@ -857,10 +858,9 @@ void Error_Handler(void)
   */
 void assert_failed(uint8_t *file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+	/* USER CODE BEGIN 6 */
+	/* User can add his own implementation to report the file name and line number,
+		ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	/* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
