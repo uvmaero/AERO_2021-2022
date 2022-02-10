@@ -80,44 +80,44 @@ CAN_HandleTypeDef hcan1;
 /* USER CODE BEGIN PV */
 
 // CAN
-CAN_RxHeaderTypeDef rxHeader; // CAN Bus Transmit Header
-CAN_TxHeaderTypeDef txHeader; // CAN Bus Receive Header
-uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0};  // CAN Bus Receive Buffer
-CAN_FilterTypeDef canFilter; // CAN Bus Filter
-uint32_t canMailbox; // CAN Bus Mail box variable
+CAN_RxHeaderTypeDef rxHeader; 					// CAN Bus Transmit Header
+CAN_TxHeaderTypeDef txHeader; 					// CAN Bus Receive Header
+uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	// CAN Bus Receive Buffer
+CAN_FilterTypeDef canFilter; 					// CAN Bus Filter
+uint32_t canMailbox; 							// CAN Bus Mail box variable
 
 // rinehart & emus
-uint16_t rinehartVoltage = 0;				  // voltage in rinehart
-uint16_t emusVoltage = 265.0;				  // emus bus voltage
+uint16_t rinehartVoltage = 0;				  	// voltage in rinehart
+uint16_t emusVoltage = 265.0;				  	// emus bus voltage
 
 // inputs
-float coastRegen, brakeRegen;			    // coast and brake regen values 
-float pedal0, pedal1;                 // pedal values
-float brake0, brake1;                 // brake values
-uint8_t coastMap, brakeMap;					  // maps for coast and brake regen
-float wheelSpeedFR = 0;               // read from sensor input
-float wheelSpeedFL = 0;               // read from sensor input
-float wheelSpeedBR = 0;               // this needs to be retrieved from CAN
-float wheelSpeedBL = 0;               // this needs to be retrieved from CAN
-float rideHeightFR = 0;               // read from sensor input
-float rideHeightFL = 0;               // read from sensor input
-float rideHeightBR = 0;               // this needs to be retrieved from CAN
-float rideHeightBL = 0;               // this needs to be retrieved from CAN
-int startButtonState = 0;             // start button state (0 is not active)
+float coastRegen, brakeRegen;			    	// coast and brake regen values 
+float pedal0, pedal1;                 			// pedal values
+float brake0, brake1;                			// brake values
+uint8_t coastMap, brakeMap;						// maps for coast and brake regen
+float wheelSpeedFR = 0;               			// read from sensor input
+float wheelSpeedFL = 0;               			// read from sensor input
+float wheelSpeedBR = 0;               			// this needs to be retrieved from CAN
+float wheelSpeedBL = 0;               			// this needs to be retrieved from CAN
+float rideHeightFR = 0;               			// read from sensor input
+float rideHeightFL = 0;               			// read from sensor input
+float rideHeightBR = 0;               			// this needs to be retrieved from CAN
+float rideHeightBL = 0;               			// this needs to be retrieved from CAN
+int startButtonState = 0;             			// start button state (0 is not active)
 
 // outputs
-int RTDButtonLEDState = 0;            // RTD button LED toggle (0 is off)
-int cooling = 0;                     	// cooling toggle (0 is off)
-int direction = 0;		                // drive direction (0 is forwards)
+int RTDButtonLEDState = 0;              		// RTD button LED toggle (0 is off)
+int cooling = 0;                     			// cooling toggle (0 is off)
+int direction = 0;		                		// drive direction (0 is forwards)
 
 // screen enum
 enum screens
 {
-	RACING_HUD,               // for driving the car
-	RIDE_SETTINGS,            // view all ride style settings
-	ELECTRICAL_SETTINGS       // view all electrical information
+	RACING_HUD,               					// for driving the car
+	RIDE_SETTINGS,            					// view all ride style settings
+	ELECTRICAL_SETTINGS       					// view all electrical information
 };
-int currentScreen = RACING_HUD;   // set the default screen mode to the racing HUD
+int currentScreen = RACING_HUD;   				// set the default screen mode to the racing HUD
 
 // power modes
 enum powerModes
