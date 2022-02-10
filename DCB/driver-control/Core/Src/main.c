@@ -719,6 +719,8 @@ void welcomeScreen()
 	lcd.setCursor(2, 1);                // next line
 	lcd.print("booting up...");         // print
 	HAL_Delay(3000);					// delay 3 seconds so the screen can be read
+	for (int i = 0; i < 32; i++) 		// slide that sweet boot text off the screen in ~style~
+		lcd.scrollDisplayRight();
 	lcd.clear();						// clear the display so the other screens can be printed
 }
 
