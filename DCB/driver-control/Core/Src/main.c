@@ -6,20 +6,19 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2022 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "LiquidCrystal.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -76,7 +75,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-CAN_HandleTypeDef hcan;
+CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
 
@@ -92,37 +91,40 @@ uint16_t rinehartVoltage = 0;				  // voltage in rinehart
 uint16_t emusVoltage = 265.0;				  // emus bus voltage
 
 // inputs
-uint16_t coastRegen, brakeRegen;			// coast and brake regen values 
+float coastRegen, brakeRegen;			    // coast and brake regen values 
+float pedal0, pedal1;                 // pedal values
+float brake0, brake1;                 // brake values
 uint8_t coastMap, brakeMap;					  // maps for coast and brake regen
-float wheelSpeedFR = 0;
-float wheelSpeedFL = 0;
+float wheelSpeedFR = 0;               // read from sensor input
+float wheelSpeedFL = 0;               // read from sensor input
 float wheelSpeedBR = 0;               // this needs to be retrieved from CAN
 float wheelSpeedBL = 0;               // this needs to be retrieved from CAN
-float rideHeightFR = 0;
-float rideHeightFL = 0;
+float rideHeightFR = 0;               // read from sensor input
+float rideHeightFL = 0;               // read from sensor input
 float rideHeightBR = 0;               // this needs to be retrieved from CAN
 float rideHeightBL = 0;               // this needs to be retrieved from CAN
+int startButtonState = 0;             // start button state (0 is not active)
 
 // outputs
-int RTDButtonLED = 0;                 // RTD button LED toggle (0 is off)
+int RTDButtonLEDState = 0;            // RTD button LED toggle (0 is off)
 int cooling = 0;                     	// cooling toggle (0 is off)
 int direction = 0;		                // drive direction (0 is forwards)
 
 // screen enum
 enum screens
 {
-  RACING_HUD,               // for driving the car
-  RIDE_SETTINGS,            // view all ride style settings
-  ELECTRICAL_SETTINGS       // view all electrical information
+	RACING_HUD,               // for driving the car
+	RIDE_SETTINGS,            // view all ride style settings
+	ELECTRICAL_SETTINGS       // view all electrical information
 };
 int currentScreen = RACING_HUD;   // set the default screen mode to the racing HUD
 
 // power modes
 enum powerModes
 {
-  TUTORIAL,           // 50% throttle power, for beginner AERO drivers
-  ECO,                // 75% throttle power, battery savings
-  EXPERT              // 100% throttle power, max speed and acceleration 
+	TUTORIAL,           // 50% throttle power, for beginner AERO drivers
+	ECO,                // 75% throttle power, battery savings
+	EXPERT              // 100% throttle power, max speed and acceleration
 };
 int powerMode = EXPERT;
 
@@ -132,15 +134,15 @@ int powerMode = EXPERT;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_CAN1_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_CAN1_Init(void);
 
 /* USER CODE BEGIN PFP */
 void welcomeScreen();
 void racingHUD();
 void electricalSettings();
 void rideSettings();
-
+void pollSensorData();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -154,68 +156,111 @@ void rideSettings();
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-  canFilter.FilterBank = 0;
-  canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
-  canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
-  canFilter.FilterIdHigh = 0;
-  canFilter.FilterIdLow = 0;
-  canFilter.FilterMaskIdHigh = 0;
-  canFilter.FilterMaskIdLow = 0;
-  canFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-  canFilter.FilterActivation = ENABLE;
-  canFilter.SlaveStartFilterBank = 14;
+	/* USER CODE BEGIN 1 */
+	// init the lcd screen
+	// LiquidCrystal lcd(rs_pin, enable_pin, PIN_LCD_SDA, PIN_LCD_SCL);   // we need to figure out the rs and enables pins!!!!!!!!!
 
-  txHeader.DLC = 8; // Number of bites to be transmitted max- 8
-  txHeader.IDE = CAN_ID_STD;
-  txHeader.RTR = CAN_RTR_DATA;
-  txHeader.StdId = 0x030;
-  txHeader.ExtId = 0x02;
-  txHeader.TransmitGlobalTime = DISABLE;
+	// init the CAN filter
+	canFilter.FilterBank = 0;
+	canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
+	canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
+	canFilter.FilterIdHigh = 0;
+	canFilter.FilterIdLow = 0;
+	canFilter.FilterMaskIdHigh = 0;
+	canFilter.FilterMaskIdLow = 0;
+	canFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+	canFilter.FilterActivation = ENABLE;
+	canFilter.SlaveStartFilterBank = 14;
 
-  HAL_CAN_ConfigFilter(&hcan, &canFilter); // Initialize CAN Filter
-  HAL_CAN_Start(&hcan); // Initialize CAN Bus
-  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
+	// init the CAN mailbox
+	txHeader.DLC = 8; // Number of bites to be transmitted max- 8
+	txHeader.IDE = CAN_ID_STD;
+	txHeader.RTR = CAN_RTR_DATA;
+	txHeader.StdId = 0x030;
+	txHeader.ExtId = 0x02;
+	txHeader.TransmitGlobalTime = DISABLE;
 
-  /* USER CODE END 1 */
+	HAL_CAN_ConfigFilter(&hcan1, &canFilter); // Initialize CAN Filter
+	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
+	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
+	/* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+	/* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* USER CODE BEGIN Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
+	/* USER CODE BEGIN SysInit */
 
-  /* USER CODE END SysInit */
+	/* USER CODE END SysInit */
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_CAN1_Init();
-  MX_ADC1_Init();
-  /* USER CODE BEGIN 2 */
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_ADC1_Init();
+	MX_CAN1_Init();
 
-  // start up LCD display
-  welcomeScreen();
-  HAL_Delay(3000);      // just a little delay to give allow for some time to read the welcome screen
+	/* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
+	// start up LCD display
+	welcomeScreen();
+	HAL_Delay(3000);      // just a little delay to give allow for some time to read the welcome screen
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
+	/* USER CODE END 2 */
 
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
+	while (1)
+	{
+    // poll sensor data
+    pollSensorData();
+
+    // read can messages
+
+    // send can messages
+    uint8_t csend[] = {wheelSpeedFR, wheelSpeedFL, rideHeightFR, rideHeightFL, 0x00, 0x00, 0x00, startButtonState}; // Tx Buffer
+    HAL_CAN_AddTxMessage(&hcan1, &txHeader, csend, &canMailbox); // Send Message
+
+    // check for lcd button press to change screeens
+    if (HAL_GPIO_ReadPin(GPIOB, PIN_LCD_BUTTON) == 0)
+    {
+      currentScreen++;
+      // loop back the first screen after reaching the last one 
+      if (currentScreen == 3) currentScreen = RACING_HUD;
+    }
+
+    // screen updates
+    switch (currentScreen)
+    {
+      case RACING_HUD:
+        racingHUD();
+      break;
+
+      case ELECTRICAL_SETTINGS:
+        electricalSettings();
+      break;
+
+      case RIDE_SETTINGS:
+        rideSettings();
+      break;
+      
+      default:
+        // go to racing hud because were not supposed to be here
+        currentScreen = RACING_HUD;
+      break;
+    }
+
+	/* USER CODE END WHILE */
+
+	/* USER CODE BEGIN 3 */
+	}
+	/* USER CODE END 3 */
 }
 
 /**
@@ -224,43 +269,37 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 100;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
-  RCC_OscInitStruct.PLL.PLLR = 2;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+	/** Configure the main internal regulator output voltage
+	*/
+	__HAL_RCC_PWR_CLK_ENABLE();
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+	/** Initializes the RCC Oscillators according to the specified parameters
+	* in the RCC_OscInitTypeDef structure.
+	*/
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
+	Error_Handler();
+	}
+	/** Initializes the CPU, AHB and APB buses clocks
+	*/
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+							  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+	{
+	Error_Handler();
+	}
 }
 
 /**
@@ -271,46 +310,178 @@ void SystemClock_Config(void)
 static void MX_ADC1_Init(void)
 {
 
-  /* USER CODE BEGIN ADC1_Init 0 */
+	/* USER CODE BEGIN ADC1_Init 0 */
 
-  /* USER CODE END ADC1_Init 0 */
+	/* USER CODE END ADC1_Init 0 */
 
+	// ADC_ChannelConfTypeDef sConfig = {0};
+
+	/* USER CODE BEGIN ADC1_Init 1 */
+
+	/* USER CODE END ADC1_Init 1 */
+	/** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+	*/
+	hadc1.Instance = ADC1;
+	hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+	hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+	hadc1.Init.ScanConvMode = DISABLE;
+	hadc1.Init.ContinuousConvMode = DISABLE;
+	hadc1.Init.DiscontinuousConvMode = DISABLE;
+	hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+	hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+	hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+	hadc1.Init.NbrOfConversion = 1;
+	hadc1.Init.DMAContinuousRequests = DISABLE;
+	hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+	if (HAL_ADC_Init(&hadc1) != HAL_OK)
+	{
+	Error_Handler();
+	}
+	/** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+	*/
+  /*
+	sConfig.Channel = ADC_CHANNEL_0;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+  */
+	/* USER CODE BEGIN ADC1_Init 2 */
+
+	/* USER CODE END ADC1_Init 2 */
+
+}
+
+void ADC_Select_CH_WSFL(void)
+{
   ADC_ChannelConfTypeDef sConfig = {0};
 
-  /* USER CODE BEGIN ADC1_Init 1 */
-
-  /* USER CODE END ADC1_Init 1 */
-  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
-  */
-  hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
-  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-  if (HAL_ADC_Init(&hadc1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
   sConfig.Channel = ADC_CHANNEL_0;
-  sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN ADC1_Init 2 */
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+}
 
-  /* USER CODE END ADC1_Init 2 */
+void ADC_Select_CH_WSFR(void)
+{
+  ADC_ChannelConfTypeDef sConfig = {0};
+  
+  sConfig.Channel = ADC_CHANNEL_1;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+}
 
+void ADC_Select_CH_RHFL(void)
+{
+  ADC_ChannelConfTypeDef sConfig = {0};
+  
+  sConfig.Channel = ADC_CHANNEL_2;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+}
+
+void ADC_Select_CH_RHFR(void)
+{
+  ADC_ChannelConfTypeDef sConfig = {0};
+  
+  sConfig.Channel = ADC_CHANNEL_3;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+}
+
+void ADC_Select_CH_B0(void)
+{
+  ADC_ChannelConfTypeDef sConfig = {0};
+  
+  sConfig.Channel = ADC_CHANNEL_4;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+}
+
+void ADC_Select_CH_B1(void)
+{
+  ADC_ChannelConfTypeDef sConfig = {0};
+  
+  sConfig.Channel = ADC_CHANNEL_5;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+}
+
+void ADC_Select_CH_P0(void)
+{
+  ADC_ChannelConfTypeDef sConfig = {0};
+  
+  sConfig.Channel = ADC_CHANNEL_6;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+}
+
+void ADC_Select_CH_P1(void)
+{
+  ADC_ChannelConfTypeDef sConfig = {0};
+  
+  sConfig.Channel = ADC_CHANNEL_7;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+}
+
+void ADC_Select_CH_CR(void)
+{
+  ADC_ChannelConfTypeDef sConfig = {0};
+  
+  sConfig.Channel = ADC_CHANNEL_8;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+}
+
+void ADC_Select_CH_BR(void)
+{
+  ADC_ChannelConfTypeDef sConfig = {0};
+  
+  sConfig.Channel = ADC_CHANNEL_9;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
 }
 
 /**
@@ -321,31 +492,32 @@ static void MX_ADC1_Init(void)
 static void MX_CAN1_Init(void)
 {
 
-  /* USER CODE BEGIN CAN1_Init 0 */
+	/* USER CODE BEGIN CAN1_Init 0 */
 
-  /* USER CODE END CAN1_Init 0 */
+	/* USER CODE END CAN1_Init 0 */
 
-  /* USER CODE BEGIN CAN1_Init 1 */
+	/* USER CODE BEGIN CAN1_Init 1 */
 
-  /* USER CODE END CAN1_Init 1 */
-  hcan.Instance = CAN1;
-  hcan.Init.Prescaler = 5;
-  hcan.Init.Mode = CAN_MODE_NORMAL;
-  hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan.Init.TimeSeg1 = CAN_BS1_14TQ;
-  hcan.Init.TimeSeg2 = CAN_BS2_5TQ;
-  hcan.Init.TimeTriggeredMode = DISABLE;
-  hcan.Init.AutoBusOff = DISABLE;
-  hcan.Init.AutoWakeUp = DISABLE;
-  hcan.Init.AutoRetransmission = DISABLE;
-  hcan.Init.ReceiveFifoLocked = DISABLE;
-  hcan.Init.TransmitFifoPriority = DISABLE;
-  if (HAL_CAN_Init(&hcan) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN CAN1_Init 2 */
-  /* USER CODE END CAN1_Init 2 */
+	/* USER CODE END CAN1_Init 1 */
+	hcan1.Instance = CAN1;
+	hcan1.Init.Prescaler = 16;
+	hcan1.Init.Mode = CAN_MODE_NORMAL;
+	hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
+	hcan1.Init.TimeSeg1 = CAN_BS1_1TQ;
+	hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
+	hcan1.Init.TimeTriggeredMode = DISABLE;
+	hcan1.Init.AutoBusOff = DISABLE;
+	hcan1.Init.AutoWakeUp = DISABLE;
+	hcan1.Init.AutoRetransmission = DISABLE;
+	hcan1.Init.ReceiveFifoLocked = DISABLE;
+	hcan1.Init.TransmitFifoPriority = DISABLE;
+	if (HAL_CAN_Init(&hcan1) != HAL_OK)
+	{
+	Error_Handler();
+	}
+	/* USER CODE BEGIN CAN1_Init 2 */
+
+	/* USER CODE END CAN1_Init 2 */
 
 }
 
@@ -356,11 +528,43 @@ static void MX_CAN1_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
+	/* GPIO Ports Clock Enable */
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+
+	/*Configure GPIO pin Output Level */
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2|GPIO_PIN_10, GPIO_PIN_RESET);
+
+	/*Configure GPIO pin Output Level */
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_RESET);
+
+	/*Configure GPIO pins : PB2 PB10 */
+	GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_10;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	/*Configure GPIO pins : PB12 PB13 */
+	GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13;
+	GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	/*Configure GPIO pin : PB15 */
+	GPIO_InitStruct.Pin = GPIO_PIN_15;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	/*Configure GPIO pin : PA10 */
+	GPIO_InitStruct.Pin = GPIO_PIN_10;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
 
@@ -368,17 +572,88 @@ static void MX_GPIO_Init(void)
 
 // *** functions *** //
 
+void pollSensorData()
+{
+  // get front right wheel speed
+  ADC_Select_CH_WSFR();
+  HAL_ADC_Start(&hadc1);
+  HAL_ADC_PollForConversion(&hadc1, 1000);
+  wheelSpeedFR = HAL_ADC_GetValue(&hadc1);
+  HAL_ADC_Stop(&hadc1);
+
+  // get front left wheel speed
+  ADC_Select_CH_WSFL();
+  HAL_ADC_Start(&hadc1);
+  HAL_ADC_PollForConversion(&hadc1, 1000);
+  wheelSpeedFL = HAL_ADC_GetValue(&hadc1);
+  HAL_ADC_Stop(&hadc1);
+
+  // get front right ride height
+  ADC_Select_CH_RHFR();
+  HAL_ADC_Start(&hadc1);
+  HAL_ADC_PollForConversion(&hadc1, 1000);
+  rideHeightFR = HAL_ADC_GetValue(&hadc1);
+  HAL_ADC_Stop(&hadc1);
+
+  // get front left ride height
+  ADC_Select_CH_RHFL();
+  HAL_ADC_Start(&hadc1);
+  HAL_ADC_PollForConversion(&hadc1, 1000);
+  rideHeightFL = HAL_ADC_GetValue(&hadc1);
+  HAL_ADC_Stop(&hadc1);
+
+  // get pedal 0
+  ADC_Select_CH_P0();
+  HAL_ADC_Start(&hadc1);
+  HAL_ADC_PollForConversion(&hadc1, 1000);
+  pedal0 = HAL_ADC_GetValue(&hadc1);
+  HAL_ADC_Stop(&hadc1);
+
+  // get pedal 1
+  ADC_Select_CH_P1();
+  HAL_ADC_Start(&hadc1);
+  HAL_ADC_PollForConversion(&hadc1, 1000);
+  pedal1 = HAL_ADC_GetValue(&hadc1);
+  HAL_ADC_Stop(&hadc1);
+
+  // get brake 0
+  ADC_Select_CH_B0();
+  HAL_ADC_PollForConversion(&hadc1, 1000);
+  brake0 = HAL_ADC_GetValue(&hadc1);
+  HAL_ADC_Stop(&hadc1);
+
+  // get brake 1
+  ADC_Select_CH_B1();
+  HAL_ADC_Start(&hadc1);
+  HAL_ADC_PollForConversion(&hadc1, 1000);
+  brake1 = HAL_ADC_GetValue(&hadc1);
+  HAL_ADC_Stop(&hadc1);
+
+  // get coast regen
+  ADC_Select_CH_CR();
+  HAL_ADC_Start(&hadc1);
+  HAL_ADC_PollForConversion(&hadc1, 1000);
+  coastRegen = HAL_ADC_GetValue(&hadc1);
+  HAL_ADC_Stop(&hadc1);
+
+  // get brake regen
+  ADC_Select_CH_BR();
+  HAL_ADC_Start(&hadc1);
+  HAL_ADC_PollForConversion(&hadc1, 1000);
+  brakeRegen = HAL_ADC_GetValue(&hadc1);
+  HAL_ADC_Stop(&hadc1);
+}
+
 /**
  * @brief CAN read message function
  * 
- * @param hcan
+ * @param hcan1
  */
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 {
-	HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rxHeader, canRX); //Receive CAN bus message to canRX buffer
+	HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, canRX); //Receive CAN bus message to canRX buffer
 	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_3);  // toggle PA3 LED
 }
-
 
 /**
  * @brief welcome & boot screen
@@ -386,12 +661,12 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
  */
 void welcomeScreen()
 {
-  lcd_init();                         // init lcd
-  lcd_clear();                        // clear the screen
-  lcd_put_cur(1, 0);                  // set the cursor
-  lcd_send_string("welcome AERO!");   // print
-  lcd_put_cur(2, 0);                  // next line
-  lcd_send_string("booting up...");   // print
+	lcd.begin(16, 2);                   // init lcd
+	lcd.clear();                        // clear the screen
+	lcd.setCursor(2, 0);                // set the cursor
+	lcd.print("welcome AERO!");         // print
+	lcd.setCursor(2, 1);                // next line
+	lcd.print("booting up...");         // print
 }
 
 
@@ -401,52 +676,48 @@ void welcomeScreen()
  */
 void racingHUD()
 {
-  // get current MPH
-  float averageWheelSpeed = (HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL) + HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL)) / 2;
-  float currentMPH = averageWheelSpeed * WHEEL_DIAMETER * (3.14159) * 60 / 63360; // pi and inches in a mile
+	// get current MPH
+	float averageWheelSpeed = (wheelSpeedFR + wheelSpeedFL) / 2;
+	float currentMPH = averageWheelSpeed * WHEEL_DIAMETER * (3.14159) * 60 / 63360; // pi and inches in a mile
 
-  // get battery percentage
-  float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
+	// get battery percentage
+	float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
 
-  // get coast regen and brake regen values
-  float coastRegen = HAL_ADC_GetValue(PIN_COAST_REGEN);
-  float brakeRegen = HAL_ADC_GetValue(PIN_BRAKE_REGEN);
+	// clear display
+	lcd.clear();
 
-  // clear display
-  lcd_clear();
+	// drive direction
+	lcd.setCursor(1, 0);                      // position of drive direction
+	if (direction) lcd.print("FWD");          // print drive direction
+	else lcd.print("RVS");
 
-  // drive direction
-  lcd_put_cur(1, 0);                        // position of drive direction
-  if (direction) lcd_send_string("FWD");    // print drive direction
-  else lcd_send_string("BCK");
+	// battery percentage
+	lcd.setCursor(12, 0);                     // set cursor for battery percentage value
+	lcd.print((int)batteryPercentage);        // print the battery percentage value
+	lcd.setCursor(15, 0);                     // set cursor for % sign
+	lcd.print("%%");                          // print % sign
 
-  // battery percentage
-  lcd_put_cur(12, 0);                       // set cursor for battery percentage value
-  lcd_send_data((int)batteryPercentage);    // print the battery percentage value
-  lcd_put_cur(15, 0);                       // set cursor for % sign
-  lcd_send_string("%%");                    // print % sign
+	// speedometer
+	lcd.setCursor(6, 0);                      // set cursor for mph value
+	lcd.print((int)currentMPH);               // print the current speed in MPH, cast to int to round to whole number
+	lcd.setCursor(6, 1);                      // set cursor for units
+	lcd.print("mph");                         // print units
 
-  // speedometer
-  lcd_put_cur(6, 1);                        // set cursor for mph value
-  lcd_send_data((int)currentMPH);           // print the current speed in MPH, cast to int to round to whole number
-  lcd_put_cur(9, 1);                        // set cursor for units
-  lcd_send_string("mph");                   // print units
+	// coast regen
+	lcd.setCursor(1, 1);                      // set cursor for CR
+	lcd.print("CR:");                         // print CR for coast regen
+	lcd.setCursor(4, 1);                      // set cursor for coast regen value
+	lcd.print((int)coastRegen);    			    	// print coast regen value
+	lcd.setCursor(6, 1);                      // set cursor for percent sign
+	lcd.print("%%");                          // print percent sign
 
-  // coast regen
-  lcd_put_cur(1, 2);                        // set cursor for CR
-  lcd_send_string("CR:");                   // print CR for coast regen
-  lcd_put_cur(4, 2);                        // set cursor for coast regen value
-  lcd_send_data((int)coastRegen);    				// print coast regen value
-  lcd_put_cur(6, 2);                        // set cursor for percent sign
-  lcd_send_string("%%");                    // print percent sign
-
-  // brake regen
-  lcd_put_cur(10, 2);                       // set cursor for BR
-  lcd_send_string("BR:");                   // print BR for brake regen
-  lcd_put_cur(12, 2);                       // set cursor for brake regen value
-  lcd_send_data((int)brakeRegen);    				// print brake regen value
-  lcd_put_cur(14, 2);                       // set cursor for percent sign
-  lcd_send_string("%%");                    // print percent sign
+	// brake regen
+	lcd.setCursor(10, 1);                     // set cursor for BR
+	lcd.print("BR:");                         // print BR for brake regen
+	lcd.setCursor(12, 1);                     // set cursor for brake regen value
+	lcd.print((int)brakeRegen);    		    		// print brake regen value
+	lcd.setCursor(14, 1);                     // set cursor for percent sign
+	lcd.print("%%");                          // print percent sign
 }
 
 
@@ -456,37 +727,37 @@ void racingHUD()
  */
 void electricalSettings()
 {
-  // get battery percentage
-  float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
+	// get battery percentage
+	float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
 
-  // clear screen
-  lcd_clear();
+	// clear screen
+	lcd.clear();
 
-  // battery percentage
-  lcd_put_cur(1, 0);                                        // set cursor for battery percentage value
-  lcd_send_data(batteryPercentage);                         // print the current battery percentage value
-  lcd_put_cur(4, 0);                                        // set cursor for % sign
-  lcd_send_string("%%");                                    // print % sign
+	// battery percentage
+	lcd.setCursor(1, 0);                                  // set cursor for battery percentage value
+	lcd.print(batteryPercentage);                         // print the current battery percentage value
+	lcd.setCursor(4, 0);                                  // set cursor for % sign
+	lcd.print("%%");                                      // print % sign
 
-  // bus voltage
-  lcd_put_cur(1, 1);                                        // set cursor for battery percentage value
-  lcd_send_data(emusVoltage);                               // print the emus voltage value
-  lcd_put_cur(4, 0);                                        // set cursor for units
-  lcd_send_string("V");                                     // print units
+	// bus voltage
+	lcd.setCursor(1, 1);                                  // set cursor for battery percentage value
+	lcd.print(emusVoltage);                               // print the emus voltage value
+	lcd.setCursor(4, 1);                                  // set cursor for units
+	lcd.print("V");                                       // print units
 
-  // rinehart voltage
-  lcd_put_cur(12, 0);                                       // set cursor for rinehart voltage value
-  lcd_send_data(rinehartVoltage);                           // print the rinehart voltage value
-  lcd_put_cur(15, 0);                                       // set cursor for units
-  lcd_send_string("V");                                     // print % sign
+	// rinehart voltage
+	lcd.setCursor(12, 0);                                 // set cursor for rinehart voltage value
+	lcd.print(rinehartVoltage);                           // print the rinehart voltage value
+	lcd.setCursor(15, 0);                                 // set cursor for units
+	lcd.print("V");                                       // print % sign
 
-  // power mode
-  lcd_put_cur(1, 2);                                        // set cursor for mode text
-  lcd_send_string("Mode:");                                 // print mode text
-  lcd_put_cur(8, 2);                                        // set cursor current mode setting
-  if (powerMode == TUTORIAL) lcd_send_string("Tutorial");
-  if (powerMode == ECO) lcd_send_string("Eco");
-  if (powerMode == EXPERT) lcd_send_string("Expert");
+	// power mode
+	lcd.setCursor(8, 1);                                  // set cursor for mode text
+	lcd.print("Mode:");                                   // print mode text
+	lcd.setCursor(12, 1);                                  // set cursor current mode setting
+	if (powerMode == TUTORIAL) lcd.print("Tutorial");
+	if (powerMode == ECO) lcd.print("Eco");
+	if (powerMode == EXPERT) lcd.print("Expert");
 }
 
 
@@ -496,81 +767,68 @@ void electricalSettings()
  */
 void rideSettings()
 {
-  // clear screen
-  lcd_clear();
+	// clear screen
+	lcd.clear();
 
-  // get suspension values
-  rideHeightFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_SUSPENSION);
-  rideHeightFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_SUSPENSION);
+	// not sure what to do for suspension values yet so
+	lcd.setCursor(6, 0);                  // ride height percentage text
+	lcd.print("Ride %%");                 // print text
 
-  // get coast regen and brake regen values
-  float coastRegen = HAL_ADC_GetValue(PIN_COAST_REGEN);
-  float brakeRegen = HAL_ADC_GetValue(PIN_BRAKE_REGEN);
+	lcd.setCursor(1, 0);                  // set cursor for wheel speed value
+	lcd.print((int)rideHeightFL);         // print front left ride height value
 
-  // not sure what to do for suspension values yet so
-  lcd_put_cur(6, 1);                    // ride height percentage text
-  lcd_send_string("Ride %%");           // print text
+	lcd.setCursor(3, 0);                  // set cursor for "-"
+	lcd.print("-");                       // print the "-"
 
-  lcd_put_cur(1, 0);                    // set cursor for wheel speed value
-  lcd_send_data((int)rideHeightFL);     // print front left ride height value
+	lcd.setCursor(5, 0);                  // set cursor for wheelspeed value
+	lcd.print((int)rideHeightFR);         // print front right ride height value
 
-  lcd_put_cur(3, 0);                    // set cursor for "-"
-  lcd_send_string("-");                 // print the "-"
+	lcd.setCursor(1, 1);                  // set cursor for wheelspeed value
+	lcd.print((int)rideHeightBL);         // print back left ride height value
 
-  lcd_put_cur(5, 0);                    // set cursor for wheelspeed value
-  lcd_send_data((int)rideHeightFR);     // print front right ride height value
+	lcd.setCursor(3, 1);                  // set cursor for "-"
+	lcd.print("-");                       // print the "-"
 
-  lcd_put_cur(1, 2);                    // set cursor for wheelspeed value
-  lcd_send_data((int)rideHeightBL);     // print back left ride height value
-
-  lcd_put_cur(3, 2);                    // set cursor for "-"
-  lcd_send_string("-");                 // print the "-"
-
-  lcd_put_cur(5, 2);                    // set cursor for wheelspeed value
-  lcd_send_data((int)rideHeightBR);     // print back right ride height value
+	lcd.setCursor(5, 1);                  // set cursor for wheelspeed value
+	lcd.print((int)rideHeightBR);         // print back right ride height value
 
 
-  // wheel speed
-  // get the current wheel speeds
-  float wheelSpeedFR = HAL_ADC_GetValue(PIN_FRONT_RIGHT_WHEEL);
-  float wheelSpeedFL = HAL_ADC_GetValue(PIN_FRONT_LEFT_WHEEL);
+	// wheel speed
+	lcd.setCursor(10, 0);                 // set cursor for RPM text
+	lcd.print("RPM");                     // print RPM text
 
-  lcd_put_cur(10, 1);                   // set cursor for RPM text
-  lcd_send_string("RPM");               // print RPM text
+	lcd.setCursor(10, 0);                 // set cursor for wheel speed value
+	lcd.print((int)wheelSpeedFR);         // print value for front left
 
-  lcd_put_cur(10, 0);                   // set cursor for wheel speed value
-  lcd_send_data((int)wheelSpeedFR);     // print value for front left
+	lcd.setCursor(12, 0);                 // set cursor for "-"
+	lcd.print("-");                       // print the "-"
 
-  lcd_put_cur(12, 0);                   // set cursor for "-"
-  lcd_send_string("-");                 // print the "-"
+	lcd.setCursor(14, 0);                 // set cursor for wheelspeed value
+	lcd.print((int)wheelSpeedFL);         // print value for front right
 
-  lcd_put_cur(14, 0);                   // set cursor for wheelspeed value
-  lcd_send_data((int)wheelSpeedFL);     // print value for front right
+	lcd.setCursor(10, 1);                 // set cursor for wheelspeed value
+	lcd.print((int)wheelSpeedBL);         // print value rear left
 
-  lcd_put_cur(10, 2);                   // set cursor for wheelspeed value
-  lcd_send_data((int)wheelSpeedBL);     // print value rear left
+	lcd.setCursor(12, 1);                 // set cursor for "-"
+	lcd.print("-");                       // print the "-"
 
-  lcd_put_cur(12, 2);                   // set cursor for "-"
-  lcd_send_string("-");                 // print the "-"
+	lcd.setCursor(14, 1);                 // set cursor for wheelspeed value
+	lcd.print((int)wheelSpeedBR);         // print value for rear right
 
-  lcd_put_cur(14, 2);                   // set cursor for wheelspeed value
-  lcd_send_data((int)wheelSpeedBR);     // print value for rear right
+	// coast regen
+	lcd.setCursor(7, 0);                  // set cursor for CR text
+	lcd.print("CR:");                     // print "CR:" for coast regen
+	lcd.print((int)coastRegen);           // print coast regen value
+	lcd.setCursor(9, 0);                  // set cursor for "%"
+	lcd.print("%%");                      // print "%"
 
-  // coast regen
-  lcd_put_cur(7, 0);                    // set cursor for CR text
-  lcd_send_string("CR:");               // print "CR:" for coast regen
-  lcd_send_data((int)coastRegen);       // print coast regen value
-  lcd_put_cur(9, 0);                    // set cursor for "%"
-  lcd_send_string("%%");                // print "%"
-
-  // brake regen
-  lcd_put_cur(7, 2);                    // set cursor for BR text
-  lcd_send_string("BR:");               // print "BR:" for brake regen
-  lcd_send_data((int)brakeRegen);       // print brake regen value
-  lcd_put_cur(9, 2);                    // set cursor for "%"
-  lcd_send_string("%%");                // print "%"
-  }
-
+	// brake regen
+	lcd.setCursor(7, 1);                  // set cursor for BR text
+	lcd.print("BR:");                     // print "BR:" for brake regen
+	lcd.print((int)brakeRegen);           // print brake regen value
+	lcd.setCursor(9, 1);                  // set cursor for "%"
+	lcd.print("%%");                      // print "%"
+}
 
 /* USER CODE END 4 */
 
@@ -580,13 +838,13 @@ void rideSettings()
   */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
+	/* USER CODE BEGIN Error_Handler_Debug */
+	/* User can add his own implementation to report the HAL error return state */
+	__disable_irq();
+	while (1)
+	{
+	}
+	/* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
@@ -606,4 +864,3 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
