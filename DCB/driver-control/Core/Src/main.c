@@ -88,8 +88,11 @@ CAN_HandleTypeDef hcan1;
 /* USER CODE BEGIN PV */
 
 // CAN
-CAN_RxHeaderTypeDef rxHeader; 					// CAN Bus Transmit Header
-CAN_TxHeaderTypeDef txHeader; 					// CAN Bus Receive Header
+CAN_RxHeaderTypeDef rxHeader; 					// CAN Bus Receive Header
+CAN_TxHeaderTypeDef txHeader0; 					// CAN Bus Transmit Header BASE
+CAN_TxHeaderTypeDef txHeader1; 					// CAN Bus Transmit Header Torque Setting
+CAN_TxHeaderTypeDef txHeader2; 					// CAN Bus Transmit Header DAQ Data
+CAN_TxHeaderTypeDef txHeader3; 					// CAN Bus Transmit Header Control Data
 uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	// CAN Bus Receive Buffer
 CAN_FilterTypeDef canFilter; 					// CAN Bus Filter
 uint32_t canMailbox; 							// CAN Bus Mail box variable
@@ -180,13 +183,37 @@ int main(void)
 	canFilter.FilterActivation = ENABLE;
 	canFilter.SlaveStartFilterBank = 14;
 
-	// init the CAN mailbox
-	txHeader.DLC = 8; // Number of bites to be transmitted max- 8
-	txHeader.IDE = CAN_ID_STD;
-	txHeader.RTR = CAN_RTR_DATA;
-	txHeader.StdId = 0x03;
-	txHeader.ExtId = 0x02;
-	txHeader.TransmitGlobalTime = DISABLE;
+	// init the CAN mailbox for BASE
+	txHeader0.DLC = 8; // Number of bites to be transmitted max- 8
+	txHeader0.IDE = CAN_ID_STD;
+	txHeader0.RTR = CAN_RTR_DATA;
+	txHeader0.StdId = 0x90;
+	txHeader0.ExtId = 0x02;
+	txHeader0.TransmitGlobalTime = DISABLE;
+
+	// init the CAN mailbox for Torque Setting 
+	txHeader1.DLC = 8; // Number of bites to be transmitted max- 8
+	txHeader1.IDE = CAN_ID_STD;
+	txHeader1.RTR = CAN_RTR_DATA;
+	txHeader1.StdId = 0x91;
+	txHeader1.ExtId = 0x03;
+	txHeader1.TransmitGlobalTime = DISABLE;
+
+	// init the CAN mailbox for DAQ Data
+	txHeader2.DLC = 8; // Number of bites to be transmitted max- 8
+	txHeader2.IDE = CAN_ID_STD;
+	txHeader2.RTR = CAN_RTR_DATA;
+	txHeader2.StdId = 0x92;
+	txHeader2.ExtId = 0x04;
+	txHeader2.TransmitGlobalTime = DISABLE;
+
+	// init the CAN mailbox for Control Data
+	txHeader3.DLC = 8; // Number of bites to be transmitted max- 8
+	txHeader3.IDE = CAN_ID_STD;
+	txHeader3.RTR = CAN_RTR_DATA;
+	txHeader3.StdId = 0x93;
+	txHeader3.ExtId = 0x05;
+	txHeader3.TransmitGlobalTime = DISABLE;
 
 	HAL_CAN_ConfigFilter(&hcan1, &canFilter); // Initialize CAN Filter
 	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
@@ -233,8 +260,18 @@ int main(void)
 
 
 		// send can messages
-		uint8_t csend[] = {wheelSpeedFR, wheelSpeedFL, rideHeightFR, rideHeightFL, 0x04, 0x05, 0x06, startButtonState}; // Tx Buffer
-		HAL_CAN_AddTxMessage(&hcan1, &txHeader, csend, &canMailbox); // Send Message
+		uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; // Tx Buffer
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
+
+		uint8_t csend1[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// add torque setting
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
+
+		uint8_t csend2[] = {wheelSpeedFL, wheelSpeedFR, rideHeightFL, rideHeightFR, brake0, brake1, pedal0, pedal1};
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader2, csend2, &canMailbox); // Send Message
+
+		uint8_t csend3[] = {coastRegen, brakeRegen, cooling, direction, 0x04, 0x05, 0x06, 0x07};
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader3, csend3, &canMailbox); // Send Message
+
 
 		// check for lcd button press to change screeens
 		if (HAL_GPIO_ReadPin(GPIOB, PIN_LCD_BUTTON) == 0)
