@@ -61,7 +61,7 @@
 #define PIN_CAN_MINUS					        33		// negative CAN wire
 
 // wheel diameter
-#define WHEEL_DIAMETER                16    // diameter of the wheels in inches
+#define WHEEL_DIAMETER                20.5    // diameter of the wheels in inches
 
 // pack voltage
 #define MAX_PACK_VOLTAGE              265   // max pack voltage for calculating pack capacity percentage
