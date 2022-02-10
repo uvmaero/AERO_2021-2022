@@ -32,6 +32,15 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
+
+/**
+ * @brief TODO:
+ * assign the lcd pins (4 pins)
+ * 4 tx headers
+ * figure rx stuff
+ */
+
+
 // inputs
 #define PIN_START_BUTTON              		28    			// ready to drive button
 #define PIN_DRIVE_DIRECTION           		26				// drive direction toggle
@@ -46,7 +55,6 @@
 #define PIN_PEDAL_1					        17				// go pedal sensor 2
 #define PIN_BRAKE_0					        14				// brake sensor 1
 #define PIN_BRAKE_1				            15				// brake sensor 2
-#define PIN_STEERING		    	        34				// THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
 
 // outputs
 #define PIN_LCD_SDA						    29				// LCD sda
@@ -176,7 +184,7 @@ int main(void)
 	txHeader.DLC = 8; // Number of bites to be transmitted max- 8
 	txHeader.IDE = CAN_ID_STD;
 	txHeader.RTR = CAN_RTR_DATA;
-	txHeader.StdId = 0x030;
+	txHeader.StdId = 0x03;
 	txHeader.ExtId = 0x02;
 	txHeader.TransmitGlobalTime = DISABLE;
 
