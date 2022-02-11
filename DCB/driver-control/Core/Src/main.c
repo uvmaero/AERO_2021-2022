@@ -40,9 +40,7 @@
 
 /**
  * @brief TODO:
- * assign the lcd pins (4 pins)
- * 4 tx headers
- * figure out rx stuff
+ * READ CAN
  */
 
 
