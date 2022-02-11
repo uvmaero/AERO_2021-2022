@@ -20,10 +20,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "LiquidCrystal.h"
+#include "lcd_hd44780_i2c.h"
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -86,7 +89,8 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 CAN_HandleTypeDef hcan1;
-
+I2C_HandleTypeDef hi2c1;
+osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 
 // CAN
@@ -123,6 +127,9 @@ int RTDButtonLEDState = 0;              		// RTD button LED toggle (0 is off)
 int cooling = 0;                     			// cooling toggle (0 is off)
 int direction = 0;		                		// drive direction (0 is forwards)
 
+// LCD
+char str_buff[10];
+
 // screen enum
 enum screens
 {
@@ -149,6 +156,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_CAN1_Init(void);
+static void MX_I2C1_Init(void);
+void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 void welcomeScreen();
@@ -156,6 +165,16 @@ void racingHUD();
 void electricalSettings();
 void rideSettings();
 void pollSensorData();
+void ADC_Select_CH_WSFR();
+void ADC_Select_CH_WSFL();
+void ADC_Select_CH_RHFR();
+void ADC_Select_CH_RHFL();
+void ADC_Select_CH_P0();
+void ADC_Select_CH_P1();
+void ADC_Select_CH_B0();
+void ADC_Select_CH_B1();
+void ADC_Select_CH_CR();
+void ADC_Select_CH_BR();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -169,7 +188,7 @@ void pollSensorData();
   */
 int main(void)
 {
-	/* USER CODE BEGIN 1 */
+  /* USER CODE BEGIN 1 */
 	// init the lcd screen
 	// LiquidCrystal lcd(rs_pin, enable_pin, PIN_LCD_SDA, PIN_LCD_SCL);   // we need to figure out the rs and enables pins!!!!!!!!!
 
@@ -220,38 +239,67 @@ int main(void)
 	HAL_CAN_ConfigFilter(&hcan1, &canFilter); // Initialize CAN Filter
 	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
-	/* USER CODE END 1 */
+  /* USER CODE END 1 */
 
-	/* MCU Configuration--------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* Configure the system clock */
-	SystemClock_Config();
+  /* Configure the system clock */
+  SystemClock_Config();
 
-	/* USER CODE BEGIN SysInit */
+  /* USER CODE BEGIN SysInit */
 
-	/* USER CODE END SysInit */
+  /* USER CODE END SysInit */
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_ADC1_Init();
-	MX_CAN1_Init();
-
-	/* USER CODE BEGIN 2 */
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_ADC1_Init();
+  MX_CAN1_Init();
+  MX_I2C1_Init();
+  /* USER CODE BEGIN 2 */
 
 	// start up LCD display
 	welcomeScreen();
 
-	/* USER CODE END 2 */
+  /* USER CODE END 2 */
 
-	/* Infinite loop */
-	/* USER CODE BEGIN WHILE */
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
 	while (1)
 	{
 		// poll sensor data
@@ -284,7 +332,7 @@ int main(void)
 		}
 
 		// clear screen if the screen mode has been changed
-		if (currentScreen != oldScreen) lcd.clear();
+		if (currentScreen != oldScreen) lcdDisplayClear();
 
 		// screen updates
 		switch (currentScreen)
@@ -307,11 +355,11 @@ int main(void)
 			break;
 		}
 
-		/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-		/* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 	}
-	/* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
@@ -320,37 +368,37 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-	/** Configure the main internal regulator output voltage
-	*/
-	__HAL_RCC_PWR_CLK_ENABLE();
-	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-	/** Initializes the RCC Oscillators according to the specified parameters
-	* in the RCC_OscInitTypeDef structure.
-	*/
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	/** Initializes the CPU, AHB and APB buses clocks
-	*/
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-							  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-	{
-		Error_Handler();
-	}
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /**
@@ -361,178 +409,48 @@ void SystemClock_Config(void)
 static void MX_ADC1_Init(void)
 {
 
-	/* USER CODE BEGIN ADC1_Init 0 */
+  /* USER CODE BEGIN ADC1_Init 0 */
 
-	/* USER CODE END ADC1_Init 0 */
+  /* USER CODE END ADC1_Init 0 */
 
-	// ADC_ChannelConfTypeDef sConfig = {0};
+  // ADC_ChannelConfTypeDef sConfig = {0};
 
-	/* USER CODE BEGIN ADC1_Init 1 */
+  /* USER CODE BEGIN ADC1_Init 1 */
 
-	/* USER CODE END ADC1_Init 1 */
-	/** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
-	*/
-	hadc1.Instance = ADC1;
-	hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
-	hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-	hadc1.Init.ScanConvMode = DISABLE;
-	hadc1.Init.ContinuousConvMode = DISABLE;
-	hadc1.Init.DiscontinuousConvMode = DISABLE;
-	hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-	hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-	hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-	hadc1.Init.NbrOfConversion = 1;
-	hadc1.Init.DMAContinuousRequests = DISABLE;
-	hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-	if (HAL_ADC_Init(&hadc1) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	/** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-	*/
-  /*
-	sConfig.Channel = ADC_CHANNEL_0;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-	Error_Handler();
-	}
+  /* USER CODE END ADC1_Init 1 */
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
-	/* USER CODE BEGIN ADC1_Init 2 */
-
-	/* USER CODE END ADC1_Init 2 */
-
-}
-
-void ADC_Select_CH_WSFL(void)
-{
-  ADC_ChannelConfTypeDef sConfig = {0};
-
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+ /*
   sConfig.Channel = ADC_CHANNEL_0;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
-}
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  */
+  /* USER CODE BEGIN ADC1_Init 2 */
 
-void ADC_Select_CH_WSFR(void)
-{
-  ADC_ChannelConfTypeDef sConfig = {0};
-  
-  sConfig.Channel = ADC_CHANNEL_1;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
-}
+  /* USER CODE END ADC1_Init 2 */
 
-void ADC_Select_CH_RHFL(void)
-{
-  ADC_ChannelConfTypeDef sConfig = {0};
-  
-  sConfig.Channel = ADC_CHANNEL_2;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
-}
-
-void ADC_Select_CH_RHFR(void)
-{
-  ADC_ChannelConfTypeDef sConfig = {0};
-  
-  sConfig.Channel = ADC_CHANNEL_3;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
-}
-
-void ADC_Select_CH_B0(void)
-{
-  ADC_ChannelConfTypeDef sConfig = {0};
-  
-  sConfig.Channel = ADC_CHANNEL_4;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
-}
-
-void ADC_Select_CH_B1(void)
-{
-  ADC_ChannelConfTypeDef sConfig = {0};
-  
-  sConfig.Channel = ADC_CHANNEL_5;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
-}
-
-void ADC_Select_CH_P0(void)
-{
-  ADC_ChannelConfTypeDef sConfig = {0};
-  
-  sConfig.Channel = ADC_CHANNEL_6;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
-}
-
-void ADC_Select_CH_P1(void)
-{
-  ADC_ChannelConfTypeDef sConfig = {0};
-  
-  sConfig.Channel = ADC_CHANNEL_7;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
-}
-
-void ADC_Select_CH_CR(void)
-{
-  ADC_ChannelConfTypeDef sConfig = {0};
-  
-  sConfig.Channel = ADC_CHANNEL_8;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
-}
-
-void ADC_Select_CH_BR(void)
-{
-  ADC_ChannelConfTypeDef sConfig = {0};
-  
-  sConfig.Channel = ADC_CHANNEL_9;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
 }
 
 /**
@@ -543,32 +461,66 @@ void ADC_Select_CH_BR(void)
 static void MX_CAN1_Init(void)
 {
 
-	/* USER CODE BEGIN CAN1_Init 0 */
+  /* USER CODE BEGIN CAN1_Init 0 */
 
-	/* USER CODE END CAN1_Init 0 */
+  /* USER CODE END CAN1_Init 0 */
 
-	/* USER CODE BEGIN CAN1_Init 1 */
+  /* USER CODE BEGIN CAN1_Init 1 */
 
-	/* USER CODE END CAN1_Init 1 */
-	hcan1.Instance = CAN1;
-	hcan1.Init.Prescaler = 16;
-	hcan1.Init.Mode = CAN_MODE_NORMAL;
-	hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-	hcan1.Init.TimeSeg1 = CAN_BS1_1TQ;
-	hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
-	hcan1.Init.TimeTriggeredMode = DISABLE;
-	hcan1.Init.AutoBusOff = DISABLE;
-	hcan1.Init.AutoWakeUp = DISABLE;
-	hcan1.Init.AutoRetransmission = DISABLE;
-	hcan1.Init.ReceiveFifoLocked = DISABLE;
-	hcan1.Init.TransmitFifoPriority = DISABLE;
-	if (HAL_CAN_Init(&hcan1) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	/* USER CODE BEGIN CAN1_Init 2 */
+  /* USER CODE END CAN1_Init 1 */
+  hcan1.Instance = CAN1;
+  hcan1.Init.Prescaler = 16;
+  hcan1.Init.Mode = CAN_MODE_NORMAL;
+  hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_1TQ;
+  hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
+  hcan1.Init.TimeTriggeredMode = DISABLE;
+  hcan1.Init.AutoBusOff = DISABLE;
+  hcan1.Init.AutoWakeUp = DISABLE;
+  hcan1.Init.AutoRetransmission = DISABLE;
+  hcan1.Init.ReceiveFifoLocked = DISABLE;
+  hcan1.Init.TransmitFifoPriority = DISABLE;
+  if (HAL_CAN_Init(&hcan1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN CAN1_Init 2 */
 
-	/* USER CODE END CAN1_Init 2 */
+  /* USER CODE END CAN1_Init 2 */
+
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
 
 }
 
@@ -579,49 +531,148 @@ static void MX_CAN1_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
-	GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-	/* GPIO Ports Clock Enable */
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-	__HAL_RCC_GPIOB_CLK_ENABLE();
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2|GPIO_PIN_10, GPIO_PIN_RESET);
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2|GPIO_PIN_10, GPIO_PIN_RESET);
 
-	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_RESET);
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_RESET);
 
-	/*Configure GPIO pins : PB2 PB10 */
-	GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_10;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  /*Configure GPIO pins : PB2 PB10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-	/*Configure GPIO pins : PB12 PB13 */
-	GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13;
-	GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  /*Configure GPIO pins : PB12 PB13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-	/*Configure GPIO pin : PB15 */
-	GPIO_InitStruct.Pin = GPIO_PIN_15;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  /*Configure GPIO pin : PB15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-	/*Configure GPIO pin : PA10 */
-	GPIO_InitStruct.Pin = GPIO_PIN_10;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  /*Configure GPIO pin : PA10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
 
 /* USER CODE BEGIN 4 */
 
 // *** functions *** //
+void ADC_Select_CH_WSFR()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_0;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_WSFL()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_1;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_RHFR()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_2;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_RHFL()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_3;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_P0()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_4;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_P1()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_5;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_B0()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_6;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_B1()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_7;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_CR()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_8;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_BR()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_9;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
 
 void pollSensorData()
 {
@@ -712,16 +763,16 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
  */
 void welcomeScreen()
 {
-	lcd.begin(16, 2);                   // init lcd
-	lcd.clear();                        // clear the screen
-	lcd.setCursor(2, 0);                // set the cursor
-	lcd.print("welcome AERO!");         // print
-	lcd.setCursor(2, 1);                // next line
-	lcd.print("booting up...");         // print
-	HAL_Delay(3000);					// delay 3 seconds so the screen can be read
-	for (int i = 0; i < 32; i++) 		// slide that sweet boot text off the screen in ~style~
-		lcd.scrollDisplayRight();
-	lcd.clear();						// clear the display so the other screens can be printed
+	lcdInit(&hi2c1, 0x27, 2, 16);       			// init lcd (i2c reference, LCD address, lines, rows)
+	lcdAutoscrollOff();								// turn off autoscroll
+	lcdBacklightOn();								// turn on backlight
+	lcdDisplayClear();                  			// clear the screen
+	lcdSetCursorPosition(2, 0);         			// set the cursor
+	lcdPrintStr((uint8_t*)"welcome AERO!", 13);   	// print
+	lcdSetCursorPosition(2, 1);         			// next line
+	lcdPrintStr((uint8_t*)"booting up...", 13);   	// print
+	HAL_Delay(3000);								// delay 3 seconds so the screen can be read
+	lcdDisplayClear();								// clear the display so the other screens can be printed
 }
 
 
@@ -733,54 +784,45 @@ void racingHUD()
 {
 	// get wheel speed
 	float averageWheelSpeed = (wheelSpeedFR + wheelSpeedFL) / 2;
+
 	// get current mph from wheel speed
 	float currentMPH = ((averageWheelSpeed * WHEEL_DIAMETER) * (3.14159 * 60)) / 63360;
 
 	// get battery percentage
 	float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
 
+	// init some char buffs for variables
+	char battStr[10];
+	char speedStr[10];
+	char coastStr[10];
+	char brakeStr[10];
+
 	// drive direction
-	lcd.setCursor(0, 1);                      // position of drive direction
-	lcd.print("   ");						  // selective clear first 4 spaces
-	lcd.setCursor(0, 1);                      // position of drive direction
-	if (direction) lcd.print("FWD");          // print drive direction
-	else lcd.print("RVS");
+	lcdSetCursorPosition(0, 0);									// position of drive direction
+	if (direction) lcdPrintStr((uint8_t*)"FWD", 3);     		// print drive direction
+	else lcdPrintStr((uint8_t*)"RVS", 3);
 
 	// battery percentage
-	lcd.setCursor(12, 0);                     // set cursor for battery percentage value
-	lcd.print("  ");						  // selective clear 2 spaces
-	lcd.setCursor(12, 0);                     // set cursor for battery percentage value
-	lcd.print((int)batteryPercentage);        // print the battery percentage value
-	lcd.setCursor(14, 0);                     // set cursor for % sign
-	lcd.print("%%");                          // print % sign
+	lcdSetCursorPosition(12, 0); 								// set cursor for battery percentage value
+	sprintf(battStr, "%.0d%%", (int)batteryPercentage); 		// sprintf it
+	lcdPrintStr((uint8_t*)battStr, strlen(battStr));			// print the battery percentage value
 
-	// speedometer
-	lcd.setCursor(7, 0);                      // set cursor for mph value
-	lcd.print("  ");						  // selective clear 2 spaces
-	lcd.setCursor(7, 0);                      // set cursor for mph value
-	lcd.print((int)currentMPH);               // print the current speed in MPH, cast to int to round to whole number
-	lcd.setCursor(7, 1);                      // set cursor for units
-	lcd.print("mph");                         // print units
+	// speedometer		
+	lcdSetCursorPosition(7, 0);                     			// set cursor for mph value
+	sprintf(speedStr, "%.0d", (int)currentMPH);					// sprintf it
+	lcdPrintStr((uint8_t*)speedStr, strlen(speedStr));			// print the current speed in MPH, cast to int to round to whole number
+	lcdSetCursorPosition(7, 1);                     			// set cursor for units
+	lcdPrintStr((uint8_t*)"mph", 3);                    		// print units
 
-	// coast regen
-	lcd.setCursor(0, 0);                      // set cursor for CR
-	lcd.print("C:");                          // print CR for coast regen
-	lcd.setCursor(2, 1);                      // set cursor for coast regen value
-	lcd.print("  ");						  // selective clear 2 spaces
-	lcd.setCursor(2, 1);                      // set cursor for coast regen value
-	lcd.print((int)coastRegen);    			  // print coast regen value
-	lcd.setCursor(4, 1);                      // set cursor for percent sign
-	lcd.print("%%");                          // print percent sign
+	// coast regen		
+	lcdSetCursorPosition(0, 1);                      			// set cursor for CR
+	sprintf(coastStr, "C:%.0d%%", (int)coastRegen);				// sprintf it
+	lcdPrintStr((uint8_t*)coastStr, strlen(coastStr));  		// print coast regen value
 
-	// brake regen
-	lcd.setCursor(11, 1);                     // set cursor for BR
-	lcd.print("B:");                          // print BR for brake regen
-	lcd.setCursor(12, 1);                     // set cursor for brake regen value
-	lcd.print("  ");						  // selective clear 2 spaces 
-	lcd.setCursor(12, 1);                     // set cursor for brake regen value
-	lcd.print((int)brakeRegen);    		      // print brake regen value
-	lcd.setCursor(14, 1);                     // set cursor for percent sign
-	lcd.print("%%");                          // print percent sign
+	// brake regen		
+	lcdSetCursorPosition(11, 1);                     			// set cursor for BR
+	sprintf(brakeStr, "B: %d%%", (int)brakeRegen);				// sprintf it
+	lcdPrintStr((uint8_t*)brakeStr, strlen(brakeStr));  		// print brake regen value
 }
 
 
@@ -793,44 +835,38 @@ void electricalSettings()
 	// get battery percentage
 	float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
 
+	// init some char buffs for variables
+	char battStr[10];
+	char busVStr[10];
+
 	// battery percentage
-	lcd.setCursor(0, 0);                                  // set cursor for battery title
-	lcd.print("Batt:");									  // print title
-	lcd.setCursor(5, 0);								  // set cursor for batter percentage value
-	lcd.print("  ");									  // selective clear 2 spaces
-	lcd.setCursor(5, 0);								  // set cursor for batter percentage value
-	lcd.print((int)batteryPercentage);                    // print the current battery percentage value
-	lcd.setCursor(7, 0);                                  // set cursor for % sign
-	lcd.print("%%");                                      // print % sign
+	lcdSetCursorPosition(0, 0);									// set cursor for battery title
+	sprintf(battStr, "Batt:%d%%", (int)batteryPercentage);		// sprintf it
+	lcdPrintStr((uint8_t*)battStr, strlen(battStr));			// print title
 
 	// bus voltage
-	lcd.setCursor(11, 0);                                 // set cursor for bus voltage title
-	lcd.print("Bus:");									  // print title
-	lcd.setCursor(11, 1);								  // set cursor for bus voltage value
-	lcd.print("   ");									  // selective clear 3 spaces
-	lcd.setCursor(11, 1);								  // set cursor for bus voltage value
-	lcd.print((int)emusVoltage);                          // print the emus voltage value
-	lcd.setCursor(15, 1);                                 // set cursor for units
-	lcd.print("V");                                       // print units
+	lcdSetCursorPosition(11, 0);								// set cursor for bus voltage title
+	sprintf(busVStr, "Bus:%d", (int)emusVoltage);				// sprintf it			
+	lcdPrintStr((uint8_t*)busVStr, strlen(busVStr));			// print
+	lcdSetCursorPosition(15, 1);                                // set cursor for units
+	lcdPrintStr((uint8_t*)"V", 1);                              // print units
 
 	/*	not planning on using this for the time being
 	// rinehart voltage
-	lcd.setCursor(12, 0);                                 // set cursor for rinehart voltage value
-	lcd.print(rinehartVoltage);                           // print the rinehart voltage value
-	lcd.setCursor(15, 0);                                 // set cursor for units
-	lcd.print("V");                                       // print % sign
+	lcdSetCursorPosition(12, 0);                                // set cursor for rinehart voltage value
+	lcdPrintStr(rinehartVoltage);                           	// print the rinehart voltage value
+	lcdSetCursorPosition(15, 0);                                // set cursor for units
+	lcdPrintStr("V");                                       	// print % sign
 	*/
 
 	// power mode
-	lcd.setCursor(0, 1);                                  // set cursor for mode text
-	lcd.print("Mode:");                                   // print mode text
-	lcd.setCursor(5, 1);                                  // set cursor current mode setting
-	lcd.print("    ");									  // selective clear 4 spaces
-	lcd.setCursor(5, 1);                                  // set cursor current mode setting
-	if (powerMode == TUTORIAL) lcd.print("TUTR");
-	if (powerMode == ECO) lcd.print("ECO");
-	if (powerMode == EXPERT) lcd.print("EXPT");
-	else lcd.print("ERR!");
+	lcdSetCursorPosition(0, 1);                                 // set cursor for mode text
+	lcdPrintStr((uint8_t*)"Mode:", 5);							// print mode text
+	lcdSetCursorPosition(5, 1);                                 // set cursor current mode setting
+	if (powerMode == TUTORIAL) lcdPrintStr((uint8_t*)"TUTR", 4);
+	if (powerMode == ECO) lcdPrintStr((uint8_t*)"ECO", 3);
+	if (powerMode == EXPERT) lcdPrintStr((uint8_t*)"EXPT", 4);
+	else lcdPrintStr((uint8_t*)(uint8_t*)"ERR!", 4);
 }
 
 
@@ -840,68 +876,82 @@ void electricalSettings()
  */
 void rideSettings()
 {
+	// init some char buffs for variables
+	char rideStr[10];
+	char wheelStr[10];
+
 	// ride height
-	lcd.setCursor(0, 0);                  // set cursor for front left ride height value
-	lcd.print("  ");					  // selective clearing 2 spaces
-	lcd.setCursor(0, 0);                  // set cursor for front left ride height value
-	lcd.print((int)rideHeightFL);         // print front left ride height value
+	lcdSetCursorPosition(0, 0);									// set cursor for front left ride height value
+	sprintf(rideStr, "%d", (int)rideHeightFL);					// sprintf it
+	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));			// print front left ride height value
 
-	lcd.setCursor(2, 0);				  // spacer
-	lcd.print("-");						  // spacer
+	lcdSetCursorPosition(2, 0);				  					// spacer
+	lcdPrintStr((uint8_t*)"-", 1);						  		// spacer
 
-	lcd.setCursor(3, 0);                  // set cursor for front right ride height value
-	lcd.print("  ");					  // selective clearing 2 spaces
-	lcd.setCursor(3, 0);                  // set cursor for front right ride height value
-	lcd.print((int)rideHeightFR);         // print front right ride height value
+	lcdSetCursorPosition(3, 0);									// set cursor for front right ride height value
+	sprintf(rideStr, "%d", (int)rideHeightFR);					// sprintf it
+	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));			// print front right ride height value
 
-	lcd.setCursor(5, 0);                  // set cursor for "<- Ride"
-	lcd.print("<-Ride");                  // print the "-"
+	lcdSetCursorPosition(5, 0);									// set cursor for "<- Ride"
+	lcdPrintStr((uint8_t*)"<-Ride", 6);							// print
 
-	lcd.setCursor(0, 1);                  // set cursor for back left ride height value
-	lcd.print("  ");					  // selective clearing 2 spaces
-	lcd.setCursor(0, 1);                  // set cursor for back left ride height value
-	lcd.print((int)rideHeightBL);         // print back left ride height value
+	lcdSetCursorPosition(0, 1);                  				// set cursor for back left ride height value
+	sprintf(rideStr, "%d", (int)rideHeightBL);					// sprintf it
+	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));         	// print back left ride height value
 
-	lcd.setCursor(2, 1);				  // spacer
-	lcd.print("-");						  // spacer
+	lcdSetCursorPosition(2, 1);				  					// spacer
+	lcdPrintStr((uint8_t*)"-", 1);						  		// spacer
 
-	lcd.setCursor(3, 1);                  // set cursor for back right ride height value
-	lcd.print("  ");					  // selective clearing 2 spaces
-	lcd.setCursor(3, 1);                  // set cursor for back right ride height value
-	lcd.print((int)rideHeightBR);         // print back right ride height value
+	lcdSetCursorPosition(3, 1);                  				// set cursor for back right ride height value
+	sprintf(rideStr, "%d", (int)rideHeightBR);					// sprintf it
+	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));			// print back right ride height value
 
-	lcd.setCursor(6, 1);                  // set cursor for "RPM->"
-	lcd.print("RPM->");                   // print the "RPM->"
+	lcdSetCursorPosition(6, 1);                  				// set cursor for "RPM->"
+	lcdPrintStr((uint8_t*)"RPM->", 5);                   		// print the "RPM->"
 
 	// wheel speed
-	lcd.setCursor(11, 0);                 // set cursor for front left wheelspeed value
-	lcd.print("  ");					  // selective clearing 2 spaces
-	lcd.setCursor(11, 0);                 // set cursor for front left wheelspeed value
-	lcd.print((int)wheelSpeedFL);         // print front left wheelspeed value
+	lcdSetCursorPosition(11, 0);								// set cursor for front left wheelspeed value
+	sprintf(wheelStr, "%d", (int)wheelSpeedFL);					// sprintf it
+	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print front left wheelspeed value
 
-	lcd.setCursor(13, 0);				  // spacer
-	lcd.print("-");						  // spacer
+	lcdSetCursorPosition(13, 0);								// spacer
+	lcdPrintStr((uint8_t*)"-", 1);						  		// spacer
 
-	lcd.setCursor(14, 0);                 // set cursor for front right wheelspeed value
-	lcd.print("  ");					  // selective clearing 2 spaces
-	lcd.setCursor(14, 0);                 // set cursor for front right wheelspeed value
-	lcd.print((int)wheelSpeedFR);         // print front right wheelspeed value
+	lcdSetCursorPosition(14, 0);                 				// set cursor for front right wheelspeed value
+	sprintf(wheelStr, "%d", (int)wheelSpeedFR);					// sprintf it
+	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print front right wheelspeed value
 
-	lcd.setCursor(11, 1);                 // set cursor for back left wheelspeed value
-	lcd.print("  ");					  // selective clearing 2 spaces
-	lcd.setCursor(11, 1);                 // set cursor for back left wheelspeed value
-	lcd.print((int)wheelSpeedBL);         // print back left wheelspeed value
+	lcdSetCursorPosition(11, 1);                 				// set cursor for back left wheelspeed value
+	sprintf(wheelStr, "%d", (int)wheelSpeedBL);					// sprintf it
+	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print back left wheelspeed value
 
-	lcd.setCursor(13, 1);                 // set cursor for "-"
-	lcd.print("-");                       // print the "-"
+	lcdSetCursorPosition(13, 1);								// set cursor for "-"
+	lcdPrintStr((uint8_t*)"-", 1);								// print the "-"
 
-	lcd.setCursor(14, 1);                 // set cursor for back right wheelspeed value
-	lcd.print("  ");					  // selective clearing 2 spaces
-	lcd.setCursor(14, 1);                 // set cursor for back right wheelspeed value
-	lcd.print((int)wheelSpeedBR);         // print value for back right wheelspeed value
+	lcdSetCursorPosition(14, 1);								// set cursor for back right wheelspeed value
+	sprintf(wheelStr, "%d", (int)wheelSpeedBR);					// sprintf it
+	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print value for back right wheelspeed value
 }
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -909,13 +959,13 @@ void rideSettings()
   */
 void Error_Handler(void)
 {
-	/* USER CODE BEGIN Error_Handler_Debug */
+  /* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 	__disable_irq();
 	while (1)
 	{
 	}
-	/* USER CODE END Error_Handler_Debug */
+  /* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
@@ -928,9 +978,10 @@ void Error_Handler(void)
   */
 void assert_failed(uint8_t *file, uint32_t line)
 {
-	/* USER CODE BEGIN 6 */
+  /* USER CODE BEGIN 6 */
 	/* User can add his own implementation to report the file name and line number,
 		ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-	/* USER CODE END 6 */
+  /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
