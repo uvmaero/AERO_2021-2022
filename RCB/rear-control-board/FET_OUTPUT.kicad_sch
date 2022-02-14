@@ -407,14 +407,9 @@
     (uuid fe9e564c-f6a2-4117-ab3d-bca2372e35f6)
   )
 
-  (text "2.2mA current \nlimiting resistor " (at 51.435 54.61 0)
+  (text "2.2mA current \nlimiting resistor " (at 45.974 60.96 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid b06e9d89-43d2-44ee-a310-561bc780ec7e)
-  )
-  (text "TODO: Set the current limiting\nand ss pins with resistors"
-    (at 100.965 57.15 0)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid d32b0e17-6f71-415a-839d-71273f79b7a9)
   )
 
   (hierarchical_label "PUMP_12V" (shape input) (at 132.08 62.23 180)

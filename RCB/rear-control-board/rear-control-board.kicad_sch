@@ -1441,7 +1441,7 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid a08b9cc0-b115-49b5-992f-a0dc81e4c17a)
   )
-  (text "Rear Control Board\nFunctions: CAN, Wheel Speed, Dampers, Fan, Pump, Brake, Main Power Fuses, BRB I/O\n\nCAN is temrinated on Rineart (start of line)\nEnd of line is the Pacman Side 2"
+  (text "Rear Control Board\nFunctions: CAN, Wheel Speed, Dampers, Fan, Pump, Brake, Main Power Fuses, BRB I/O\n- CAN from rinehart to HVB\nCAN is temrinated on Rineart (start of line)\nEnd of line is the Pacman Side 2"
     (at 178.435 177.165 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid a7fc0812-140f-4d96-9cd8-ead8c1c610b1)

@@ -2,7 +2,7 @@
 <export version="E">
   <design>
     <source>C:\Users\aero\Documents\GitHub\AERO_2021-2022\PAM\pacman\pacman.kicad_sch</source>
-    <date>2/5/2022 4:04:48 PM</date>
+    <date>2/14/2022 9:58:17 AM</date>
     <tool>Eeschema (6.0.1)</tool>
     <sheet number="1" name="/" tstamps="/">
       <title_block>
@@ -210,18 +210,14 @@
       <sheetpath names="/" tstamps="/"/>
       <tstamps>06bc1d3f-a817-499c-b305-bf090751aa70</tstamps>
     </comp>
-    <comp ref="R4">
-      <value>1k 7W</value>
-      <footprint>Resistor_THT:R_Axial_Power_L25.0mm_W9.0mm_P30.48mm</footprint>
-      <fields>
-        <field name="MFR P/N">AC07000001001JAC00</field>
-      </fields>
-      <libsource lib="Device" part="R_US" description="Resistor, US symbol"/>
-      <property name="MFR P/N" value="AC07000001001JAC00"/>
+    <comp ref="R3">
+      <value>500</value>
+      <footprint>Package_TO_SOT_THT:TO-220-2_Horizontal_TabDown</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="pacman.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
-      <tstamps>00000000-0000-0000-0000-00005c5151c5</tstamps>
+      <tstamps>d38c4111-b22d-4aa6-9f1e-02baca01bfee</tstamps>
     </comp>
     <comp ref="R5">
       <value>10k</value>
@@ -240,19 +236,6 @@
       <property name="Sheetfile" value="pacman.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
       <tstamps>00000000-0000-0000-0000-00005c519b82</tstamps>
-    </comp>
-    <comp ref="R7">
-      <value>1k 7W</value>
-      <footprint>Resistor_THT:R_Axial_Power_L25.0mm_W9.0mm_P30.48mm</footprint>
-      <fields>
-        <field name="MFR P/N">AC07000001001JAC00</field>
-      </fields>
-      <libsource lib="Device" part="R_US" description="Resistor, US symbol"/>
-      <property name="MFR P/N" value="AC07000001001JAC00"/>
-      <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="pacman.kicad_sch"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamps>00000000-0000-0000-0000-00005ddba44f</tstamps>
     </comp>
   </components>
   <libparts>
@@ -546,8 +529,7 @@
     <net code="9" name="/INT+">
       <node ref="J3" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="R1" pin="1" pintype="passive"/>
-      <node ref="R4" pin="2" pintype="passive"/>
-      <node ref="R7" pin="2" pintype="passive"/>
+      <node ref="R3" pin="1" pintype="passive"/>
     </net>
     <net code="10" name="/INT-">
       <node ref="D1" pin="1" pinfunction="K" pintype="passive"/>
@@ -600,8 +582,7 @@
     <net code="19" name="Net-(K1-Pad5)">
       <node ref="K1" pin="5" pintype="passive"/>
       <node ref="K1" pin="6" pintype="passive"/>
-      <node ref="R4" pin="1" pintype="passive"/>
-      <node ref="R7" pin="1" pintype="passive"/>
+      <node ref="R3" pin="2" pintype="passive"/>
     </net>
     <net code="20" name="Net-(Q2-Pad1)">
       <node ref="Q2" pin="1" pinfunction="B" pintype="input"/>

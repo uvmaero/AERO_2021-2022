@@ -996,6 +996,11 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 3acdf21e-2676-4213-afbc-4b97e96301dd)
   )
+  (text "Board Function: \n- CAN IN/OUT from RCB to DCB and Pack 1\n- Vicor DC/DC \n- TSMP\n- BMS Current\n- STM32 (Precharge)\n- TSAL\n- IMD"
+    (at 177.8 182.245 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 3c8a5a63-01f2-4753-ae37-f7a745e078cd)
+  )
   (text "Power Resistors" (at 38.1 61.595 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 3f03fd16-a09a-47f5-adca-50c300f3a91b)
@@ -1973,9 +1978,6 @@
     )
     (path "/00000000-0000-0000-0000-00005c8304bf/00000000-0000-0000-0000-00005c60aca7"
       (reference "C23") (unit 1) (value "4700uF") (footprint "Capacitor_THT:C_Radial_D18.0mm_H35.5mm_P7.50mm")
-    )
-    (path "/00000000-0000-0000-0000-00005c8304a7/00000000-0000-0000-0000-000061903c93"
-      (reference "D1") (unit 1) (value "BAT54GW") (footprint "Diode_SMD:D_SOD-123")
     )
     (path "/00000000-0000-0000-0000-00005c8304a7/00000000-0000-0000-0000-000061904301"
       (reference "D2") (unit 1) (value "LED") (footprint "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder")
