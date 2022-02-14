@@ -6,7 +6,9 @@
   ******************************************************************************
   * @attention
   * 
-  * ADD SOME STUFF HERE
+  * This is the driver control board code. In this file includes all of the 
+  * driver code for the dashboard LCD, reading and writing to the CAN bus,
+  * sensor data gathering, and the power mode of the car. 
   *
   * Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.
