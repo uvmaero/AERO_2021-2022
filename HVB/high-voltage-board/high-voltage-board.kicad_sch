@@ -1830,9 +1830,6 @@
     (path "/00000000-0000-0000-0000-00005c8304a7/00000000-0000-0000-0000-000061911327"
       (reference "#PWR029") (unit 1) (value "+3.3V") (footprint "")
     )
-    (path "/00000000-0000-0000-0000-00005c8304a7/00000000-0000-0000-0000-0000619b6af5"
-      (reference "#PWR030") (unit 1) (value "GND") (footprint "")
-    )
     (path "/00000000-0000-0000-0000-00005c8304a7/00000000-0000-0000-0000-00006194925f"
       (reference "#PWR031") (unit 1) (value "+3.3V") (footprint "")
     )
@@ -1875,8 +1872,8 @@
     (path "/bc16a2d6-3566-4a8e-9301-1ea59d5ad589"
       (reference "#PWR0107") (unit 1) (value "+12V") (footprint "")
     )
-    (path "/00000000-0000-0000-0000-00005c8304a7/43b55b67-700e-4da2-aacc-bad8681a1ef4"
-      (reference "#PWR0108") (unit 1) (value "+3.3V") (footprint "")
+    (path "/00000000-0000-0000-0000-00005c8304a7/529cdea5-872c-441e-ba88-b46767afe657"
+      (reference "#PWR0108") (unit 1) (value "GND") (footprint "")
     )
     (path "/00000000-0000-0000-0000-00005c8304a7/68f92a54-f14a-4338-bfb4-429506e9b675"
       (reference "#PWR0109") (unit 1) (value "+3.3V") (footprint "")
@@ -1919,6 +1916,12 @@
     )
     (path "/00000000-0000-0000-0000-00005c8304a7/e6ab4020-bb24-4604-903d-197d8140f3b8"
       (reference "#PWR0122") (unit 1) (value "GND") (footprint "")
+    )
+    (path "/00000000-0000-0000-0000-00005c8304a7/80dbc0e2-3bf5-4816-ab7a-df2c2f52f81d"
+      (reference "#PWR0123") (unit 1) (value "GND") (footprint "")
+    )
+    (path "/00000000-0000-0000-0000-00005c8304a7/355525c3-6bae-4a8a-8b6b-7733976ef9c4"
+      (reference "#PWR0124") (unit 1) (value "GND") (footprint "")
     )
     (path "/00000000-0000-0000-0000-00005c8304a7/091008b4-41aa-4b76-bc0c-a8e9f8a7f968"
       (reference "C1") (unit 1) (value "4.7u") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
@@ -2033,6 +2036,9 @@
     )
     (path "/00000000-0000-0000-0000-00005c8304a7/3abfcec1-9c70-4f30-8332-c5c90f7b872d"
       (reference "J12") (unit 1) (value "Conn_01x02") (footprint "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
+    )
+    (path "/00000000-0000-0000-0000-00005c8304a7/d7bfd96b-ab03-4414-9dd2-aa714409e06c"
+      (reference "JP1") (unit 1) (value "SolderJumper_2_Bridged") (footprint "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm")
     )
     (path "/00000000-0000-0000-0000-00005c8304bf/00000000-0000-0000-0000-00005c6687ed"
       (reference "L1") (unit 1) (value "1uH") (footprint "Inductor_SMD:L_1008_2520Metric_Pad1.43x2.20mm_HandSolder")
