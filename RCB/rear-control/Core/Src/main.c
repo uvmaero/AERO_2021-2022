@@ -34,23 +34,22 @@
 /* USER CODE BEGIN PD */
 
 // inputs
-#define PIN_WATER_TEMP					17		// water temperauture sensor
-#define PIN_REAR_RIGHT_WHEEL			11		// rear right wheel speed sensor
-#define PIN_REAR_LEFT_WHEEL				10		// rear left wheel speed sensor
-#define PIN_REAR_RIGHT_SUSPENSION		13		// rear right suspension sensor
-#define PIN_REAR_LEFT_SUSPENSION		12		// rear left suspension sensor
-#define PIN_IMD_FAULT					18		// IMD fault line
-#define PIN_BMS_FAULT					19		// BMS fault line
+#define PIN_WATER_TEMP                    17		// water temperauture sensor
+#define PIN_REAR_RIGHT_WHEEL              11		// rear right wheel speed sensor
+#define PIN_REAR_LEFT_WHEEL				        10		// rear left wheel speed sensor
+#define PIN_REAR_RIGHT_SUSPENSION		      13		// rear right suspension sensor
+#define PIN_REAR_LEFT_SUSPENSION		      12		// rear left suspension sensor
+#define PIN_IMD_FAULT					            18		// IMD fault line
+#define PIN_BMS_FAULT					            19		// BMS fault line
 
 // outputs
-#define PIN_BRAKE_LIGHT					14		// brake light
-#define PIN_FAN_CONTROL					15		// fan speed/on/off control
-#define PIN_PUMP_CONTROL				16		// pump speed/on/off control
+#define PIN_BRAKE_LIGHT					          14		// brake light
+#define PIN_FAN_CONTROL					          15		// fan speed/on/off control
+#define PIN_PUMP_CONTROL				          16		// pump speed/on/off control
 
 // CAN
-#define PIN_CAN_PLUS					31		// positive CAN wire
-#define PIN_CAN_MINUS					33		// negative CAN wire
-
+#define PIN_CAN_PLUS					            31		// positive CAN wire
+#define PIN_CAN_MINUS					            33		// negative CAN wire
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -60,10 +59,33 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-
 CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
+
+// CAN
+CAN_RxHeaderTypeDef rxHeader; 					// CAN Bus Receive Header
+CAN_TxHeaderTypeDef txHeader0; 					// CAN Bus Transmit Header BASE
+CAN_TxHeaderTypeDef txHeader1; 					// CAN Bus Transmit Header Torque Setting
+CAN_TxHeaderTypeDef txHeader2; 					// CAN Bus Transmit Header DAQ Data
+CAN_TxHeaderTypeDef txHeader3; 					// CAN Bus Transmit Header Control Data
+uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	// CAN Bus Receive Buffer
+CAN_FilterTypeDef canFilter; 					// CAN Bus Filter
+uint32_t canMailbox; 							// CAN Bus Mail box variable
+
+// inputs
+float waterTemp = 0;
+float wheelSpeedBR = 0;
+float wheelSpeedBL = 0;
+float rideHeightBR = 0;
+float rideHeightBL = 0;
+int IMDFaultState = 0;              // 0 is maybe not faulting 
+int BMSFaultState = 0;              // 0 is maybe not faulting
+
+// outputs
+int brakeLightState = 0;            // 0 is off maybe
+int pumpState = 1;                  // 1 is on maybe
+int fanState = 1;                   // 1 is on maybe
 
 /* USER CODE END PV */
 
@@ -72,8 +94,13 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_ADC1_Init(void);
-/* USER CODE BEGIN PFP */
 
+/* USER CODE BEGIN PFP */
+void ADC_Select_CH_WSBR();          // wheelspeed 
+void ADC_Select_CH_WSBL();          // wheelspeed 
+void ADC_Select_CH_RHBR();          // ride height
+void ADC_Select_CH_RHBL();          // ride height
+void ADC_Select_CH_WT();            // water temperature
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -89,6 +116,45 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+  // init the CAN filter
+	canFilter.FilterBank = 0;
+	canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
+	canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
+	canFilter.FilterIdHigh = 0;
+	canFilter.FilterIdLow = 0;
+	canFilter.FilterMaskIdHigh = 0;
+	canFilter.FilterMaskIdLow = 0;
+	canFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+	canFilter.FilterActivation = ENABLE;
+	canFilter.SlaveStartFilterBank = 14;
+
+	// init the CAN mailbox for BASE
+	txHeader0.DLC = 8; // Number of bites to be transmitted max- 8
+	txHeader0.IDE = CAN_ID_STD;
+	txHeader0.RTR = CAN_RTR_DATA;
+	txHeader0.StdId = 0x80;
+	txHeader0.ExtId = 0x02;
+	txHeader0.TransmitGlobalTime = DISABLE;
+
+	// init the CAN mailbox for DAQ DATA
+	txHeader1.DLC = 8; // Number of bites to be transmitted max- 8
+	txHeader1.IDE = CAN_ID_STD;
+	txHeader1.RTR = CAN_RTR_DATA;
+	txHeader1.StdId = 0x81;
+	txHeader1.ExtId = 0x03;
+	txHeader1.TransmitGlobalTime = DISABLE;
+
+	// init the CAN mailbox for CONTROL DATA
+	txHeader2.DLC = 8; // Number of bites to be transmitted max- 8
+	txHeader2.IDE = CAN_ID_STD;
+	txHeader2.RTR = CAN_RTR_DATA;
+	txHeader2.StdId = 0x82;
+	txHeader2.ExtId = 0x04;
+	txHeader2.TransmitGlobalTime = DISABLE;
+
+	HAL_CAN_ConfigFilter(&hcan1, &canFilter); // Initialize CAN Filter
+	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
+	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -119,38 +185,26 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+    // poll sensor data
+    pollSensorData();
 
-    /* USER CODE BEGIN 3 */
+    // read CAN messages
 
-    //get CAN messages 
 
-    //sample thermistor 
+    // send can messages
+    // BASE
+		uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
 
-    //sample wheels
-    //using hall effect 
+    // DAQ DATA
+		uint8_t csend1[] = {wheelSpeedBL, wheelSpeedBR, rideHeightBL, rideHeightBR, waterTempIn, waterTempOut, 0x06, 0x07};
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
 
-    //sample suspension 
-    //using potentiometer 
-
-    //control break light
-    //using mosfet
-
-    //control fan
-    //using mosfet
-
-    //control pump
-    //using mosfet
-
-    //fault imd
-    //using transistor
-
-    //fault bms
-    //using transistor 
-
-    //send CAN messages
+    // CONTROL SETTINGS
+		uint8_t csend2[] = {brakeLightState, pumpState, fanState, 0x03, 0x04, 0x05, 0x06, 0x07};
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader2, csend2, &canMailbox); // Send Message
   }
-  /* USER CODE END 3 */
+  /* USER CODE END WHILE */
 }
 
 /**
