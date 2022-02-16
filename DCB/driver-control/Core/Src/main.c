@@ -350,7 +350,7 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 0 */
   /* USER CODE END ADC1_Init 0 */
 
-  ADC_ChannelConfTypeDef sConfig = {0};
+  // ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
   /* USER CODE END ADC1_Init 1 */
