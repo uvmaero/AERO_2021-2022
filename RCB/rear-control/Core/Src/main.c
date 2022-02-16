@@ -34,7 +34,8 @@
 /* USER CODE BEGIN PD */
 
 // inputs
-#define PIN_WATER_TEMP                    17		// water temperauture sensor
+#define PIN_WATER_TEMP_IN                 17		// water temperauture sensor in
+#define PIN_WATER_TEMP_OUT                29		// water temperauture sensor out
 #define PIN_REAR_RIGHT_WHEEL              11		// rear right wheel speed sensor
 #define PIN_REAR_LEFT_WHEEL				        10		// rear left wheel speed sensor
 #define PIN_REAR_RIGHT_SUSPENSION		      13		// rear right suspension sensor
@@ -74,7 +75,8 @@ CAN_FilterTypeDef canFilter; 					// CAN Bus Filter
 uint32_t canMailbox; 							// CAN Bus Mail box variable
 
 // inputs
-float waterTemp = 0;
+float waterTempIn = 0;
+float waterTempOut = 0;
 float wheelSpeedBR = 0;
 float wheelSpeedBL = 0;
 float rideHeightBR = 0;
@@ -100,7 +102,8 @@ void ADC_Select_CH_WSBR();          // wheelspeed
 void ADC_Select_CH_WSBL();          // wheelspeed 
 void ADC_Select_CH_RHBR();          // ride height
 void ADC_Select_CH_RHBL();          // ride height
-void ADC_Select_CH_WT();            // water temperature
+void ADC_Select_CH_WTIN();          // water temperature in
+void ADC_Select_CH_WTOUT();         // water temperature out
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -372,6 +375,67 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+// *** functions *** //
+void ADC_Select_CH_WSBR()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_0;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_WSBL()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_1;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_RHBR()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_2;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_RHBL()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_3;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_WTIN()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_4;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_WTOUT()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_5;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
 
 /* USER CODE END 4 */
 
