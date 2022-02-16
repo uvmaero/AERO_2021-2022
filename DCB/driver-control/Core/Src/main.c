@@ -373,7 +373,6 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -381,10 +380,9 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
+  */
   /* USER CODE BEGIN ADC1_Init 2 */
-
   /* USER CODE END ADC1_Init 2 */
-
 }
 
 /**
