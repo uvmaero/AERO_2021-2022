@@ -57,7 +57,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-
 CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
@@ -369,7 +368,47 @@ static void MX_GPIO_Init(void)
 
 void pollSensorData()
 {
+  // get back right wheel speed
+	ADC_Select_CH_WSBR();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	wheelSpeedBR = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 
+	// get back left wheel speed
+	ADC_Select_CH_WSBL();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	wheelSpeedBL = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
+
+	// get back right ride height
+	ADC_Select_CH_RHBR();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	rideHeightBR = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
+
+	// get back left ride height
+	ADC_Select_CH_RHBL();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	rideHeightBL = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
+
+	// get water temp in 
+	ADC_Select_CH_WTIN();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	waterTempIn = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
+
+	// get water temp out
+	ADC_Select_CH_WTOUT();
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	waterTempOut = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
 }
 
 void ADC_Select_CH_WSBL()
