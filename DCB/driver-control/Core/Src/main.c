@@ -289,15 +289,61 @@ int main(void)
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
+	while (1)
+	{
+		// poll sensor data
+		pollSensorData();
 
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+		// read can messages
+
+
+		// send can messages
+		uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; // Tx Buffer
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
+
+		uint8_t csend1[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// add torque setting
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
+
+		uint8_t csend2[] = {wheelSpeedFL, wheelSpeedFR, rideHeightFL, rideHeightFR, brake0, brake1, pedal0, pedal1};
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader2, csend2, &canMailbox); // Send Message
+
+		uint8_t csend3[] = {coastRegen, brakeRegen, cooling, direction, 0x04, 0x05, 0x06, 0x07};
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader3, csend3, &canMailbox); // Send Message
+
+
+		// check for lcd button press to change screeens
+		int oldScreen = currentScreen;
+		if (HAL_GPIO_ReadPin(GPIOB, PIN_LCD_BUTTON) == 0)
+		{
+			currentScreen++;
+			// loop back the first screen after reaching the last one 
+			if (currentScreen > RIDE_SETTINGS) currentScreen = RACING_HUD;
+		}
+
+		// clear screen if the screen mode has been changed
+		if (currentScreen != oldScreen) lcdDisplayClear();
+
+		// screen updates
+		switch (currentScreen)
+		{
+			case RACING_HUD:
+				racingHUD();
+			break;
+
+			case ELECTRICAL_SETTINGS:
+				electricalSettings();
+			break;
+
+			case RIDE_SETTINGS:
+				rideSettings();
+			break;
+			
+			default:
+				// go to racing hud because were not supposed to be here
+				currentScreen = RACING_HUD;
+			break;
+		}
+	}
 }
 
 /**
