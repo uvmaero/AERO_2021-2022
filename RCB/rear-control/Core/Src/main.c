@@ -6,8 +6,8 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * This is the code for the rear control board. This reads all of the sensor data, 
+  * sends and reads CAN messages, and also manages faults from around the car.
   *
   * This software component is licensed by ST under BSD 3-Clause license,
   * the "License"; You may not use this file except in compliance with the
@@ -22,12 +22,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -55,7 +53,6 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -65,14 +62,14 @@ CAN_HandleTypeDef hcan1;
 /* USER CODE BEGIN PV */
 
 // CAN
-CAN_RxHeaderTypeDef rxHeader; 					// CAN Bus Receive Header
-CAN_TxHeaderTypeDef txHeader0; 					// CAN Bus Transmit Header BASE
-CAN_TxHeaderTypeDef txHeader1; 					// CAN Bus Transmit Header Torque Setting
-CAN_TxHeaderTypeDef txHeader2; 					// CAN Bus Transmit Header DAQ Data
-CAN_TxHeaderTypeDef txHeader3; 					// CAN Bus Transmit Header Control Data
-uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	// CAN Bus Receive Buffer
-CAN_FilterTypeDef canFilter; 					// CAN Bus Filter
-uint32_t canMailbox; 							// CAN Bus Mail box variable
+CAN_RxHeaderTypeDef rxHeader; 					        // CAN Bus Receive Header
+CAN_TxHeaderTypeDef txHeader0; 					        // CAN Bus Transmit Header BASE
+CAN_TxHeaderTypeDef txHeader1; 					        // CAN Bus Transmit Header Torque Setting
+CAN_TxHeaderTypeDef txHeader2; 					        // CAN Bus Transmit Header DAQ Data
+CAN_TxHeaderTypeDef txHeader3; 					        // CAN Bus Transmit Header Control Data
+uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	  // CAN Bus Receive Buffer
+CAN_FilterTypeDef canFilter; 					          // CAN Bus Filter
+uint32_t canMailbox; 							              // CAN Bus Mail box variable
 
 // inputs
 float waterTempIn = 0;
@@ -81,14 +78,13 @@ float wheelSpeedBR = 0;
 float wheelSpeedBL = 0;
 float rideHeightBR = 0;
 float rideHeightBL = 0;
-int IMDFaultState = 0;              // 0 is maybe not faulting 
-int BMSFaultState = 0;              // 0 is maybe not faulting
+int IMDFaultState = 0;                          // 0 is maybe not faulting 
+int BMSFaultState = 0;                          // 0 is maybe not faulting
 
 // outputs
-int brakeLightState = 0;            // 0 is off maybe
-int pumpState = 1;                  // 1 is on maybe
-int fanState = 1;                   // 1 is on maybe
-
+int brakeLightState = 0;                        // 0 is off maybe
+int pumpState = 1;                              // 1 is on maybe
+int fanState = 1;                               // 1 is on maybe
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,7 +104,6 @@ void ADC_Select_CH_WTOUT();         // water temperature out
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -166,14 +161,12 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -219,8 +212,7 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage
-  */
+  // Configure the main internal regulator output voltage
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   /** Initializes the RCC Oscillators according to the specified parameters
@@ -237,11 +229,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
     Error_Handler();
-  }
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
+
+  // Initializes the CPU, AHB and APB buses clocks
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
@@ -250,9 +240,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
-  {
     Error_Handler();
-  }
 }
 
 /**
@@ -262,16 +250,14 @@ void SystemClock_Config(void)
   */
 static void MX_ADC1_Init(void)
 {
-
   /* USER CODE BEGIN ADC1_Init 0 */
-
   /* USER CODE END ADC1_Init 0 */
 
-  ADC_ChannelConfTypeDef sConfig = {0};
+  // ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
-
   /* USER CODE END ADC1_Init 1 */
+
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
@@ -287,11 +273,9 @@ static void MX_ADC1_Init(void)
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
-  {
     Error_Handler();
-  }
+
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -299,10 +283,10 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
+  */
+
   /* USER CODE BEGIN ADC1_Init 2 */
-
   /* USER CODE END ADC1_Init 2 */
-
 }
 
 /**
@@ -312,13 +296,10 @@ static void MX_ADC1_Init(void)
   */
 static void MX_CAN1_Init(void)
 {
-
   /* USER CODE BEGIN CAN1_Init 0 */
-
   /* USER CODE END CAN1_Init 0 */
 
   /* USER CODE BEGIN CAN1_Init 1 */
-
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
   hcan1.Init.Prescaler = 5;
@@ -333,13 +314,10 @@ static void MX_CAN1_Init(void)
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
-  {
     Error_Handler();
-  }
+
   /* USER CODE BEGIN CAN1_Init 2 */
-
   /* USER CODE END CAN1_Init 2 */
-
 }
 
 /**
@@ -377,7 +355,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 // *** functions *** //
-void ADC_Select_CH_WSBR()
+void ADC_Select_CH_WSBL()
 {
 	ADC_ChannelConfTypeDef sConfig = {0};
 	sConfig.Channel = ADC_CHANNEL_0;
@@ -387,7 +365,7 @@ void ADC_Select_CH_WSBR()
 		Error_Handler();
 }
 
-void ADC_Select_CH_WSBL()
+void ADC_Select_CH_WSBR()
 {
 	ADC_ChannelConfTypeDef sConfig = {0};
 	sConfig.Channel = ADC_CHANNEL_1;
@@ -397,7 +375,7 @@ void ADC_Select_CH_WSBL()
 		Error_Handler();
 }
 
-void ADC_Select_CH_RHBR()
+void ADC_Select_CH_RHBL()
 {
 	ADC_ChannelConfTypeDef sConfig = {0};
 	sConfig.Channel = ADC_CHANNEL_2;
@@ -407,7 +385,7 @@ void ADC_Select_CH_RHBR()
 		Error_Handler();
 }
 
-void ADC_Select_CH_RHBL()
+void ADC_Select_CH_RHBR()
 {
 	ADC_ChannelConfTypeDef sConfig = {0};
 	sConfig.Channel = ADC_CHANNEL_3;
@@ -420,7 +398,7 @@ void ADC_Select_CH_RHBL()
 void ADC_Select_CH_WTIN()
 {
 	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_4;
+	sConfig.Channel = ADC_CHANNEL_7;
 	sConfig.Rank = 1;
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -430,13 +408,12 @@ void ADC_Select_CH_WTIN()
 void ADC_Select_CH_WTOUT()
 {
 	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_5;
+	sConfig.Channel = ADC_CHANNEL_8;
 	sConfig.Rank = 1;
 	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 		Error_Handler();
 }
-
 /* USER CODE END 4 */
 
 /**

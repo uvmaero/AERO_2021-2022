@@ -6,7 +6,8 @@
   ******************************************************************************
   * @attention
   * 
-  * ADD SOME STUFF HERE
+  * This is the code for the dash board. This reads all of the sensor data, reads and 
+  * sends CAN messages, and drives the LCD screen on the dashboard.
   *
   * Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.
@@ -31,12 +32,10 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 
 /**
  * @brief TODO:
@@ -76,12 +75,10 @@
 
 // pack voltage
 #define MAX_PACK_VOLTAGE             	 	265   			// max pack voltage for calculating pack capacity percentage
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -145,8 +142,6 @@ enum powerModes
 	EXPERT              // 100% throttle power, max speed and acceleration
 };
 int powerMode = EXPERT;
-
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -177,7 +172,6 @@ void ADC_Select_CH_BR();
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -243,14 +237,12 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -350,12 +342,7 @@ int main(void)
 				currentScreen = RACING_HUD;
 			break;
 		}
-
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
 	}
-  /* USER CODE END 3 */
 }
 
 /**
@@ -367,8 +354,7 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage
-  */
+  //Configure the main internal regulator output voltage
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   /** Initializes the RCC Oscillators according to the specified parameters
@@ -379,11 +365,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
     Error_Handler();
-  }
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
+
+  // Initializes the CPU, AHB and APB buses clocks
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
@@ -392,9 +376,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-  {
     Error_Handler();
-  }
 }
 
 /**
@@ -404,18 +386,15 @@ void SystemClock_Config(void)
   */
 static void MX_ADC1_Init(void)
 {
-
   /* USER CODE BEGIN ADC1_Init 0 */
-
   /* USER CODE END ADC1_Init 0 */
 
   // ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
-
   /* USER CODE END ADC1_Init 1 */
-  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
-  */
+
+  // Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
@@ -429,9 +408,8 @@ static void MX_ADC1_Init(void)
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
-  {
     Error_Handler();
-  }
+
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
  /*
@@ -458,12 +436,11 @@ static void MX_CAN1_Init(void)
 {
 
   /* USER CODE BEGIN CAN1_Init 0 */
-
   /* USER CODE END CAN1_Init 0 */
 
   /* USER CODE BEGIN CAN1_Init 1 */
-
   /* USER CODE END CAN1_Init 1 */
+
   hcan1.Instance = CAN1;
   hcan1.Init.Prescaler = 16;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
@@ -477,13 +454,10 @@ static void MX_CAN1_Init(void)
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
-  {
     Error_Handler();
-  }
+
   /* USER CODE BEGIN CAN1_Init 2 */
-
   /* USER CODE END CAN1_Init 2 */
-
 }
 
 /**
@@ -493,14 +467,12 @@ static void MX_CAN1_Init(void)
   */
 static void MX_I2C1_Init(void)
 {
-
   /* USER CODE BEGIN I2C1_Init 0 */
-
   /* USER CODE END I2C1_Init 0 */
 
   /* USER CODE BEGIN I2C1_Init 1 */
-
   /* USER CODE END I2C1_Init 1 */
+
   hi2c1.Instance = I2C1;
   hi2c1.Init.ClockSpeed = 100000;
   hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
@@ -511,13 +483,10 @@ static void MX_I2C1_Init(void)
   hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
   hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
   if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
     Error_Handler();
-  }
+
   /* USER CODE BEGIN I2C1_Init 2 */
-
   /* USER CODE END I2C1_Init 2 */
-
 }
 
 /**
