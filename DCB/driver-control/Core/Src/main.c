@@ -6,9 +6,7 @@
   ******************************************************************************
   * @attention
   * 
-  * This is the driver control board code. In this file includes all of the 
-  * driver code for the dashboard LCD, reading and writing to the CAN bus,
-  * sensor data gathering, and the power mode of the car. 
+  * ADD SOME STUFF HERE
   *
   * Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.
@@ -27,6 +25,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "lcd_hd44780_i2c.h"
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,9 +40,7 @@
 
 /**
  * @brief TODO:
- * assign the lcd pins (4 pins)
- * 4 tx headers
- * figure out rx stuff
+ * READ CAN
  */
 
 
@@ -127,6 +125,9 @@ int RTDButtonLEDState = 0;              		// RTD button LED toggle (0 is off)
 int cooling = 0;                     			// cooling toggle (0 is off)
 int direction = 0;		                		// drive direction (0 is forwards)
 
+// LCD
+char str_buff[10];
+
 // screen enum
 enum screens
 {
@@ -186,7 +187,9 @@ void ADC_Select_CH_BR();
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	
+	// init the lcd screen
+	// LiquidCrystal lcd(rs_pin, enable_pin, PIN_LCD_SDA, PIN_LCD_SCL);   // we need to figure out the rs and enables pins!!!!!!!!!
+
 	// init the CAN filter
 	canFilter.FilterBank = 0;
 	canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
@@ -327,7 +330,7 @@ int main(void)
 		}
 
 		// clear screen if the screen mode has been changed
-		if (currentScreen != oldScreen) lcd.clear();
+		if (currentScreen != oldScreen) lcdDisplayClear();
 
 		// screen updates
 		switch (currentScreen)
@@ -408,7 +411,7 @@ static void MX_ADC1_Init(void)
 
   /* USER CODE END ADC1_Init 0 */
 
-  ADC_ChannelConfTypeDef sConfig = {0};
+  // ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
 
@@ -433,6 +436,7 @@ static void MX_ADC1_Init(void)
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
+ /*
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -440,6 +444,7 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
+  */
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
@@ -567,6 +572,105 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 // *** functions *** //
+void ADC_Select_CH_WSFR()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_0;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_WSFL()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_1;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_RHFR()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_2;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_RHFL()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_3;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_P0()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_4;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_P1()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_5;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_B0()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_6;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_B1()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_7;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_CR()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_8;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
+
+void ADC_Select_CH_BR()
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Channel = ADC_CHANNEL_9;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+		Error_Handler();
+}
 
 void pollSensorData()
 {
@@ -647,8 +751,8 @@ void pollSensorData()
  */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 {
-	HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, canRX); //Receive CAN bus message to canRX buffer
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_3);  // toggle PA3 LED
+	// receive CAN bus message to canRX buffer
+	HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, canRX); 
 }
 
 /**
@@ -657,16 +761,16 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
  */
 void welcomeScreen()
 {
-	lcdInit(&hi2c1, 0x27, 2, 16);       // init lcd (i2c reference, LCD address, lines, rows)
-	lcdAutoscrollOff();					// turn off autoscroll
-	lcdBacklightOn();					// turn on backlight
-	lcdDisplayClear();                  // clear the screen
-	lcdSetCursorPosition(2, 0);         // set the cursor
-	lcdPrintStr("welcome AERO!", 13);   // print
-	lcdSetCursorPosition(2, 1);         // next line
-	lcdPrintStr("booting up...", 13);   // print
-	HAL_Delay(3000);					// delay 3 seconds so the screen can be read
-	lcdDisplayClear();					// clear the display so the other screens can be printed
+	lcdInit(&hi2c1, 0x27, 2, 16);       			// init lcd (i2c reference, LCD address, lines, rows)
+	lcdAutoscrollOff();								// turn off autoscroll
+	lcdBacklightOn();								// turn on backlight
+	lcdDisplayClear();                  			// clear the screen
+	lcdSetCursorPosition(2, 0);         			// set the cursor
+	lcdPrintStr((uint8_t*)"welcome AERO!", 13);   	// print
+	lcdSetCursorPosition(2, 1);         			// next line
+	lcdPrintStr((uint8_t*)"booting up...", 13);   	// print
+	HAL_Delay(3000);								// delay 3 seconds so the screen can be read
+	lcdDisplayClear();								// clear the display so the other screens can be printed
 }
 
 
@@ -678,51 +782,45 @@ void racingHUD()
 {
 	// get wheel speed
 	float averageWheelSpeed = (wheelSpeedFR + wheelSpeedFL) / 2;
+
 	// get current mph from wheel speed
 	float currentMPH = ((averageWheelSpeed * WHEEL_DIAMETER) * (3.14159 * 60)) / 63360;
 
 	// get battery percentage
 	float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
 
-	char driveDirStr[10];
-	char batteryStr[10];
+	// init some char buffs for variables
+	char battStr[10];
 	char speedStr[10];
 	char coastStr[10];
 	char brakeStr[10];
 
 	// drive direction
-	lcdSetCursorPosition(0, 1);                    // position of drive direction
-	if (direction) lcdPrintStr("FWD", 3);          // print drive direction
-	else lcdPrintStr("RVS", 3);
+	lcdSetCursorPosition(0, 0);									// position of drive direction
+	if (direction) lcdPrintStr((uint8_t*)"FWD", 3);     		// print drive direction
+	else lcdPrintStr((uint8_t*)"RVS", 3);
 
 	// battery percentage
-	lcdSetCursorPosition(12, 0);                     // set cursor for battery percentage value
-	sprintf(batteryStr, "%.0f", batteryPercentage);
-	lcdPrintStr(batteryStr, strlen(batteryStr));        // print the battery percentage value
-	lcdSetCursorPosition(14, 0);                     // set cursor for % sign
-	lcdPrintStr("%%");                          // print % sign
+	lcdSetCursorPosition(12, 0); 								// set cursor for battery percentage value
+	sprintf(battStr, "%.0d%%", (int)batteryPercentage); 		// sprintf it
+	lcdPrintStr((uint8_t*)battStr, strlen(battStr));			// print the battery percentage value
 
-	// speedometer
-	lcdSetCursorPosition(7, 0);                      // set cursor for mph value
-	lcdPrintStr((int)currentMPH);               // print the current speed in MPH, cast to int to round to whole number
-	lcdSetCursorPosition(7, 1);                      // set cursor for units
-	lcdPrintStr("mph", 3);                         // print units
+	// speedometer		
+	lcdSetCursorPosition(7, 0);                     			// set cursor for mph value
+	sprintf(speedStr, "%.0d", (int)currentMPH);					// sprintf it
+	lcdPrintStr((uint8_t*)speedStr, strlen(speedStr));			// print the current speed in MPH, cast to int to round to whole number
+	lcdSetCursorPosition(7, 1);                     			// set cursor for units
+	lcdPrintStr((uint8_t*)"mph", 3);                    		// print units
 
-	// coast regen
-	lcdSetCursorPosition(0, 0);                      // set cursor for CR
-	lcdPrintStr("C:", 2);                          // print CR for coast regen
-	lcdSetCursorPosition(2, 1);                      // set cursor for coast regen value
-	lcdPrintStr((int)coastRegen);    			  // print coast regen value
-	lcdSetCursorPosition(4, 1);                      // set cursor for percent sign
-	lcdPrintStr("%%");                          // print percent sign
+	// coast regen		
+	lcdSetCursorPosition(0, 1);                      			// set cursor for CR
+	sprintf(coastStr, "C:%.0d%%", (int)coastRegen);				// sprintf it
+	lcdPrintStr((uint8_t*)coastStr, strlen(coastStr));  		// print coast regen value
 
-	// brake regen
-	lcdSetCursorPosition(11, 1);                     // set cursor for BR
-	lcdPrintStr("B:");                          // print BR for brake regen
-	lcdSetCursorPosition(12, 1);                     // set cursor for brake regen value
-	lcdPrintStr((int)brakeRegen);    		      // print brake regen value
-	lcdSetCursorPosition(14, 1);                     // set cursor for percent sign
-	lcdPrintStr("%%");                          // print percent sign
+	// brake regen		
+	lcdSetCursorPosition(11, 1);                     			// set cursor for BR
+	sprintf(brakeStr, "B: %d%%", (int)brakeRegen);				// sprintf it
+	lcdPrintStr((uint8_t*)brakeStr, strlen(brakeStr));  		// print brake regen value
 }
 
 
@@ -735,38 +833,38 @@ void electricalSettings()
 	// get battery percentage
 	float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
 
+	// init some char buffs for variables
+	char battStr[10];
+	char busVStr[10];
+
 	// battery percentage
-	lcdSetCursorPosition(0, 0);                                  // set cursor for battery title
-	lcdPrintStr("Batt:");									  // print title
-	lcdSetCursorPosition(5, 0);								  // set cursor for batter percentage value
-	lcdPrintStr((int)batteryPercentage);                    // print the current battery percentage value
-	lcdSetCursorPosition(7, 0);                                  // set cursor for % sign
-	lcdPrintStr("%%");                                      // print % sign
+	lcdSetCursorPosition(0, 0);									// set cursor for battery title
+	sprintf(battStr, "Batt:%d%%", (int)batteryPercentage);		// sprintf it
+	lcdPrintStr((uint8_t*)battStr, strlen(battStr));			// print title
 
 	// bus voltage
-	lcdSetCursorPosition(11, 0);                                 // set cursor for bus voltage title
-	lcdPrintStr("Bus:");									  // print title
-	lcdSetCursorPosition(11, 1);								  // set cursor for bus voltage value
-	lcdPrintStr((int)emusVoltage);                          // print the emus voltage value
-	lcdSetCursorPosition(15, 1);                                 // set cursor for units
-	lcdPrintStr("V");                                       // print units
+	lcdSetCursorPosition(11, 0);								// set cursor for bus voltage title
+	sprintf(busVStr, "Bus:%d", (int)emusVoltage);				// sprintf it			
+	lcdPrintStr((uint8_t*)busVStr, strlen(busVStr));			// print
+	lcdSetCursorPosition(15, 1);                                // set cursor for units
+	lcdPrintStr((uint8_t*)"V", 1);                              // print units
 
 	/*	not planning on using this for the time being
 	// rinehart voltage
-	lcdSetCursorPosition(12, 0);                                 // set cursor for rinehart voltage value
-	lcdPrintStr(rinehartVoltage);                           // print the rinehart voltage value
-	lcdSetCursorPosition(15, 0);                                 // set cursor for units
-	lcdPrintStr("V");                                       // print % sign
+	lcdSetCursorPosition(12, 0);                                // set cursor for rinehart voltage value
+	lcdPrintStr(rinehartVoltage);                           	// print the rinehart voltage value
+	lcdSetCursorPosition(15, 0);                                // set cursor for units
+	lcdPrintStr("V");                                       	// print % sign
 	*/
 
 	// power mode
-	lcdSetCursorPosition(0, 1);                                  // set cursor for mode text
-	lcdPrintStr("Mode:");                                   // print mode text
-	lcdSetCursorPosition(5, 1);                                  // set cursor current mode setting
-	if (powerMode == TUTORIAL) lcdPrintStr("TUTR");
-	if (powerMode == ECO) lcdPrintStr("ECO");
-	if (powerMode == EXPERT) lcdPrintStr("EXPT");
-	else lcdPrintStr("ERR!");
+	lcdSetCursorPosition(0, 1);                                 // set cursor for mode text
+	lcdPrintStr((uint8_t*)"Mode:", 5);							// print mode text
+	lcdSetCursorPosition(5, 1);                                 // set cursor current mode setting
+	if (powerMode == TUTORIAL) lcdPrintStr((uint8_t*)"TUTR", 4);
+	if (powerMode == ECO) lcdPrintStr((uint8_t*)"ECO", 3);
+	if (powerMode == EXPERT) lcdPrintStr((uint8_t*)"EXPT", 4);
+	else lcdPrintStr((uint8_t*)(uint8_t*)"ERR!", 4);
 }
 
 
@@ -776,49 +874,61 @@ void electricalSettings()
  */
 void rideSettings()
 {
+	// init some char buffs for variables
+	char rideStr[10];
+	char wheelStr[10];
+
 	// ride height
-	lcdSetCursorPosition(0, 0);                  // set cursor for front left ride height value
-	lcdPrintStr((int)rideHeightFL);         // print front left ride height value
+	lcdSetCursorPosition(0, 0);									// set cursor for front left ride height value
+	sprintf(rideStr, "%d", (int)rideHeightFL);					// sprintf it
+	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));			// print front left ride height value
 
-	lcdSetCursorPosition(2, 0);				  // spacer
-	lcdPrintStr("-");						  // spacer
+	lcdSetCursorPosition(2, 0);				  					// spacer
+	lcdPrintStr((uint8_t*)"-", 1);						  		// spacer
 
-	lcdSetCursorPosition(3, 0);                  // set cursor for front right ride height value
-	lcdPrintStr((int)rideHeightFR);         // print front right ride height value
+	lcdSetCursorPosition(3, 0);									// set cursor for front right ride height value
+	sprintf(rideStr, "%d", (int)rideHeightFR);					// sprintf it
+	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));			// print front right ride height value
 
-	lcdSetCursorPosition(5, 0);                  // set cursor for "<- Ride"
-	lcdPrintStr("<-Ride");                  // print the "-"
+	lcdSetCursorPosition(5, 0);									// set cursor for "<- Ride"
+	lcdPrintStr((uint8_t*)"<-Ride", 6);							// print
 
-	lcdSetCursorPosition(0, 1);                  // set cursor for back left ride height value
-	lcdPrintStr((int)rideHeightBL);         // print back left ride height value
+	lcdSetCursorPosition(0, 1);                  				// set cursor for back left ride height value
+	sprintf(rideStr, "%d", (int)rideHeightBL);					// sprintf it
+	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));         	// print back left ride height value
 
-	lcdSetCursorPosition(2, 1);				  // spacer
-	lcdPrintStr("-");						  // spacer
+	lcdSetCursorPosition(2, 1);				  					// spacer
+	lcdPrintStr((uint8_t*)"-", 1);						  		// spacer
 
-	lcdSetCursorPosition(3, 1);                  // set cursor for back right ride height value
-	lcdPrintStr((int)rideHeightBR);         // print back right ride height value
+	lcdSetCursorPosition(3, 1);                  				// set cursor for back right ride height value
+	sprintf(rideStr, "%d", (int)rideHeightBR);					// sprintf it
+	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));			// print back right ride height value
 
-	lcdSetCursorPosition(6, 1);                  // set cursor for "RPM->"
-	lcdPrintStr("RPM->");                   // print the "RPM->"
+	lcdSetCursorPosition(6, 1);                  				// set cursor for "RPM->"
+	lcdPrintStr((uint8_t*)"RPM->", 5);                   		// print the "RPM->"
 
 	// wheel speed
-	lcdSetCursorPosition(11, 0);                 // set cursor for front left wheelspeed value
-	lcdPrintStr((int)wheelSpeedFL);         // print front left wheelspeed value
+	lcdSetCursorPosition(11, 0);								// set cursor for front left wheelspeed value
+	sprintf(wheelStr, "%d", (int)wheelSpeedFL);					// sprintf it
+	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print front left wheelspeed value
 
-	lcdSetCursorPosition(13, 0);				  // spacer
-	lcdPrintStr("-");						  // spacer
+	lcdSetCursorPosition(13, 0);								// spacer
+	lcdPrintStr((uint8_t*)"-", 1);						  		// spacer
 
-	lcdSetCursorPosition(14, 0);                 // set cursor for front right wheelspeed value
-	lcdPrintStr((int)wheelSpeedFR);         // print front right wheelspeed value
+	lcdSetCursorPosition(14, 0);                 				// set cursor for front right wheelspeed value
+	sprintf(wheelStr, "%d", (int)wheelSpeedFR);					// sprintf it
+	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print front right wheelspeed value
 
-	lcdSetCursorPosition(11, 1);                 // set cursor for back left wheelspeed value
-	lcdPrintStr((int)wheelSpeedBL);         // print back left wheelspeed value
+	lcdSetCursorPosition(11, 1);                 				// set cursor for back left wheelspeed value
+	sprintf(wheelStr, "%d", (int)wheelSpeedBL);					// sprintf it
+	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print back left wheelspeed value
 
-	lcdSetCursorPosition(13, 1);                 // set cursor for "-"
-	lcdPrintStr("-");                       // print the "-"
+	lcdSetCursorPosition(13, 1);								// set cursor for "-"
+	lcdPrintStr((uint8_t*)"-", 1);								// print the "-"
 
-	lcdSetCursorPosition(14, 1);                 // set cursor for back right wheelspeed value
-	lcdPrintStr((int)wheelSpeedBR);         // print value for back right wheelspeed value
+	lcdSetCursorPosition(14, 1);								// set cursor for back right wheelspeed value
+	sprintf(wheelStr, "%d", (int)wheelSpeedBR);					// sprintf it
+	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print value for back right wheelspeed value
 }
 
 /* USER CODE END 4 */
@@ -872,4 +982,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
