@@ -187,8 +187,6 @@ void ADC_Select_CH_BR();
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	// init the lcd screen
-	// LiquidCrystal lcd(rs_pin, enable_pin, PIN_LCD_SDA, PIN_LCD_SCL);   // we need to figure out the rs and enables pins!!!!!!!!!
 
 	// init the CAN filter
 	canFilter.FilterBank = 0;
