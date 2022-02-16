@@ -32,8 +32,8 @@
 /* USER CODE BEGIN PD */
 
 // inputs
-#define PIN_WATER_TEMP_IN                 17		// water temperauture sensor in
-#define PIN_WATER_TEMP_OUT                29		// water temperauture sensor out
+#define PIN_WATER_TEMP_IN                 17		// water temperature sensor in
+#define PIN_WATER_TEMP_OUT                29		// water temperature sensor out
 #define PIN_REAR_RIGHT_WHEEL              11		// rear right wheel speed sensor
 #define PIN_REAR_LEFT_WHEEL				        10		// rear left wheel speed sensor
 #define PIN_REAR_RIGHT_SUSPENSION		      13		// rear right suspension sensor
@@ -57,6 +57,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+
 CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
@@ -92,10 +93,10 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_ADC1_Init(void);
-
 /* USER CODE BEGIN PFP */
-void ADC_Select_CH_WSBR();          // wheelspeed 
-void ADC_Select_CH_WSBL();          // wheelspeed 
+void pollSensorData();
+void ADC_Select_CH_WSBR();          // wheel speed
+void ADC_Select_CH_WSBL();          // wheel speed
 void ADC_Select_CH_RHBR();          // ride height
 void ADC_Select_CH_RHBL();          // ride height
 void ADC_Select_CH_WTIN();          // water temperature in
@@ -199,8 +200,9 @@ int main(void)
     // CONTROL SETTINGS
 		uint8_t csend2[] = {brakeLightState, pumpState, fanState, 0x03, 0x04, 0x05, 0x06, 0x07};
 		HAL_CAN_AddTxMessage(&hcan1, &txHeader2, csend2, &canMailbox); // Send Message
+
   }
-  /* USER CODE END WHILE */
+  /* USER CODE END 3 */
 }
 
 /**
@@ -212,7 +214,8 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  // Configure the main internal regulator output voltage
+  /** Configure the main internal regulator output voltage
+  */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   /** Initializes the RCC Oscillators according to the specified parameters
@@ -229,9 +232,11 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
     Error_Handler();
-
-  // Initializes the CPU, AHB and APB buses clocks
+  }
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
@@ -240,7 +245,9 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
+  {
     Error_Handler();
+  }
 }
 
 /**
@@ -250,21 +257,21 @@ void SystemClock_Config(void)
   */
 static void MX_ADC1_Init(void)
 {
+
   /* USER CODE BEGIN ADC1_Init 0 */
   /* USER CODE END ADC1_Init 0 */
 
-  // ADC_ChannelConfTypeDef sConfig = {0};
+  ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
   /* USER CODE END ADC1_Init 1 */
-
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.ScanConvMode = ENABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -273,9 +280,11 @@ static void MX_ADC1_Init(void)
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
     Error_Handler();
-
+  }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -283,10 +292,9 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
-  */
-
   /* USER CODE BEGIN ADC1_Init 2 */
   /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
@@ -296,6 +304,7 @@ static void MX_ADC1_Init(void)
   */
 static void MX_CAN1_Init(void)
 {
+
   /* USER CODE BEGIN CAN1_Init 0 */
   /* USER CODE END CAN1_Init 0 */
 
@@ -314,10 +323,12 @@ static void MX_CAN1_Init(void)
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
+  {
     Error_Handler();
-
+  }
   /* USER CODE BEGIN CAN1_Init 2 */
   /* USER CODE END CAN1_Init 2 */
+
 }
 
 /**
@@ -355,6 +366,12 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 // *** functions *** //
+
+void pollSensorData()
+{
+
+}
+
 void ADC_Select_CH_WSBL()
 {
 	ADC_ChannelConfTypeDef sConfig = {0};
@@ -448,4 +465,3 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
