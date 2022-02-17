@@ -57,15 +57,13 @@ CAN_HandleTypeDef hcan1;
 /* USER CODE BEGIN PV */
 
 // inputs
-int DCDCEnable = 0;                     // dc-dc enable
+int DCDCEnable = 0;                     // dc-dc enable (0 = disabled, 1 = enabled)
 float vicoreTemp = 0;                   // temperature of vicore
+int RTDButtonPressed = 0                // read this from CAN, if it's 1 we can finish precharge
 
 // output
-int DCDCFault = 0;                      // the dc-dc fault indicator
-
-// precharge
-int readyToDrive = 0;					          // car is ready to drive
-int prechargeStateEnter = 0;			      // allowed to enter precharge
+int DCDCFault = 0;                      // the dc-dc fault indicator (0 = no fault, 1 = fault)
+int readyToDrive = 0;					          // the car is ready to drive! (0 = not ready, 1 = ready)
 
 // precharge states
 enum prechargeStates
@@ -156,6 +154,9 @@ int main(void)
   {
     // poll sensor data
 		pollSensorData();
+
+    // precharge
+    prechargeControl();
 
 		// read can messages
 
@@ -332,10 +333,14 @@ static void MX_GPIO_Init(void)
  */
 void pollSensorData()
 {
+  // get vicore temp 
   HAL_ADC_Start(&hadc1);
 	HAL_ADC_PollForConversion(&hadc1, 1000);
 	vicoreTemp = HAL_ADC_GetValue(&hadc1);
 	HAL_ADC_Stop(&hadc1);
+
+  // get dc-dc fault status
+  DCDCFault = HAL_GPIO_ReadPin(GPIOA, PIN_DC_DC_FAULT);
 }
 
 
@@ -350,17 +355,26 @@ void prechargeControl()
 		case (PRECHARGE_OFF):
 			// set ready to drive to false
 			readyToDrive = 0;
-      // move to PRECHARGE_ON due to this specific condition that doesn't exist yet
-      // write that^ specific condition here
+      
+      // if the dc dc system is on then move to precharge on
+      if (DCDCEnable == 1)
+        prechargeState = PRECHARGE_ON;
+
 		break;
 
 		case (PRECHARGE_ON):
 		  // ensure voltages are above correct values
 			if (rinehartVoltage >= (emusVoltage * PRECHARGE_COEFFICIENT))
 			{ 
-				// move to precharge done state
-				prechargeState = PRECHARGE_DONE;
+        // if the RTD button is pressed, move to precharge done 
+        if (RTDButtonPressed == 1)
+				  prechargeState = PRECHARGE_DONE;
 			}
+
+      // if we have a DCDC fault, end precharge
+      if (DCDCFault == 1)
+        prechargeState = PRECHARGE_ERROR;
+
 		break;
 
 		case (PRECHARGE_DONE):
@@ -370,7 +384,7 @@ void prechargeControl()
 
 		case (PRECHARGE_ERROR):
 			// the car is most definitly not ready to drive
-			// probably requires hard reboot of systems to clear this state idk ask george
+			// probably requires hard reboot of systems to clear this state
 			readyToDrive = 0;
 		break;
 
