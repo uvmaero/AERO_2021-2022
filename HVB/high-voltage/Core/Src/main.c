@@ -187,8 +187,12 @@ int main(void)
 	  if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
 	  	  Error_Handler();
 
+    // send CAN
+    uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};  // BASE
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
 
-    /* USER CODE BEGIN 3 */
+		uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// DATA
+		HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
   }
   /* USER CODE END 3 */
 }
@@ -358,13 +362,26 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
     Error_Handler();
 
   // get rinehart bus voltage
-  if ((rxHeader.StdId == 0xA7))
+  if (rxHeader.StdId == 0xA7)
   {
     // rinehart voltage is spread across the first 2 bytes
 	  int rine1 = canRX[0];
     int rine2 = canRX[1];
     // combine the first two bytes and assign that to the rinehart voltage
     rinehartVoltage = (rine1 << 8) | rine2;
+  }
+
+  // get BMS total voltages
+  if (rxHeader.StdId == 0x1)
+  {
+    int volt1 = canRX[4];
+    int volt2 = canRX[3];
+    int volt3 = canRX[6];
+    int volt4 = canRX[5];
+
+    int emus1 = (volt1 << 8) | volt2
+    int emus2 = (volt3 << 8) | volt4;
+    emusVoltage = (emus1 << 8) | emus2;   // if this doesnt work then change the 8 to 16
   }
 }
 
