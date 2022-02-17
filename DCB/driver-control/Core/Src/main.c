@@ -102,8 +102,9 @@ CAN_FilterTypeDef canFilter; 					// CAN Bus Filter
 uint32_t canMailbox; 							// CAN Bus Mail box variable
 
 // rinehart & emus
-uint16_t rinehartVoltage = 0;				  	// voltage in rinehart
-uint16_t emusVoltage = 265.0;				  	// emus bus voltage
+float rinehartVoltage = 0;				  		// voltage in rinehart
+float emusVoltage = 0;				  			// emus bus voltage
+int readyToDrive = 0;							// ready to drive (0 = no, 1 = yes)
 
 // inputs
 float coastRegen, brakeRegen;			    	// coast and brake regen values 
@@ -124,9 +125,6 @@ int startButtonState = 0;             			// start button state (0 is not active)
 int RTDButtonLEDState = 0;              		// RTD button LED toggle (0 is off)
 int cooling = 0;                     			// cooling toggle (0 is off)
 int direction = 0;		                		// drive direction (0 is forwards)
-
-// LCD
-char str_buff[10];
 
 // screen enum
 enum screens
@@ -184,8 +182,33 @@ void ADC_Select_CH_BR();
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  /* USER CODE END 1 */
 
-	// init the CAN filter
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_ADC1_Init();
+  MX_CAN1_Init();
+  MX_I2C1_Init();
+  /* USER CODE BEGIN 2 */
+
+  // start up LCD display
+  welcomeScreen();
+
+  // init the CAN filter
 	canFilter.FilterBank = 0;
 	canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
 	canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
@@ -232,31 +255,6 @@ int main(void)
 	HAL_CAN_ConfigFilter(&hcan1, &canFilter); // Initialize CAN Filter
 	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-
-  /* USER CODE BEGIN Init */
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_ADC1_Init();
-  MX_CAN1_Init();
-  MX_I2C1_Init();
-  /* USER CODE BEGIN 2 */
-
-	// start up LCD display
-	welcomeScreen();
 
   /* USER CODE END 2 */
 
@@ -554,12 +552,18 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
     Error_Handler();
 
   // get sensor data from rcb
-  if ((rxHeader.StdId == 0x81))
+  if (rxHeader.StdId == 0x81)
   {
 	  wheelSpeedBL = canRX[0];
 	  wheelSpeedBR = canRX[1];
 	  rideHeightBL = canRX[2];
 	  rideHeightBR = canRX[3];
+  }
+
+  // get ready to drive from high voltage for precharge complete
+  if (rxHeader.StdId == 0x87)
+  {
+	  readyToDrive = canRX[0];
   }
 }
 
