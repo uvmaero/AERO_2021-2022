@@ -34,17 +34,15 @@
 /* USER CODE BEGIN PD */
 
 // inputs
-#define PIN_DC_DC_FAULT                         // DC DC fault indicator pin
-#define PIN_VICOR_TEMP                          // temperature inside vicore
+#define PIN_DC_DC_FAULT            12             // DC DC fault indicator pin
+#define PIN_VICOR_TEMP             17           // temperature inside vicore
 
 // outputs 
-#define PIN_DC_DC_ENABLE                        // DC DC control pin
-#define PIN_RTD_BUZZER              00		      // THIS IS NOT CORRECT, JUST WASN'T LISTED IN DOC
-#define BUZZER_PERIOD               2000	      // time the buzzer is supposed to be on in milliseconds
+#define PIN_DC_DC_ENABLE           11           // DC DC control pin
 
 // CAN
-#define PIN_CAN_PLUS                            // positve CAN wire
-#define PIN_CAN_MINUS                           // negative CAN wire
+#define PIN_CAN_PLUS               32           // positve CAN wire
+#define PIN_CAN_MINUS              33           // negative CAN wire
 
 // precharge
 #define PRECHARGE_COEFFICIENT       0.9		      // 90% complete with precharge so it's probably safe to continue
@@ -64,15 +62,11 @@ CAN_HandleTypeDef hcan1;
 /* USER CODE BEGIN PV */
 
 // rinehart & emus
-uint16_t rinehartVoltage = 0;				  // voltage in rinehart
-uint16_t emusVoltage = 265.0;				  // emus bus voltage
+float rinehartVoltage = 0;				  // voltage in rinehart
+float emusVoltage = 0;				  // emus bus voltage
 
 // precharge
 int readyToDrive = 0;					    // car is ready to drive
-int RTDLED = 0;						        // indicator LED in start button
-int buzzer = 0;						        // buzzer is buzzing state
-uint16_t timeSinceBuzzerStart = 0;	     	// counter to time buzzer buzz
-int prechargeStateEnter = 0;			    // allowed to enter precharge
 
 // precharge states
 enum prechargeStates
@@ -95,8 +89,7 @@ static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 void prechargeControl();
-void RTDButtonChange();
-
+void pollSensorData();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -332,20 +325,14 @@ void prechargeControl()
 
 		case (PRECHARGE_ON):
 		  // ensure voltages are above correct values
-			if (rinehartVoltage >= (emusVoltage * 0.9))
-			{
-				// turn on ready to drive light
-        HAL_GPIO_WritePin(GPIOB, RTDLED, GPIO_PIN_SET);
-        
+			if (rinehartVoltage >= (emusVoltage * PRECHARGE_COEFFICIENT))
+			{ 
 				// move to precharge done state
 				prechargeState = PRECHARGE_DONE;
 			}
 		break;
 
 		case (PRECHARGE_DONE):
-      // turn off the RTD Button LED
-      HAL_GPIO_WritePin(GPIOB, RTDLED, GPIO_PIN_RESET);
-
 			// now that precharge is complete we can drive the car
 			readyToDrive = 1;
 		break;
@@ -366,23 +353,6 @@ void prechargeControl()
 	}
 }
 
-
-/**
- * @brief 
- * 
- */
-void RTDButtonChange()
-{
-  // if the precharge state is done and the button is being depressed
-	if (prechargeState == PRECHARGE_DONE && RTDLED)
-	{
-    // turn off the indicator button in the RTD button
-		HAL_GPIO_WritePin(GPIOB, RTDLED, GPIO_PIN_RESET);
-
-		buzzer = 1;				    // turn on the buzzer
-		timeSinceBuzzerStart = 0;	// reset buzzer timer
-	}
-}
 
 /* USER CODE END 4 */
 
