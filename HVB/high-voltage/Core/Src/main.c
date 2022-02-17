@@ -79,14 +79,14 @@ enum prechargeStates
 int prechargeState = PRECHARGE_OFF;			// set intial precharge state to OFF
 
 // CAN
-CAN_RxHeaderTypeDef rxHeader; 					      // CAN Bus Receive Header
-CAN_TxHeaderTypeDef txHeader0; 					      // CAN Bus Transmit Header BASE
-CAN_TxHeaderTypeDef txHeader1; 					      // CAN Bus Transmit Header Torque Setting
-CAN_TxHeaderTypeDef txHeader2; 					      // CAN Bus Transmit Header DAQ Data
-CAN_TxHeaderTypeDef txHeader3; 					      // CAN Bus Transmit Header Control Data
-uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	// CAN Bus Receive Buffer
-CAN_FilterTypeDef canFilter; 					        // CAN Bus Filter
 uint32_t canMailbox; 							            // CAN Bus Mail box variable
+CAN_TxHeaderTypeDef txHeader0; 					      // CAN Bus Transmit Header BASE
+CAN_TxHeaderTypeDef txHeader1; 					      // CAN Bus Transmit Header DATA
+
+CAN_RxHeaderTypeDef rxHeader; 					      // CAN Bus Receive Header
+uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	// CAN Bus Receive Buffer
+CAN_FilterTypeDef canFilter0; 					      // CAN Bus Filter for BMS
+CAN_FilterTypeDef canFilter1;                 // CAN Bus Filter for Rinehart
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -111,33 +111,6 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-  // init the CAN filter
-	canFilter.FilterBank = 0;
-	canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
-	canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
-	canFilter.FilterIdHigh = 0;
-	canFilter.FilterIdLow = 0;
-	canFilter.FilterMaskIdHigh = 0;
-	canFilter.FilterMaskIdLow = 0;
-	canFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-	canFilter.FilterActivation = ENABLE;
-	canFilter.SlaveStartFilterBank = 14;
-
-	// init the CAN mailbox for BASE
-	txHeader0.DLC = 8; // Number of bites to be transmitted max- 8
-	txHeader0.IDE = CAN_ID_STD;
-	txHeader0.RTR = CAN_RTR_DATA;
-	txHeader0.StdId = 0x86;
-	txHeader0.ExtId = 0x02;
-	txHeader0.TransmitGlobalTime = DISABLE;
-
-	// init the CAN mailbox for Data
-	txHeader1.DLC = 8; // Number of bites to be transmitted max- 8
-	txHeader1.IDE = CAN_ID_STD;
-	txHeader1.RTR = CAN_RTR_DATA;
-	txHeader1.StdId = 0x87;
-	txHeader1.ExtId = 0x03;
-	txHeader1.TransmitGlobalTime = DISABLE;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -158,14 +131,62 @@ int main(void)
   MX_GPIO_Init();
   MX_CAN1_Init();
   MX_ADC1_Init();
+
   /* USER CODE BEGIN 2 */
+  // init the CAN filter for BMS messages
+    canFilter0.FilterIdHigh = 0x72 << 5;   // BMS IDs: 0 - 0x72
+  	canFilter0.FilterIdLow = 0;
+    canFilter0.FilterMaskIdHigh = 0x72 << 5;
+  	canFilter0.FilterMaskIdLow = 0x00;
+    canFilter0.FilterBank = 0;
+  	canFilter0.FilterMode = CAN_FILTERMODE_IDMASK;
+  	canFilter0.FilterFIFOAssignment = CAN_RX_FIFO0;
+  	canFilter0.FilterScale = CAN_FILTERSCALE_32BIT;
+  	canFilter0.FilterActivation = ENABLE;
+
+    HAL_CAN_ConfigFilter(&hcan1, &canFilter0);
+
+    // init the CAN filter for Rinehart messages
+    canFilter1.FilterIdHigh = 0xB1 << 5;      // Rinehart IDs: 0xA0 - 0xB1
+  	canFilter1.FilterIdLow = 0xA0;
+    canFilter1.FilterMaskIdHigh = 0xB1 << 5;
+  	canFilter1.FilterMaskIdLow = 0xA0;
+    canFilter1.FilterBank = 0;
+  	canFilter1.FilterMode = CAN_FILTERMODE_IDMASK;
+  	canFilter1.FilterFIFOAssignment = CAN_RX_FIFO0;
+  	canFilter1.FilterScale = CAN_FILTERSCALE_32BIT;
+  	canFilter1.FilterActivation = ENABLE;
+
+    HAL_CAN_ConfigFilter(&hcan1, &canFilter1);
+
+  	// init the CAN mailbox for BASE
+  	txHeader0.DLC = 8; // Number of bites to be transmitted max- 8
+  	txHeader0.IDE = CAN_ID_STD;
+  	txHeader0.RTR = CAN_RTR_DATA;
+  	txHeader0.StdId = 0x86;
+  	txHeader0.ExtId = 0x02;
+  	txHeader0.TransmitGlobalTime = DISABLE;
+
+  	// init the CAN mailbox for DATA
+  	txHeader1.DLC = 8; // Number of bites to be transmitted max- 8
+  	txHeader1.IDE = CAN_ID_STD;
+  	txHeader1.RTR = CAN_RTR_DATA;
+  	txHeader1.StdId = 0x87;
+  	txHeader1.ExtId = 0x03;
+  	txHeader1.TransmitGlobalTime = DISABLE;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+	  // poll sensors
+	  pollSensorData();
+
+	  // read CAN
+	  if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+	  	  Error_Handler();
+
 
     /* USER CODE BEGIN 3 */
   }
@@ -330,6 +351,22 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
+{
+  if (HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, canRX) != HAL_OK)
+    Error_Handler();
+
+  // get rinehart bus voltage
+  if ((rxHeader.StdId == 0xA7))
+  {
+    // rinehart voltage is spread across the first 2 bytes
+	  int rine1 = canRX[0];
+    int rine2 = canRX[1];
+    // combine the first two bytes and assign that to the rinehart voltage
+    rinehartVoltage = (rine1 << 8) | rine2;
+  }
+}
 
 /**
  * @brief 
