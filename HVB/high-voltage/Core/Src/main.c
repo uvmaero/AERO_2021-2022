@@ -174,6 +174,9 @@ int main(void)
   	txHeader1.StdId = 0x87;
   	txHeader1.ExtId = 0x03;
   	txHeader1.TransmitGlobalTime = DISABLE;
+
+	  HAL_CAN_Start(&hcan1); // Initialize CAN Bus
+	  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
   /* USER CODE END 2 */
 
   /* Infinite loop */
