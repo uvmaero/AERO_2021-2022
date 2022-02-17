@@ -379,7 +379,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
     int volt3 = canRX[6];
     int volt4 = canRX[5];
 
-    int emus1 = (volt1 << 8) | volt2
+    int emus1 = (volt1 << 8) | volt2;
     int emus2 = (volt3 << 8) | volt4;
     emusVoltage = (emus1 << 8) | emus2;   // if this doesnt work then change the 8 to 16
   }
