@@ -52,14 +52,17 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+
 CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
 
 // inputs
+float rinehartVoltage = 0;				// read from CAN
+float emusVoltage = 0;					// read from CAN
 int DCDCEnable = 0;                     // dc-dc enable (0 = disabled, 1 = enabled)
 float vicoreTemp = 0;                   // temperature of vicore
-int RTDButtonPressed = 0                // read this from CAN, if it's 1 we can finish precharge
+int RTDButtonPressed = 0;               // read this from CAN, if it's 1 we can finish precharge
 
 // output
 int DCDCFault = 0;                      // the dc-dc fault indicator (0 = no fault, 1 = fault)
@@ -74,6 +77,16 @@ enum prechargeStates
 	PRECHARGE_ERROR
 };
 int prechargeState = PRECHARGE_OFF;			// set intial precharge state to OFF
+
+// CAN
+CAN_RxHeaderTypeDef rxHeader; 					      // CAN Bus Receive Header
+CAN_TxHeaderTypeDef txHeader0; 					      // CAN Bus Transmit Header BASE
+CAN_TxHeaderTypeDef txHeader1; 					      // CAN Bus Transmit Header Torque Setting
+CAN_TxHeaderTypeDef txHeader2; 					      // CAN Bus Transmit Header DAQ Data
+CAN_TxHeaderTypeDef txHeader3; 					      // CAN Bus Transmit Header Control Data
+uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	// CAN Bus Receive Buffer
+CAN_FilterTypeDef canFilter; 					        // CAN Bus Filter
+uint32_t canMailbox; 							            // CAN Bus Mail box variable
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -81,7 +94,6 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_ADC1_Init(void);
-
 /* USER CODE BEGIN PFP */
 void prechargeControl();
 void pollSensorData();
@@ -146,28 +158,18 @@ int main(void)
   MX_GPIO_Init();
   MX_CAN1_Init();
   MX_ADC1_Init();
-
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
 
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // poll sensor data
-		pollSensorData();
+    /* USER CODE END WHILE */
 
-    // precharge
-    prechargeControl();
-
-		// read can messages
-
-
-		// send can messages
-		uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-		HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
-
-		uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07};
-		HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
+    /* USER CODE BEGIN 3 */
   }
+  /* USER CODE END 3 */
 }
 
 /**
@@ -235,8 +237,8 @@ static void MX_ADC1_Init(void)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = ENABLE;
-  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -269,6 +271,7 @@ static void MX_ADC1_Init(void)
   */
 static void MX_CAN1_Init(void)
 {
+
   /* USER CODE BEGIN CAN1_Init 0 */
   /* USER CODE END CAN1_Init 0 */
 
@@ -292,6 +295,7 @@ static void MX_CAN1_Init(void)
   }
   /* USER CODE BEGIN CAN1_Init 2 */
   /* USER CODE END CAN1_Init 2 */
+
 }
 
 /**
