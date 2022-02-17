@@ -295,7 +295,8 @@ int main(void)
 		pollSensorData();
 
 		// read can messages
-
+		if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+	  		Error_Handler();
 
 		// send can messages
 		uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; // Tx Buffer
@@ -546,6 +547,22 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 // *** functions *** //
+
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
+{
+  if (HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, canRX) != HAL_OK)
+    Error_Handler();
+
+  // get sensor data from rcb
+  if ((rxHeader.StdId == 0x81))
+  {
+	  wheelSpeedBL = canRX[0];
+	  wheelSpeedBR = canRX[1];
+	  rideHeightBL = canRX[2];
+	  rideHeightBR = canRX[3];
+  }
+}
+
 void ADC_Select_CH_WSFR()
 {
 	ADC_ChannelConfTypeDef sConfig = {0};
