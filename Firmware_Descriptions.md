@@ -3,7 +3,7 @@
 Here you'll find more information about the firmare of each of the boards throughout the car. You can expect to find documentation for things like each function used, a program flow chart, CAN addresses and message content, and more. 
 
 ## Diver Control Board
-Overview: 
+### Overview: 
 ### Flowchart:
 
 ### Function Definitons:
@@ -12,7 +12,7 @@ Overview:
 
 
 ## Rear Control Board
-Overview: 
+### Overview: 
 ### Flowchart:
 
 ### Function Definitons:
@@ -21,7 +21,7 @@ Overview:
 
 
 ## High Voltage Board
-Overview: 
+### Overview: 
 ### Flowchart:
 
 ### Function Definitons:
