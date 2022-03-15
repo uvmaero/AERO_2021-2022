@@ -84,7 +84,7 @@ int BMSFaultState = 0;                          // 0 is maybe not faulting
 // outputs
 int brakeLightState = 0;                        // 0 is off maybe
 int pumpState = 1;                              // 1 is on maybe
-int fanState = 1;                               // 1 is on maybe
+int fanState = 0;                               // 1 is on maybe
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -114,7 +114,29 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-  // init the CAN filter
+  /* USER CODE END 1 */
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_CAN1_Init();
+  MX_ADC1_Init();
+
+  /* USER CODE BEGIN 2 */
+    // init the CAN filter
 	canFilter.FilterBank = 0;
 	canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
 	canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
@@ -153,27 +175,6 @@ int main(void)
 	HAL_CAN_ConfigFilter(&hcan1, &canFilter); // Initialize CAN Filter
 	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-
-  /* USER CODE BEGIN Init */
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_CAN1_Init();
-  MX_ADC1_Init();
-  /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
@@ -185,7 +186,8 @@ int main(void)
     pollSensorData();
 
     // read CAN messages
-
+    if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+	    Error_Handler();
 
     // send can messages
     // BASE
@@ -351,6 +353,22 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 // *** functions *** //
+
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
+{
+  if (HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, canRX) != HAL_OK)
+    Error_Handler();
+
+  // get the control signals from dash
+  if ((rxHeader.StdId == 0x93))
+  {
+    // get the brake light signal
+	  brakeLightState = canRX[1];
+
+    // get the cooling state
+    fanState = canRX[0];
+  }
+}
 
 void pollSensorData()
 {
