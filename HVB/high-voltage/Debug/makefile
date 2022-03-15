@@ -60,8 +60,8 @@ all: main-build
 main-build: high-voltage.elf secondary-outputs
 
 # Tool invocations
-high-voltage.elf: $(OBJS) $(USER_OBJS) C:\Users\aero\Documents\GitHub\AERO_2021-2022\HVB\high-voltage\STM32F413CGUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "high-voltage.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\aero\Documents\GitHub\AERO_2021-2022\HVB\high-voltage\STM32F413CGUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="high-voltage.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+high-voltage.elf: $(OBJS) $(USER_OBJS) C:\Users\domin\OneDrive\Documents\School\AERO\Code\AERO_2021-2022\HVB\high-voltage\STM32F413CGUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "high-voltage.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\domin\OneDrive\Documents\School\AERO\Code\AERO_2021-2022\HVB\high-voltage\STM32F413CGUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="high-voltage.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
