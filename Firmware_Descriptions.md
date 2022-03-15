@@ -8,15 +8,34 @@ This board controls all of the hardware that the driver needs to interface with 
 ### Flowchart:
 
 ### Function Definitons:
+#### pollSensorData:
+Input Parameters: void  
+Return Type & Value: void  
+Description: Reads each sensor that the board monitors and updates the appropriate global variable holding the sensor value.
 
 ### CAN Information: 
 #### Outgoing Messages:
+Front Left Wheel Speed: int 0 - 255 (rpm)  
+Front Right Wheel Speed: int 0 - 255  
+Front Right Suspension: int 0 - 255 (spring depression scaled to 0 - 255)  
+Front Left Suspension: int 0 - 255 (spring depression scaled to 0 - 255)  
+Brake 1: 
+Brake 2: 
+Pedal 1: 
+Pedal 2: 
+
 #### Incoming Messages:
+Rear Left Wheel Speed: Rear Control Board - int 0 - 255 (rpm)  
+Rear Right Wheel Speed: Rear Control Board - int 0 - 255 (rpm)  
+Rear Right Suspension: Rear Control Board - int 0 - 255 (spring depression scaled to 0 - 255)  
+Rear Left Suspension: Rear Control Board - int 0 - 255 (spring depression scaled to 0 - 255)  
+Read to Drive State: High Voltage Board - int 0 or 1 
+
 #### Addresses:
 0x90: Base - [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]  
 0x91: Prog - [Torque Setting, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]  
-0x92: DAQ-DATA - [Left Wheel, Right Wheel, Left Suspension, Right Suspension, Brake 1, Brake 2, Pedal 1, Pedal 2]    
-0x93: CONTROL - [Brake Regen, Coast Regen, Cooling, Drive Direction, 0x04, 0x05, 0x06, 0x07]  
+0x92: DAQ-DATA - [Left Wheel Speed, Right Wheel Speed, Left Suspension, Right Suspension, Brake 1, Brake 2, Pedal 1, Pedal 2]    
+0x93: CONTROL DATA - [Brake Regen, Coast Regen, Cooling, Drive Direction, 0x04, 0x05, 0x06, 0x07]  
 
 
 ## Rear Control Board
@@ -24,8 +43,27 @@ This board controls all of the hardware that the driver needs to interface with 
 ### Flowchart:
 
 ### Function Definitons:
+#### pollSensorData:
+Input Parameters: void  
+Return Type & Value: void  
+Description: Reads each sensor that the board monitors and updates the appropriate global variable holding the sensor value.
 
 ### CAN Information: 
+
+#### Outgoing Messages:
+Rear Left Wheel Speed: int 0 - 255 (rpm)  
+Rear Right Wheel Speed: int 0 - 255  
+Rear Right Suspension: int 0 - 255 (spring depression scaled to 0 - 255)  
+Rear Left Suspension: int 0 - 255 (spring depression scaled to 0 - 255)  
+
+#### Incoming Messages:
+Brake Light State: Dash Control Board - int 0 or 1
+Fan State: Dash Control Board - int 0 or 1
+
+#### Addresses:
+0x80: Base - [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]  
+0x81: DAQ DATA - [Left Wheel Speed, Right Wheel Speed, Left Suspension, Right Suspension, Water Temperature Inlet, Water Temperature Outlet, 0x06, 0x07]  
+0x82: CONTROL DATA - [Brake Signal, Pump Signal, Fan Signal, 0x04, 0x05, 0x06, 0x07]  
 
 
 ## High Voltage Board
@@ -33,5 +71,9 @@ This board controls all of the hardware that the driver needs to interface with 
 ### Flowchart:
 
 ### Function Definitons:
+#### pollSensorData:
+Input Parameters: void  
+Return Type & Value: void  
+Description: Reads each sensor that the board monitors and updates the appropriate global variable holding the sensor value.
 
 ### CAN Information: 
