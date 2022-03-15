@@ -739,16 +739,6 @@ void pollSensorData()
 	HAL_ADC_Stop(&hadc1);
 }
 
-/**
- * @brief CAN read message function
- * 
- * @param hcan1
- */
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
-{
-	// receive CAN bus message to canRX buffer
-	HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, canRX); 
-}
 
 /**
  * @brief welcome & boot screen
