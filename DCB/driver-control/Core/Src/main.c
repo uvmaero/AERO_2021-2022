@@ -225,7 +225,7 @@ int main(void)
 	txHeader0.IDE = CAN_ID_STD;
 	txHeader0.RTR = CAN_RTR_DATA;
 	txHeader0.StdId = 0x90;
-	txHeader0.ExtId = 0x02;
+	txHeader0.ExtId = 0;
 	txHeader0.TransmitGlobalTime = DISABLE;
 
 	// init the CAN mailbox for Torque Setting 
@@ -233,7 +233,7 @@ int main(void)
 	txHeader1.IDE = CAN_ID_STD;
 	txHeader1.RTR = CAN_RTR_DATA;
 	txHeader1.StdId = 0x91;
-	txHeader1.ExtId = 0x03;
+	txHeader1.ExtId = 0;
 	txHeader1.TransmitGlobalTime = DISABLE;
 
 	// init the CAN mailbox for DAQ Data
@@ -241,7 +241,7 @@ int main(void)
 	txHeader2.IDE = CAN_ID_STD;
 	txHeader2.RTR = CAN_RTR_DATA;
 	txHeader2.StdId = 0x92;
-	txHeader2.ExtId = 0x04;
+	txHeader2.ExtId = 0;
 	txHeader2.TransmitGlobalTime = DISABLE;
 
 	// init the CAN mailbox for Control Data
@@ -249,7 +249,7 @@ int main(void)
 	txHeader3.IDE = CAN_ID_STD;
 	txHeader3.RTR = CAN_RTR_DATA;
 	txHeader3.StdId = 0x93;
-	txHeader3.ExtId = 0x05;
+	txHeader3.ExtId = 0;
 	txHeader3.TransmitGlobalTime = DISABLE;
 
 	HAL_CAN_ConfigFilter(&hcan1, &canFilter); // Initialize CAN Filter
@@ -287,14 +287,16 @@ int main(void)
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
-	while (1)
-	{
-		// poll sensor data
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+	  // poll sensor data
 		pollSensorData();
 
 		// read can messages
 		if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
-	  		Error_Handler();
+			Error_Handler();
 
 		// send can messages
 		uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; // Tx Buffer
@@ -315,7 +317,7 @@ int main(void)
 		if (HAL_GPIO_ReadPin(GPIOB, PIN_LCD_BUTTON) == 0)
 		{
 			currentScreen++;
-			// loop back the first screen after reaching the last one 
+			// loop back the first screen after reaching the last one
 			if (currentScreen > RIDE_SETTINGS) currentScreen = RACING_HUD;
 		}
 
@@ -336,13 +338,17 @@ int main(void)
 			case RIDE_SETTINGS:
 				rideSettings();
 			break;
-			
+
 			default:
 				// go to racing hud because were not supposed to be here
 				currentScreen = RACING_HUD;
 			break;
-		}
-	}
+	  		}
+	  	}
+    /* USER CODE END WHILE */
+    /* USER CODE BEGIN 3 */
+  }
+  /* USER CODE END 3 */
 }
 
 /**
@@ -395,7 +401,7 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 0 */
   /* USER CODE END ADC1_Init 0 */
 
-  // ADC_ChannelConfTypeDef sConfig = {0};
+  ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
   /* USER CODE END ADC1_Init 1 */
@@ -418,6 +424,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -425,9 +432,9 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
-  */
   /* USER CODE BEGIN ADC1_Init 2 */
   /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
@@ -451,8 +458,8 @@ static void MX_CAN1_Init(void)
   hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = DISABLE;
-  hcan1.Init.AutoWakeUp = DISABLE;
-  hcan1.Init.AutoRetransmission = DISABLE;
+  hcan1.Init.AutoWakeUp = ENABLE;
+  hcan1.Init.AutoRetransmission = ENABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
@@ -747,7 +754,10 @@ void pollSensorData()
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 {
 	// receive CAN bus message to canRX buffer
-	HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, canRX); 
+	HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, canRX);
+
+	// get information from the CAN bus
+
 }
 
 /**
