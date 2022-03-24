@@ -52,7 +52,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-
 CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
@@ -82,7 +81,6 @@ int prechargeState = PRECHARGE_OFF;			// set intial precharge state to OFF
 uint32_t canMailbox; 							            // CAN Bus Mail box variable
 CAN_TxHeaderTypeDef txHeader0; 					      // CAN Bus Transmit Header BASE
 CAN_TxHeaderTypeDef txHeader1; 					      // CAN Bus Transmit Header DATA
-
 CAN_RxHeaderTypeDef rxHeader; 					      // CAN Bus Receive Header
 uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	// CAN Bus Receive Buffer
 CAN_FilterTypeDef canFilter0; 					      // CAN Bus Filter for BMS
@@ -94,6 +92,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_ADC1_Init(void);
+
 /* USER CODE BEGIN PFP */
 void prechargeControl();
 void pollSensorData();
@@ -175,27 +174,30 @@ int main(void)
   	txHeader1.ExtId = 0x03;
   	txHeader1.TransmitGlobalTime = DISABLE;
 
-	  HAL_CAN_Start(&hcan1); // Initialize CAN Bus
-	  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
+	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
+	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  // poll sensors
-	  pollSensorData();
 
-	  // read CAN
-	  if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
-	  	  Error_Handler();
+	// poll sensors
+	pollSensorData();
 
-    // send CAN
-    uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};  // BASE
-		HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
+	// read CAN
+	if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+		Error_Handler();
 
-		uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// DATA
-		HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
+	// send CAN
+	uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};  // BASE
+	HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
+
+	uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// DATA
+	HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
+    /* USER CODE END WHILE */
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
@@ -313,8 +315,8 @@ static void MX_CAN1_Init(void)
   hcan1.Init.TimeSeg2 = CAN_BS2_5TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = DISABLE;
-  hcan1.Init.AutoWakeUp = DISABLE;
-  hcan1.Init.AutoRetransmission = DISABLE;
+  hcan1.Init.AutoWakeUp = ENABLE;
+  hcan1.Init.AutoRetransmission = ENABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
@@ -359,6 +361,12 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+// *** functions *** //
+
+
+/**
+ * overwriting the weak function defined in the includes which is the ISR for the CAN interrupt
+ */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 {
   if (HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, canRX) != HAL_OK)
@@ -384,7 +392,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 
     int emus1 = (volt1 << 8) | volt2;
     int emus2 = (volt3 << 8) | volt4;
-    emusVoltage = (emus1 << 8) | emus2;   // if this doesnt work then change the 8 to 16
+    emusVoltage = (emus1 << 8) | emus2;   // if this doesn't work then change the 8 to 16
   }
 }
 
