@@ -37,11 +37,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_macro  00020a36  00000000  00000000  0002a968  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00008291  00000000  00000000  0004b39e  2**0
+ 17 .debug_line   0000828f  00000000  00000000  0004b39e  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000cd671  00000000  00000000  0005362f  2**0
+ 18 .debug_str    000cd671  00000000  00000000  0005362d  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000053  00000000  00000000  00120ca0  2**0
+ 19 .comment      00000053  00000000  00000000  00120c9e  2**0
                   CONTENTS, READONLY
  20 .debug_frame  00001a68  00000000  00000000  00120cf4  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
@@ -386,21 +386,22 @@ int main(void)
  8000522:	f000 f97d 	bl	8000820 <MX_CAN1_Init>
   MX_ADC1_Init();
  8000526:	f000 f929 	bl	800077c <MX_ADC1_Init>
+
   /* USER CODE BEGIN 2 */
   // init the CAN filter for BMS messages
-    canFilter0.FilterIdHigh = 0x72 << 5;   // BMS IDs: 0 - 0x72
+    canFilter0.FilterIdHigh = 0x072 << 5;   // BMS IDs: 0 - 0x72
  800052a:	4b55      	ldr	r3, [pc, #340]	; (8000680 <main+0x170>)
  800052c:	f44f 6264 	mov.w	r2, #3648	; 0xe40
  8000530:	601a      	str	r2, [r3, #0]
-  	canFilter0.FilterIdLow = 0;
+  	canFilter0.FilterIdLow = 0x000;
  8000532:	4b53      	ldr	r3, [pc, #332]	; (8000680 <main+0x170>)
  8000534:	2200      	movs	r2, #0
  8000536:	605a      	str	r2, [r3, #4]
-    canFilter0.FilterMaskIdHigh = 0x72 << 5;
+    canFilter0.FilterMaskIdHigh = 0x072 << 5;
  8000538:	4b51      	ldr	r3, [pc, #324]	; (8000680 <main+0x170>)
  800053a:	f44f 6264 	mov.w	r2, #3648	; 0xe40
  800053e:	609a      	str	r2, [r3, #8]
-  	canFilter0.FilterMaskIdLow = 0x00;
+  	canFilter0.FilterMaskIdLow = 0x000;
  8000540:	4b4f      	ldr	r3, [pc, #316]	; (8000680 <main+0x170>)
  8000542:	2200      	movs	r2, #0
  8000544:	60da      	str	r2, [r3, #12]
@@ -431,25 +432,25 @@ int main(void)
  8000568:	f001 f8f0 	bl	800174c <HAL_CAN_ConfigFilter>
 
     // init the CAN filter for Rinehart messages
-    canFilter1.FilterIdHigh = 0xB1 << 5;      // Rinehart IDs: 0xA0 - 0xB1
+    canFilter1.FilterIdHigh = 0x0B1 << 5;      // Rinehart IDs: 0xA0 - 0xB1
  800056c:	4b46      	ldr	r3, [pc, #280]	; (8000688 <main+0x178>)
  800056e:	f44f 52b1 	mov.w	r2, #5664	; 0x1620
  8000572:	601a      	str	r2, [r3, #0]
-  	canFilter1.FilterIdLow = 0xA0;
+  	canFilter1.FilterIdLow = 0x0A0;
  8000574:	4b44      	ldr	r3, [pc, #272]	; (8000688 <main+0x178>)
  8000576:	22a0      	movs	r2, #160	; 0xa0
  8000578:	605a      	str	r2, [r3, #4]
-    canFilter1.FilterMaskIdHigh = 0xB1 << 5;
+    canFilter1.FilterMaskIdHigh = 0x0B1 << 5;
  800057a:	4b43      	ldr	r3, [pc, #268]	; (8000688 <main+0x178>)
  800057c:	f44f 52b1 	mov.w	r2, #5664	; 0x1620
  8000580:	609a      	str	r2, [r3, #8]
-  	canFilter1.FilterMaskIdLow = 0xA0;
+  	canFilter1.FilterMaskIdLow = 0x0A0;
  8000582:	4b41      	ldr	r3, [pc, #260]	; (8000688 <main+0x178>)
  8000584:	22a0      	movs	r2, #160	; 0xa0
  8000586:	60da      	str	r2, [r3, #12]
-    canFilter1.FilterBank = 0;
+    canFilter1.FilterBank = 1;
  8000588:	4b3f      	ldr	r3, [pc, #252]	; (8000688 <main+0x178>)
- 800058a:	2200      	movs	r2, #0
+ 800058a:	2201      	movs	r2, #1
  800058c:	615a      	str	r2, [r3, #20]
   	canFilter1.FilterMode = CAN_FILTERMODE_IDMASK;
  800058e:	4b3e      	ldr	r3, [pc, #248]	; (8000688 <main+0x178>)
@@ -486,11 +487,11 @@ int main(void)
  80005ba:	4b34      	ldr	r3, [pc, #208]	; (800068c <main+0x17c>)
  80005bc:	2200      	movs	r2, #0
  80005be:	60da      	str	r2, [r3, #12]
-  	txHeader0.StdId = 0x86;
+  	txHeader0.StdId = 0x086;
  80005c0:	4b32      	ldr	r3, [pc, #200]	; (800068c <main+0x17c>)
  80005c2:	2286      	movs	r2, #134	; 0x86
  80005c4:	601a      	str	r2, [r3, #0]
-  	txHeader0.ExtId = 0x02;
+  	txHeader0.ExtId = 0x002;
  80005c6:	4b31      	ldr	r3, [pc, #196]	; (800068c <main+0x17c>)
  80005c8:	2202      	movs	r2, #2
  80005ca:	605a      	str	r2, [r3, #4]
@@ -512,11 +513,11 @@ int main(void)
  80005de:	4b2c      	ldr	r3, [pc, #176]	; (8000690 <main+0x180>)
  80005e0:	2200      	movs	r2, #0
  80005e2:	60da      	str	r2, [r3, #12]
-  	txHeader1.StdId = 0x87;
+  	txHeader1.StdId = 0x087;
  80005e4:	4b2a      	ldr	r3, [pc, #168]	; (8000690 <main+0x180>)
  80005e6:	2287      	movs	r2, #135	; 0x87
  80005e8:	601a      	str	r2, [r3, #0]
-  	txHeader1.ExtId = 0x03;
+  	txHeader1.ExtId = 0x003;
  80005ea:	4b29      	ldr	r3, [pc, #164]	; (8000690 <main+0x180>)
  80005ec:	2203      	movs	r2, #3
  80005ee:	605a      	str	r2, [r3, #4]
@@ -525,46 +526,46 @@ int main(void)
  80005f2:	2200      	movs	r2, #0
  80005f4:	751a      	strb	r2, [r3, #20]
 
-	  HAL_CAN_Start(&hcan1); // Initialize CAN Bus
+	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
  80005f6:	4823      	ldr	r0, [pc, #140]	; (8000684 <main+0x174>)
  80005f8:	f001 f994 	bl	8001924 <HAL_CAN_Start>
-	  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
+	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
  80005fc:	2102      	movs	r1, #2
  80005fe:	4821      	ldr	r0, [pc, #132]	; (8000684 <main+0x174>)
  8000600:	f001 fbc1 	bl	8001d86 <HAL_CAN_ActivateNotification>
+  /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-	// poll sensors
-	pollSensorData();
+    // poll sensors
+    pollSensorData();
  8000604:	f000 f9e6 	bl	80009d4 <pollSensorData>
 
-	// read CAN
-	if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+    // read CAN
+    if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
  8000608:	2102      	movs	r1, #2
  800060a:	481e      	ldr	r0, [pc, #120]	; (8000684 <main+0x174>)
  800060c:	f001 fbbb 	bl	8001d86 <HAL_CAN_ActivateNotification>
  8000610:	4603      	mov	r3, r0
  8000612:	2b00      	cmp	r3, #0
  8000614:	d001      	beq.n	800061a <main+0x10a>
-		Error_Handler();
+      Error_Handler();
  8000616:	f000 fa07 	bl	8000a28 <Error_Handler>
 
-	// send CAN
-	uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};  // BASE
+    // send CAN
+    uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};  // BASE
  800061a:	4a1e      	ldr	r2, [pc, #120]	; (8000694 <main+0x184>)
  800061c:	f107 0310 	add.w	r3, r7, #16
  8000620:	e892 0003 	ldmia.w	r2, {r0, r1}
  8000624:	e883 0003 	stmia.w	r3, {r0, r1}
-	HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
+    HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
  8000628:	f107 0210 	add.w	r2, r7, #16
  800062c:	4b1a      	ldr	r3, [pc, #104]	; (8000698 <main+0x188>)
  800062e:	4917      	ldr	r1, [pc, #92]	; (800068c <main+0x17c>)
  8000630:	4814      	ldr	r0, [pc, #80]	; (8000684 <main+0x174>)
  8000632:	f001 f9bb 	bl	80019ac <HAL_CAN_AddTxMessage>
 
-	uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// DATA
+    uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// DATA
  8000636:	4b19      	ldr	r3, [pc, #100]	; (800069c <main+0x18c>)
  8000638:	681b      	ldr	r3, [r3, #0]
  800063a:	b2db      	uxtb	r3, r3
@@ -590,7 +591,7 @@ int main(void)
  8000668:	73bb      	strb	r3, [r7, #14]
  800066a:	2307      	movs	r3, #7
  800066c:	73fb      	strb	r3, [r7, #15]
-	HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
+    HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
  800066e:	f107 0208 	add.w	r2, r7, #8
  8000672:	4b09      	ldr	r3, [pc, #36]	; (8000698 <main+0x188>)
  8000674:	4906      	ldr	r1, [pc, #24]	; (8000690 <main+0x180>)

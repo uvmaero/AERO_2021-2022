@@ -39,7 +39,7 @@
 #define PIN_DC_DC_ENABLE            11          // DC DC control pin
 
 // CAN
-#define PIN_CAN_PLUS                            // positve CAN wire
+#define PIN_CAN_PLUS                            // positive CAN wire
 #define PIN_CAN_MINUS                           // negative CAN wire
 
 // precharge
@@ -75,7 +75,7 @@ enum prechargeStates
 	PRECHARGE_DONE,
 	PRECHARGE_ERROR
 };
-int prechargeState = PRECHARGE_OFF;			// set intial precharge state to OFF
+int prechargeState = PRECHARGE_OFF;			// set initial precharge state to OFF
 
 // CAN
 uint32_t canMailbox; 							            // CAN Bus Mail box variable
@@ -133,10 +133,10 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   // init the CAN filter for BMS messages
-    canFilter0.FilterIdHigh = 0x72 << 5;   // BMS IDs: 0 - 0x72
-  	canFilter0.FilterIdLow = 0;
-    canFilter0.FilterMaskIdHigh = 0x72 << 5;
-  	canFilter0.FilterMaskIdLow = 0x00;
+    canFilter0.FilterIdHigh = 0x072 << 5;   // BMS IDs: 0 - 0x72
+  	canFilter0.FilterIdLow = 0x000;
+    canFilter0.FilterMaskIdHigh = 0x072 << 5;
+  	canFilter0.FilterMaskIdLow = 0x000;
     canFilter0.FilterBank = 0;
   	canFilter0.FilterMode = CAN_FILTERMODE_IDMASK;
   	canFilter0.FilterFIFOAssignment = CAN_RX_FIFO0;
@@ -146,11 +146,11 @@ int main(void)
     HAL_CAN_ConfigFilter(&hcan1, &canFilter0);
 
     // init the CAN filter for Rinehart messages
-    canFilter1.FilterIdHigh = 0xB1 << 5;      // Rinehart IDs: 0xA0 - 0xB1
-  	canFilter1.FilterIdLow = 0xA0;
-    canFilter1.FilterMaskIdHigh = 0xB1 << 5;
-  	canFilter1.FilterMaskIdLow = 0xA0;
-    canFilter1.FilterBank = 0;
+    canFilter1.FilterIdHigh = 0x0B1 << 5;      // Rinehart IDs: 0xA0 - 0xB1
+  	canFilter1.FilterIdLow = 0x0A0;
+    canFilter1.FilterMaskIdHigh = 0x0B1 << 5;
+  	canFilter1.FilterMaskIdLow = 0x0A0;
+    canFilter1.FilterBank = 1;
   	canFilter1.FilterMode = CAN_FILTERMODE_IDMASK;
   	canFilter1.FilterFIFOAssignment = CAN_RX_FIFO0;
   	canFilter1.FilterScale = CAN_FILTERSCALE_32BIT;
@@ -162,16 +162,16 @@ int main(void)
   	txHeader0.DLC = 8; // Number of bites to be transmitted max- 8
   	txHeader0.IDE = CAN_ID_STD;
   	txHeader0.RTR = CAN_RTR_DATA;
-  	txHeader0.StdId = 0x86;
-  	txHeader0.ExtId = 0x02;
+  	txHeader0.StdId = 0x086;
+  	txHeader0.ExtId = 0x002;
   	txHeader0.TransmitGlobalTime = DISABLE;
 
   	// init the CAN mailbox for DATA
   	txHeader1.DLC = 8; // Number of bites to be transmitted max- 8
   	txHeader1.IDE = CAN_ID_STD;
   	txHeader1.RTR = CAN_RTR_DATA;
-  	txHeader1.StdId = 0x87;
-  	txHeader1.ExtId = 0x03;
+  	txHeader1.StdId = 0x087;
+  	txHeader1.ExtId = 0x003;
   	txHeader1.TransmitGlobalTime = DISABLE;
 
 	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
@@ -182,20 +182,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // poll sensors
+    pollSensorData();
 
-	// poll sensors
-	pollSensorData();
+    // read CAN
+    if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+      Error_Handler();
 
-	// read CAN
-	if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
-		Error_Handler();
+    // send CAN
+    uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};  // BASE
+    HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
 
-	// send CAN
-	uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};  // BASE
-	HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
-
-	uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// DATA
-	HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
+    uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// DATA
+    HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
   }
