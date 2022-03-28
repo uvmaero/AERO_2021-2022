@@ -37,26 +37,27 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-
 // inputs
-#define PIN_START_BUTTON              		28    			// ready to drive button
-#define PIN_DRIVE_DIRECTION           		26				// drive direction toggle
-#define PIN_BRAKE_REGEN					    19		        // brake regeneration
-#define PIN_COAST_REGEN					    18				// coast regeneration
+#define PIN_FRONT_LEFT_WHEEL			    0				// front left wheel speed sensor
+#define PIN_FRONT_RIGHT_WHEEL			    1				// front right wheel speed sensor
+#define PIN_FRONT_LEFT_SUSPENSION		    2				// front left suspension
+#define PIN_FRONT_RIGHT_SUSPENSION			3				// front right suspension
+#define PIN_BRAKE_0					        4				// brake sensor 1
+#define PIN_BRAKE_1				            5				// brake sensor 2
+#define PIN_PEDAL_0					        6				// go pedal sensor 1
+#define PIN_PEDAL_1					        7				// go pedal sensor 2
+#define PIN_COAST_REGEN					    8				// coast regeneration
+#define PIN_BRAKE_REGEN					    9		        // brake regeneration
 #define PIN_COOLING_TOGGLE			    	25				// toggle the cooling 
-#define PIN_FRONT_RIGHT_WHEEL			    11				// front right wheel speed sensor
-#define PIN_FRONT_LEFT_WHEEL			    10				// front left wheel speed sensor
-#define PIN_FRONT_RIGHT_SUSPENSION			13				// front right suspension
-#define PIN_FRONT_LEFT_SUSPENSION		    12				// front left suspension
-#define PIN_PEDAL_0					        16				// go pedal sensor 1
-#define PIN_PEDAL_1					        17				// go pedal sensor 2
-#define PIN_BRAKE_0					        14				// brake sensor 1
-#define PIN_BRAKE_1				            15				// brake sensor 2
+#define PIN_DRIVE_DIRECTION           		12				// drive direction toggle
+#define PIN_START_BUTTON              		13    			// ready to drive button
+#define PIN_LCD_BUTTON					    15				// LCD control button
+
+#define ADC_BUF_LEN							10				// length of dma adc buffer
 
 // outputs
 #define PIN_LCD_SDA						    29				// LCD sda
 #define PIN_LCD_SCL						    30				// LCD scl
-#define PIN_LCD_BUTTON					    27				// LCD control button
 #define PIN_RTD_LED							45				// RTD button LED
 #define PIN_IHD							    20				// IHD Fault LED
 #define PIN_AMS						        31				// AMS LED
@@ -78,11 +79,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-
+DMA_HandleTypeDef hdma_adc1;
 CAN_HandleTypeDef hcan1;
-
 I2C_HandleTypeDef hi2c1;
-
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 
@@ -114,11 +113,12 @@ float rideHeightFR = 0;               			// read from sensor input
 float rideHeightFL = 0;               			// read from sensor input
 float rideHeightBR = 0;               			// this needs to be retrieved from CAN
 float rideHeightBL = 0;               			// this needs to be retrieved from CAN
-int startButtonState = 0;             			// start button state (0 is not active)
+int startButton = 0;             				// start button state (0 is not active)
+int cooling = 0;								// cooling toggle switch
 
 // outputs
-int RTDButtonLEDState = 0;              		// RTD button LED toggle (0 is off)
-int cooling = 0;                     			// cooling toggle (0 is off)
+int startButtonState = 0;              			// RTD button LED toggle (0 is off)
+int coolingState = 0;                     		// cooling toggle (0 is off)
 int direction = 0;		                		// drive direction (0 is forwards)
 
 // screen enum
@@ -145,6 +145,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_CAN1_Init(void);
+static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 void StartDefaultTask(void const * argument);
 
@@ -154,16 +155,7 @@ void racingHUD();
 void electricalSettings();
 void rideSettings();
 void pollSensorData();
-void ADC_Select_CH_WSFR();
-void ADC_Select_CH_WSFL();
-void ADC_Select_CH_RHFR();
-void ADC_Select_CH_RHFL();
-void ADC_Select_CH_P0();
-void ADC_Select_CH_P1();
-void ADC_Select_CH_B0();
-void ADC_Select_CH_B1();
-void ADC_Select_CH_CR();
-void ADC_Select_CH_BR();
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -197,6 +189,7 @@ int main(void)
   MX_GPIO_Init();
   MX_ADC1_Init();
   MX_CAN1_Init();
+  MX_DMA_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
@@ -253,6 +246,9 @@ int main(void)
 	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
 
+	// start the dma adc conversion
+	HAL_ADC_Start_DMA(&hadc1, ADC_BUF_LEN);
+
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -290,6 +286,7 @@ int main(void)
   {
 	// all of the main loop code is in the defaultTask function as the infinite loop is in there
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -361,7 +358,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
@@ -447,6 +444,22 @@ static void MX_I2C1_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -518,176 +531,37 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
   }
 }
 
-void ADC_Select_CH_WSFR()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_0;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_WSFL()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_1;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_RHFR()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_2;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_RHFL()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_3;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_P0()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_4;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_P1()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_5;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_B0()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_6;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_B1()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_7;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_CR()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_8;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_BR()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_9;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
 void pollSensorData()
 {
 	// get front right wheel speed
-	ADC_Select_CH_WSFR();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	wheelSpeedFR = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	wheelSpeedFL = adc_buf[0];
 
 	// get front left wheel speed
-	ADC_Select_CH_WSFL();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	wheelSpeedFL = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	wheelSpeedFR = adc_buf[1];
 
 	// get front right ride height
-	ADC_Select_CH_RHFR();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	rideHeightFR = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	rideHeightFL = adc_buf[2];
 
 	// get front left ride height
-	ADC_Select_CH_RHFL();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	rideHeightFL = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
-
-	// get pedal 0
-	ADC_Select_CH_P0();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	pedal0 = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
-
-	// get pedal 1
-	ADC_Select_CH_P1();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	pedal1 = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	rideHeightFR = adc_buf[3];
 
 	// get brake 0
-	ADC_Select_CH_B0();
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	brake0 = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	brake0 = adc_buf[4];
 
 	// get brake 1
-	ADC_Select_CH_B1();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	brake1 = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	brake1 = adc_buf[5];
+
+	// get pedal 0
+	pedal0 = adc_buf[6];
+
+	// get pedal 1
+	pedal1 = adc_buf[7];
 
 	// get coast regen
-	ADC_Select_CH_CR();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	coastRegen = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	coastRegen = adc_buf[8];
 
 	// get brake regen
-	ADC_Select_CH_BR();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	brakeRegen = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	brakeRegen = adc_buf[9];
 }
 
 
@@ -893,16 +767,20 @@ void StartDefaultTask(void const * argument)
 		Error_Handler();
 
 	// send can messages
+	// BASE
 	uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; // Tx Buffer
 	HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
 
+	// idk what i wrote this for, im sure ill figure it out at some point
 	uint8_t csend1[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// add torque setting
 	HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
 
+	// DAQ DATA
 	uint8_t csend2[] = {wheelSpeedFL, wheelSpeedFR, rideHeightFL, rideHeightFR, brake0, brake1, pedal0, pedal1};
 	HAL_CAN_AddTxMessage(&hcan1, &txHeader2, csend2, &canMailbox); // Send Message
 
-	uint8_t csend3[] = {coastRegen, brakeRegen, cooling, direction, 0x04, 0x05, 0x06, 0x07};
+	// CONTROL DATA
+	uint8_t csend3[] = {coastRegen, brakeRegen, coolingState, direction, 0x04, 0x05, 0x06, 0x07};
 	HAL_CAN_AddTxMessage(&hcan1, &txHeader3, csend3, &canMailbox); // Send Message
 
 
@@ -941,7 +819,7 @@ void StartDefaultTask(void const * argument)
   }
 }
   /* USER CODE END 5 */
-
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
