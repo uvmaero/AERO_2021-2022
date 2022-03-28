@@ -41,6 +41,8 @@
 #define PIN_IMD_FAULT					            18		// IMD fault line
 #define PIN_BMS_FAULT					            19		// BMS fault line
 
+#define ADC_BUF_LEN                       6     // length of the DMA buffer for ADC reads
+
 // outputs
 #define PIN_BRAKE_LIGHT					          14		// brake light
 #define PIN_FAN_CONTROL					          15		// fan speed/on/off control
@@ -57,7 +59,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-
+DMA_HandleTypeDef hdma_adc1;
 CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
@@ -82,6 +84,8 @@ float rideHeightBL = 0;
 int IMDFaultState = 0;                          // 0 is maybe not faulting 
 int BMSFaultState = 0;                          // 0 is maybe not faulting
 
+uint32_t adc_buf[ADC_BUF_LEN];                 // array to store our adc reads
+
 // outputs
 int brakeLightState = 0;                        // 0 is off maybe
 int pumpState = 1;                              // 1 is on maybe
@@ -92,15 +96,11 @@ int fanState = 0;                               // 1 is on maybe
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
+static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 void pollSensorData();
-void ADC_Select_CH_WSBR();          // wheel speed
-void ADC_Select_CH_WSBL();          // wheel speed
-void ADC_Select_CH_RHBR();          // ride height
-void ADC_Select_CH_RHBL();          // ride height
-void ADC_Select_CH_WTIN();          // water temperature in
-void ADC_Select_CH_WTOUT();         // water temperature out
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -134,6 +134,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_CAN1_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
     // init the CAN filter
@@ -175,6 +176,9 @@ int main(void)
 	HAL_CAN_ConfigFilter(&hcan1, &canFilter); // Initialize CAN Filter
 	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
+
+  // start adc dma stuff
+  HAL_ADC_Start_DMA(&hadc1, adc_buf, ADC_BUF_LEN);     // 3rd param might the length of the data from the pin not the length of the buffer
 
   /* USER CODE END 2 */
 
@@ -281,7 +285,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
@@ -332,6 +336,22 @@ static void MX_CAN1_Init(void)
   }
   /* USER CODE BEGIN CAN1_Init 2 */
   /* USER CODE END CAN1_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
 
@@ -390,107 +410,24 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 void pollSensorData()
 {
   // get back right wheel speed
-	ADC_Select_CH_WSBR();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	wheelSpeedBR = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	wheelSpeedBL = adc_buf[0];
 
 	// get back left wheel speed
-	ADC_Select_CH_WSBL();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	wheelSpeedBL = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	wheelSpeedBR = adc_buf[1];
 
 	// get back right ride height
-	ADC_Select_CH_RHBR();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	rideHeightBR = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	rideHeightBL = adc_buf[2];
 
 	// get back left ride height
-	ADC_Select_CH_RHBL();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	rideHeightBL = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	rideHeightBR = adc_buf[3];
 
 	// get water temp in 
-	ADC_Select_CH_WTIN();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	waterTempIn = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	waterTempIn = adc_buf[4];
 
 	// get water temp out
-	ADC_Select_CH_WTOUT();
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	waterTempOut = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+	waterTempOut = adc_buf[5];
 }
 
-void ADC_Select_CH_WSBL()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_0;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_WSBR()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_1;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_RHBL()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_2;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_RHBR()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_3;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_WTIN()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_7;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
-
-void ADC_Select_CH_WTOUT()
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Channel = ADC_CHANNEL_8;
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-		Error_Handler();
-}
 /* USER CODE END 4 */
 
 /**
