@@ -34,6 +34,7 @@
 // inputs
 #define PIN_DC_DC_FAULT             12            // DC DC fault indicator pin
 #define PIN_VICOR_TEMP              17            // temperature inside vicore
+#define ADC_BUF_LEN					1			  // length of the ADC buffer from DMA
 
 // outputs 
 #define PIN_DC_DC_ENABLE            11          // DC DC control pin
@@ -52,6 +53,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
 CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
@@ -59,9 +61,10 @@ CAN_HandleTypeDef hcan1;
 // inputs
 float rinehartVoltage = 0;				// read from CAN
 float emusVoltage = 0;					// read from CAN
+float vicoreTemp = 0;					// read from DMA, vicore temp
 int DCDCEnable = 0;                     // dc-dc enable (0 = disabled, 1 = enabled)
-float vicoreTemp = 0;                   // temperature of vicore
 int RTDButtonPressed = 0;               // read this from CAN, if it's 1 we can finish precharge
+float adc_buf[ADC_BUF_LEN];				// adc read buffer
 
 // output
 int DCDCFault = 0;                      // the dc-dc fault indicator (0 = no fault, 1 = fault)
@@ -91,8 +94,8 @@ CAN_FilterTypeDef canFilter1;                 // CAN Bus Filter for Rinehart
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
+static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
-
 /* USER CODE BEGIN PFP */
 void prechargeControl();
 void pollSensorData();
@@ -129,8 +132,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_CAN1_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
-
   /* USER CODE BEGIN 2 */
   // init the CAN filter for BMS messages
     canFilter0.FilterIdHigh = 0x072 << 5;   // BMS IDs: 0 - 0x72
@@ -176,6 +179,10 @@ int main(void)
 
 	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
+
+	// start ADC DMA
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, ADC_BUF_LEN);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -196,6 +203,7 @@ int main(void)
     uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// DATA
     HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -266,14 +274,14 @@ static void MX_ADC1_Init(void)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.ScanConvMode = ENABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
@@ -324,6 +332,22 @@ static void MX_CAN1_Init(void)
   }
   /* USER CODE BEGIN CAN1_Init 2 */
   /* USER CODE END CAN1_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
 
@@ -402,10 +426,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 void pollSensorData()
 {
   // get vicore temp 
-  HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	vicoreTemp = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
+  vicoreTemp = adc_buf[0];
 
   // get dc-dc fault status
   DCDCFault = HAL_GPIO_ReadPin(GPIOA, PIN_DC_DC_FAULT);
