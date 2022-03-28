@@ -80,55 +80,61 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
+
 CAN_HandleTypeDef hcan1;
+
 I2C_HandleTypeDef hi2c1;
+DMA_HandleTypeDef hdma_i2c1_tx;
+DMA_HandleTypeDef hdma_i2c1_rx;
+
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 
 // CAN
-CAN_RxHeaderTypeDef rxHeader; 					// CAN Bus Receive Header
-CAN_TxHeaderTypeDef txHeader0; 					// CAN Bus Transmit Header BASE
-CAN_TxHeaderTypeDef txHeader1; 					// CAN Bus Transmit Header Torque Setting
-CAN_TxHeaderTypeDef txHeader2; 					// CAN Bus Transmit Header DAQ Data
-CAN_TxHeaderTypeDef txHeader3; 					// CAN Bus Transmit Header Control Data
-uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	// CAN Bus Receive Buffer
-CAN_FilterTypeDef canFilter; 					// CAN Bus Filter
-uint32_t canMailbox; 							// CAN Bus Mail box variable
+CAN_RxHeaderTypeDef rxHeader; 					      // CAN Bus Receive Header
+CAN_TxHeaderTypeDef txHeader0; 					      // CAN Bus Transmit Header BASE
+CAN_TxHeaderTypeDef txHeader1; 					      // CAN Bus Transmit Header Torque Setting
+CAN_TxHeaderTypeDef txHeader2; 					      // CAN Bus Transmit Header DAQ Data
+CAN_TxHeaderTypeDef txHeader3; 					      // CAN Bus Transmit Header Control Data
+uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0};  // CAN Bus Receive Buffer
+CAN_FilterTypeDef canFilter; 					        // CAN Bus Filter
+uint32_t canMailbox; 							            // CAN Bus Mail box variable
 
-// rinehart & emus
-float rinehartVoltage = 0;				  		// voltage in rinehart
-float emusVoltage = 0;				  			// emus bus voltage
-int readyToDrive = 0;							// ready to drive (0 = no, 1 = yes)
+// rinehart & emus  
+float rinehartVoltage = 0;				  		      // voltage in rinehart
+float emusVoltage = 0;				  			        // emus bus voltage
+int readyToDrive = 0;							            // ready to drive (0 = no, 1 = yes)
 
-// inputs
-float coastRegen, brakeRegen;			    	// coast and brake regen values 
-float pedal0, pedal1;                 			// pedal values
-float brake0, brake1;                			// brake values
-uint8_t coastMap, brakeMap;						// maps for coast and brake regen
-float wheelSpeedFR = 0;               			// read from sensor input
-float wheelSpeedFL = 0;               			// read from sensor input
-float wheelSpeedBR = 0;               			// this needs to be retrieved from CAN
-float wheelSpeedBL = 0;               			// this needs to be retrieved from CAN
-float rideHeightFR = 0;               			// read from sensor input
-float rideHeightFL = 0;               			// read from sensor input
-float rideHeightBR = 0;               			// this needs to be retrieved from CAN
-float rideHeightBL = 0;               			// this needs to be retrieved from CAN
-int startButton = 0;             				// start button state (0 is not active)
-int cooling = 0;								// cooling toggle switch
+// inputs 
+float coastRegen, brakeRegen;			    	      // coast and brake regen values 
+float pedal0, pedal1;                 			  // pedal values
+float brake0, brake1;                		  	  // brake values
+uint8_t coastMap, brakeMap;						        // maps for coast and brake regen
+float wheelSpeedFR = 0;               			  // read from sensor input
+float wheelSpeedFL = 0;               			  // read from sensor input
+float wheelSpeedBR = 0;               			  // this needs to be retrieved from CAN
+float wheelSpeedBL = 0;               			  // this needs to be retrieved from CAN
+float rideHeightFR = 0;               			  // read from sensor input
+float rideHeightFL = 0;               			  // read from sensor input
+float rideHeightBR = 0;               			  // this needs to be retrieved from CAN
+float rideHeightBL = 0;               			  // this needs to be retrieved from CAN
+int startButton = 0;             				      // start button state (0 is not active)
+int cooling = 0;								              // cooling toggle switch
+uint32_t adc_buf[ADC_BUF_LEN];                // adc buffer for dma
 
 // outputs
-int startButtonState = 0;              			// RTD button LED toggle (0 is off)
+int startButtonState = 0;              			  // RTD button LED toggle (0 is off)
 int coolingState = 0;                     		// cooling toggle (0 is off)
-int direction = 0;		                		// drive direction (0 is forwards)
+int direction = 0;		                		    // drive direction (0 is forwards)
 
 // screen enum
 enum screens
 {
-	RACING_HUD,               					// for driving the car
-	RIDE_SETTINGS,            					// view all ride style settings
-	ELECTRICAL_SETTINGS       					// view all electrical information
+	RACING_HUD,               					        // for driving the car
+	RIDE_SETTINGS,            					        // view all ride style settings
+	ELECTRICAL_SETTINGS       					        // view all electrical information
 };
-int currentScreen = RACING_HUD;   				// set the default screen mode to the racing HUD
+int currentScreen = RACING_HUD;   				    // set the default screen mode to the racing HUD
 
 // power modes
 enum powerModes
@@ -247,7 +253,7 @@ int main(void)
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
 
 	// start the dma adc conversion
-	HAL_ADC_Start_DMA(&hadc1, ADC_BUF_LEN);
+	HAL_ADC_Start_DMA(&hadc1, adc_buf, ADC_BUF_LEN);
 
   /* USER CODE END 2 */
 
@@ -451,8 +457,15 @@ static void MX_DMA_Init(void)
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA1_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
@@ -526,9 +539,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 
   // get ready to drive from high voltage for precharge complete
   if (rxHeader.StdId == 0x87)
-  {
 	  readyToDrive = canRX[0];
-  }
 }
 
 void pollSensorData()
@@ -768,11 +779,11 @@ void StartDefaultTask(void const * argument)
 
 	// send can messages
 	// BASE
-	uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; // Tx Buffer
+	uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
 	HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
 
 	// idk what i wrote this for, im sure ill figure it out at some point
-	uint8_t csend1[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// add torque setting
+	uint8_t csend1[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
 	HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
 
 	// DAQ DATA
@@ -784,7 +795,7 @@ void StartDefaultTask(void const * argument)
 	HAL_CAN_AddTxMessage(&hcan1, &txHeader3, csend3, &canMailbox); // Send Message
 
 
-	// check for lcd button press to change screeens
+	// check for lcd button press to change screens
 	int oldScreen = currentScreen;
 	if (HAL_GPIO_ReadPin(GPIOB, PIN_LCD_BUTTON) == 0)
 	{
@@ -819,7 +830,7 @@ void StartDefaultTask(void const * argument)
   }
 }
   /* USER CODE END 5 */
-}
+
 
 /**
   * @brief  This function is executed in case of error occurrence.
