@@ -34,6 +34,7 @@
 // inputs
 #define PIN_DC_DC_FAULT             12            // DC DC fault indicator pin
 #define PIN_VICOR_TEMP              17            // temperature inside vicore
+
 #define ADC_BUF_LEN					1			  // length of the ADC buffer from DMA
 
 // outputs 
@@ -64,7 +65,7 @@ float emusVoltage = 0;					// read from CAN
 float vicoreTemp = 0;					// read from DMA, vicore temp
 int DCDCEnable = 0;                     // dc-dc enable (0 = disabled, 1 = enabled)
 int RTDButtonPressed = 0;               // read this from CAN, if it's 1 we can finish precharge
-float adc_buf[ADC_BUF_LEN];				// adc read buffer
+uint32_t adc_buf[ADC_BUF_LEN];				// adc read buffer
 
 // output
 int DCDCFault = 0;                      // the dc-dc fault indicator (0 = no fault, 1 = fault)
@@ -181,7 +182,7 @@ int main(void)
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
 
 	// start ADC DMA
-	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, ADC_BUF_LEN);
+	HAL_ADC_Start_DMA(&hadc1, adc_buf, ADC_BUF_LEN);
 
   /* USER CODE END 2 */
 
@@ -197,10 +198,12 @@ int main(void)
       Error_Handler();
 
     // send CAN
-    uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};  // BASE
+    // BASE
+    uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
     HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
 
-    uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07}; 	// DATA
+    // BASE
+    uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07};
     HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
     /* USER CODE END WHILE */
 
@@ -430,6 +433,10 @@ void pollSensorData()
 
   // get dc-dc fault status
   DCDCFault = HAL_GPIO_ReadPin(GPIOA, PIN_DC_DC_FAULT);
+  if (DCDCFault == 1)
+	  DCDCEnable = 0;
+  else
+	  DCDCEnable = 1;
 }
 
 
@@ -444,26 +451,25 @@ void prechargeControl()
 		case (PRECHARGE_OFF):
 			// set ready to drive to false
 			readyToDrive = 0;
-      
-      // if the dc dc system is on then move to precharge on
-      if (DCDCEnable == 1)
-        prechargeState = PRECHARGE_ON;
+
+			// if the dc dc system is on then move to precharge on
+			if (DCDCEnable == 1)
+				prechargeState = PRECHARGE_ON;
 
 		break;
 
 		case (PRECHARGE_ON):
-		  // ensure voltages are above correct values
+			// ensure voltages are above correct values
 			if (rinehartVoltage >= (emusVoltage * PRECHARGE_COEFFICIENT))
 			{ 
-        // if the RTD button is pressed, move to precharge done 
-        if (RTDButtonPressed == 1)
+				// if the RTD button is pressed, move to precharge done
+				if (RTDButtonPressed == 1)
 				  prechargeState = PRECHARGE_DONE;
 			}
 
-      // if we have a DCDC fault, end precharge
-      if (DCDCFault == 1)
-        prechargeState = PRECHARGE_ERROR;
-
+			// if we have a DCDC fault, end precharge
+			if (DCDCFault == 1)
+				prechargeState = PRECHARGE_ERROR;
 		break;
 
 		case (PRECHARGE_DONE):
@@ -478,7 +484,7 @@ void prechargeControl()
 		break;
 
 		default:
-      // fallback state, this indicates we did some undefined action that brought us here
+      // fall back state, this indicates we did some undefined action that brought us here
       // we will move to PRECHARGE_ERROR to ensure readyToDrive stays false :)
 			prechargeState = PRECHARGE_ERROR;
 		break;
