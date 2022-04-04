@@ -31,19 +31,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-// inputs
-#define PIN_DC_DC_FAULT             12            // DC DC fault indicator pin
-#define PIN_VICOR_TEMP              17            // temperature inside vicore
-
-#define ADC_BUF_LEN					1			  // length of the ADC buffer from DMA
-
-// outputs 
-#define PIN_DC_DC_ENABLE            11          // DC DC control pin
-
-// CAN
-#define PIN_CAN_PLUS                            // positive CAN wire
-#define PIN_CAN_MINUS                           // negative CAN wire
-
+// analog buffer
+#define ADC_BUF_LEN 4086
 // precharge
 #define PRECHARGE_COEFFICIENT       0.9		      // 90% complete with precharge so it's probably safe to continue
 /* USER CODE END PD */
@@ -55,14 +44,18 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
+
 CAN_HandleTypeDef hcan1;
+
+TIM_HandleTypeDef htim13;
+TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN PV */
 
 // inputs
-float rinehartVoltage = 0;				// read from CAN
-float emusVoltage = 0;					// read from CAN
-float vicoreTemp = 0;					// read from DMA, vicore temp
+int rinehartVoltage = 0;				// read from CAN
+int emusVoltage = 0;					// read from CAN
+int vicoreTemp = 0;					// read from DMA, vicore temp
 int DCDCEnable = 0;                     // dc-dc enable (0 = disabled, 1 = enabled)
 int RTDButtonPressed = 0;               // read this from CAN, if it's 1 we can finish precharge
 uint32_t adc_buf[ADC_BUF_LEN];				// adc read buffer
@@ -82,11 +75,13 @@ enum prechargeStates
 int prechargeState = PRECHARGE_OFF;			// set initial precharge state to OFF
 
 // CAN
-uint32_t canMailbox; 							            // CAN Bus Mail box variable
+uint32_t TxMailbox; 							            // CAN Bus Mail box variable
 CAN_TxHeaderTypeDef txHeader0; 					      // CAN Bus Transmit Header BASE
 CAN_TxHeaderTypeDef txHeader1; 					      // CAN Bus Transmit Header DATA
+CAN_TxHeaderTypeDef txHeader2; 					      // CAN Bus Transmit Header DATA
 CAN_RxHeaderTypeDef rxHeader; 					      // CAN Bus Receive Header
 uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	// CAN Bus Receive Buffer
+uint8_t TxData[8];                            // CAN transmit buffer
 CAN_FilterTypeDef canFilter0; 					      // CAN Bus Filter for BMS
 CAN_FilterTypeDef canFilter1;                 // CAN Bus Filter for Rinehart
 /* USER CODE END PV */
@@ -97,9 +92,11 @@ static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_TIM14_Init(void);
+static void MX_TIM13_Init(void);
 /* USER CODE BEGIN PFP */
 void prechargeControl();
-void pollSensorData();
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -135,51 +132,40 @@ int main(void)
   MX_CAN1_Init();
   MX_DMA_Init();
   MX_ADC1_Init();
+  MX_TIM14_Init();
+  MX_TIM13_Init();
   /* USER CODE BEGIN 2 */
-  // init the CAN filter for BMS messages
-    canFilter0.FilterIdHigh = 0x072 << 5;   // BMS IDs: 0 - 0x72
-  	canFilter0.FilterIdLow = 0x000;
-    canFilter0.FilterMaskIdHigh = 0x072 << 5;
-  	canFilter0.FilterMaskIdLow = 0x000;
-    canFilter0.FilterBank = 0;
-  	canFilter0.FilterMode = CAN_FILTERMODE_IDMASK;
-  	canFilter0.FilterFIFOAssignment = CAN_RX_FIFO0;
-  	canFilter0.FilterScale = CAN_FILTERSCALE_32BIT;
-  	canFilter0.FilterActivation = ENABLE;
 
-    HAL_CAN_ConfigFilter(&hcan1, &canFilter0);
+  // init the CAN mailbox for BASE
+  txHeader0.DLC = 8; // Number of bites to be transmitted max- 8
+  txHeader0.IDE = CAN_ID_STD;
+  txHeader0.RTR = CAN_RTR_DATA;
+  txHeader0.StdId = 0x086;
+  txHeader0.ExtId = 0;
+  txHeader0.TransmitGlobalTime = DISABLE;
 
-    // init the CAN filter for Rinehart messages
-    canFilter1.FilterIdHigh = 0x0B1 << 5;      // Rinehart IDs: 0xA0 - 0xB1
-  	canFilter1.FilterIdLow = 0x0A0;
-    canFilter1.FilterMaskIdHigh = 0x0B1 << 5;
-  	canFilter1.FilterMaskIdLow = 0x0A0;
-    canFilter1.FilterBank = 1;
-  	canFilter1.FilterMode = CAN_FILTERMODE_IDMASK;
-  	canFilter1.FilterFIFOAssignment = CAN_RX_FIFO0;
-  	canFilter1.FilterScale = CAN_FILTERSCALE_32BIT;
-  	canFilter1.FilterActivation = ENABLE;
+  // init the CAN mailbox for DATA
+  txHeader1.DLC = 8; // Number of bites to be transmitted max- 8
+  txHeader1.IDE = CAN_ID_STD;
+  txHeader1.RTR = CAN_RTR_DATA;
+  txHeader1.StdId = 0x087;
+  txHeader1.ExtId = 0;
+  txHeader1.TransmitGlobalTime = DISABLE;
 
-    HAL_CAN_ConfigFilter(&hcan1, &canFilter1);
-
-  	// init the CAN mailbox for BASE
-  	txHeader0.DLC = 8; // Number of bites to be transmitted max- 8
-  	txHeader0.IDE = CAN_ID_STD;
-  	txHeader0.RTR = CAN_RTR_DATA;
-  	txHeader0.StdId = 0x086;
-  	txHeader0.ExtId = 0x002;
-  	txHeader0.TransmitGlobalTime = DISABLE;
-
-  	// init the CAN mailbox for DATA
-  	txHeader1.DLC = 8; // Number of bites to be transmitted max- 8
-  	txHeader1.IDE = CAN_ID_STD;
-  	txHeader1.RTR = CAN_RTR_DATA;
-  	txHeader1.StdId = 0x087;
-  	txHeader1.ExtId = 0x003;
-  	txHeader1.TransmitGlobalTime = DISABLE;
+  // header for rinehart (Parameter Command Message)
+  txHeader2.DLC = 8; // Number of bites to be transmitted max- 8
+  txHeader2.IDE = CAN_ID_STD;
+  txHeader2.RTR = CAN_RTR_DATA;
+  txHeader2.StdId = 0x0C1;
+  txHeader2.ExtId = 0;
+  txHeader2.TransmitGlobalTime = DISABLE;
 
 	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
+
+  // start timer
+  HAL_TIM_Base_Start_IT(&htim14);
+  HAL_TIM_Base_Start_IT(&htim13);
 
 	// start ADC DMA
 	HAL_ADC_Start_DMA(&hadc1, adc_buf, ADC_BUF_LEN);
@@ -191,20 +177,20 @@ int main(void)
   while (1)
   {
     // poll sensors
-    pollSensorData();
+    // pollSensorData();
 
     // read CAN
-    if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
-      Error_Handler();
+    // if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+    //   Error_Handler();
 
     // send CAN
     // BASE
-    uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-    HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
+    // uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+    // HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
 
     // BASE
-    uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07};
-    HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
+    // uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07};
+    // HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -234,7 +220,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 100;
+  RCC_OscInitStruct.PLL.PLLN = 90;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
@@ -277,7 +263,7 @@ static void MX_ADC1_Init(void)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = ENABLE;
+  hadc1.Init.ScanConvMode = DISABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -318,11 +304,11 @@ static void MX_CAN1_Init(void)
   /* USER CODE BEGIN CAN1_Init 1 */
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 5;
+  hcan1.Init.Prescaler = 18;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_14TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_5TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_3TQ;
+  hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = DISABLE;
   hcan1.Init.AutoWakeUp = ENABLE;
@@ -334,7 +320,96 @@ static void MX_CAN1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN CAN1_Init 2 */
+
+  // init the CAN filter for BMS messages
+    canFilter0.FilterIdHigh = 0x072 << 5;   // BMS IDs: 0 - 0x72
+  	canFilter0.FilterIdLow = 0x000;
+    canFilter0.FilterMaskIdHigh = 0x072 << 5;
+  	canFilter0.FilterMaskIdLow = 0x000;
+    canFilter0.FilterBank = 0;
+  	canFilter0.FilterMode = CAN_FILTERMODE_IDMASK;
+  	canFilter0.FilterFIFOAssignment = CAN_RX_FIFO0;
+  	canFilter0.FilterScale = CAN_FILTERSCALE_32BIT;
+  	canFilter0.FilterActivation = ENABLE;
+
+    HAL_CAN_ConfigFilter(&hcan1, &canFilter0);
+
+    // init the CAN filter for Rinehart messages
+    canFilter1.FilterIdHigh = 0x0B1 << 5;      // Rinehart IDs: 0xA0 - 0xB1
+  	canFilter1.FilterIdLow = 0x0A0;
+    canFilter1.FilterMaskIdHigh = 0x0B1 << 5;
+  	canFilter1.FilterMaskIdLow = 0x0A0;
+    canFilter1.FilterBank = 1;
+  	canFilter1.FilterMode = CAN_FILTERMODE_IDMASK;
+  	canFilter1.FilterFIFOAssignment = CAN_RX_FIFO0;
+  	canFilter1.FilterScale = CAN_FILTERSCALE_32BIT;
+  	canFilter1.FilterActivation = ENABLE;
+
+    HAL_CAN_ConfigFilter(&hcan1, &canFilter1);
+
   /* USER CODE END CAN1_Init 2 */
+
+}
+
+/**
+  * @brief TIM13 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM13_Init(void)
+{
+
+  /* USER CODE BEGIN TIM13_Init 0 */
+
+  /* USER CODE END TIM13_Init 0 */
+
+  /* USER CODE BEGIN TIM13_Init 1 */
+
+  /* USER CODE END TIM13_Init 1 */
+  htim13.Instance = TIM13;
+  htim13.Init.Prescaler = 9000-1;
+  htim13.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim13.Init.Period = 1000-1;
+  htim13.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim13.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim13) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM13_Init 2 */
+
+  /* USER CODE END TIM13_Init 2 */
+
+}
+
+/**
+  * @brief TIM14 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM14_Init(void)
+{
+
+  /* USER CODE BEGIN TIM14_Init 0 */
+
+  /* USER CODE END TIM14_Init 0 */
+
+  /* USER CODE BEGIN TIM14_Init 1 */
+
+  /* USER CODE END TIM14_Init 1 */
+  htim14.Instance = TIM14;
+  htim14.Init.Prescaler = 9000-1;
+  htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim14.Init.Period = 5000-1;
+  htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM14_Init 2 */
+
+  /* USER CODE END TIM14_Init 2 */
 
 }
 
@@ -368,12 +443,19 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PA0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA1 */
   GPIO_InitStruct.Pin = GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
@@ -399,7 +481,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
     Error_Handler();
 
   // get rinehart bus voltage
-  if (rxHeader.StdId == 0xA7)
+  if (rxHeader.StdId == 0x0A7)
   {
     // rinehart voltage is spread across the first 2 bytes
 	  int rine1 = canRX[0];
@@ -409,7 +491,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
   }
 
   // get BMS total voltages
-  if (rxHeader.StdId == 0x1)
+  if (rxHeader.StdId == 0x001)
   {
     int volt1 = canRX[4];
     int volt2 = canRX[3];
@@ -418,25 +500,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 
     int emus1 = (volt1 << 8) | volt2;
     int emus2 = (volt3 << 8) | volt4;
-    emusVoltage = (emus1 << 8) | emus2;   // if this doesn't work then change the 8 to 16
+    emusVoltage = (emus1 << 16) | emus2;  
   }
-}
-
-/**
- * @brief 
- * 
- */
-void pollSensorData()
-{
-  // get vicore temp 
-  vicoreTemp = adc_buf[0];
-
-  // get dc-dc fault status
-  DCDCFault = HAL_GPIO_ReadPin(GPIOA, PIN_DC_DC_FAULT);
-  if (DCDCFault == 1)
-	  DCDCEnable = 0;
-  else
-	  DCDCEnable = 1;
 }
 
 
@@ -453,28 +518,38 @@ void prechargeControl()
 			readyToDrive = 0;
 
 			// if the dc dc system is on then move to precharge on
-			if (DCDCEnable == 1)
-				prechargeState = PRECHARGE_ON;
+			// if (DCDCEnable == 1)
+			// 	prechargeState = PRECHARGE_ON;
+
+      // this state sends a message to rinehart to turn 
+      TxData[0] = 10; // controled by precharge
+      // send message
+      
+      HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
 
 		break;
 
 		case (PRECHARGE_ON):
+      
 			// ensure voltages are above correct values
 			if (rinehartVoltage >= (emusVoltage * PRECHARGE_COEFFICIENT))
 			{ 
 				// if the RTD button is pressed, move to precharge done
-				if (RTDButtonPressed == 1)
+				// if (RTDButtonPressed == 1)
 				  prechargeState = PRECHARGE_DONE;
 			}
 
+      // if we do this for too long, move to error state
+
 			// if we have a DCDC fault, end precharge
-			if (DCDCFault == 1)
-				prechargeState = PRECHARGE_ERROR;
+			// if (DCDCFault == 1)
+			// 	prechargeState = PRECHARGE_ERROR;
 		break;
 
 		case (PRECHARGE_DONE):
 			// now that precharge is complete we can drive the car
 			readyToDrive = 1;
+      // message is sent to rinehart to turn on main contactor
 		break;
 
 		case (PRECHARGE_ERROR):
@@ -489,6 +564,43 @@ void prechargeControl()
 			prechargeState = PRECHARGE_ERROR;
 		break;
 	}
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+  // send can message
+  if (htim == &htim14){
+    // define message
+    TxData[0] = readyToDrive; // controled by precharge
+    TxData[1] = DCDCFault; // 0 for now TODO: implement fault detection
+    TxData[2] = vicoreTemp; // DMA update
+    TxData[3] = rinehartVoltage; // update on CAN message
+    TxData[4] = emusVoltage; // update on CAN message
+    // send message
+    HAL_CAN_AddTxMessage(&hcan1, &txHeader1, TxData, &TxMailbox);
+  }
+
+  // check precharge status
+  if(htim == &htim13){
+    prechargeControl();
+  }
+
+}
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+  // TODO: check analog values for the temperature conversion
+  // Define threshold for when the fan should turn on
+
+  // update vicor temp
+  vicoreTemp = adc_buf[0];
+
+  // set fan based on value
+  if (vicoreTemp >= 2048){
+    // set the fan high
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+  } else{
+    // set fan low
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+  }
 }
 
 /* USER CODE END 4 */
