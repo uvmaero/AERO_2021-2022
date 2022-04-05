@@ -35,6 +35,9 @@
 #define ADC_BUF_LEN 4086
 // precharge
 #define PRECHARGE_COEFFICIENT       0.9		      // 90% complete with precharge so it's probably safe to continue
+#define NUM_COMMAND_MSG 10
+#define NUM_VOLTAGE_CHECKS 500 // since we're checking at 10ms Interrupts, 500 would be 5 seconds. 
+                              // precharge should be done in less than 2 seconds. 
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -52,9 +55,12 @@ TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN PV */
 
+// counters for Rinehart message sending in precharge
+uint8_t rinehart_send_command_count = 0;
+
 // inputs
-int rinehartVoltage = 0;				// read from CAN
-int emusVoltage = 0;					// read from CAN
+uint32_t rinehartVoltage = 0;				// read from CAN
+uint32_t emusVoltage = 0;					// read from CAN
 int vicoreTemp = 0;					// read from DMA, vicore temp
 int DCDCEnable = 0;                     // dc-dc enable (0 = disabled, 1 = enabled)
 int RTDButtonPressed = 0;               // read this from CAN, if it's 1 we can finish precharge
@@ -72,7 +78,9 @@ enum prechargeStates
 	PRECHARGE_DONE,
 	PRECHARGE_ERROR
 };
-int prechargeState = PRECHARGE_OFF;			// set initial precharge state to OFF
+uint8_t prechargeState = PRECHARGE_OFF;			// set initial precharge state to OFF
+uint8_t lastPrechargeState = PRECHARGE_OFF;
+uint8_t voltageCheckCount = 0;
 
 // CAN
 uint32_t TxMailbox; 							            // CAN Bus Mail box variable
@@ -176,21 +184,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // poll sensors
-    // pollSensorData();
-
-    // read CAN
-    // if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
-    //   Error_Handler();
-
-    // send CAN
-    // BASE
-    // uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-    // HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
-
-    // BASE
-    // uint8_t csend1[] = {readyToDrive, DCDCFault, vicoreTemp, 0x03, 0x04, 0x05, 0x06, 0x07};
-    // HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
+    
+    
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -322,9 +317,9 @@ static void MX_CAN1_Init(void)
   /* USER CODE BEGIN CAN1_Init 2 */
 
   // init the CAN filter for BMS messages
-    canFilter0.FilterIdHigh = 0x072 << 5;   // BMS IDs: 0 - 0x72
+    canFilter0.FilterIdHigh = 0x001 << 5;   // BMS IDs: 0 - 0x72
   	canFilter0.FilterIdLow = 0x000;
-    canFilter0.FilterMaskIdHigh = 0x072 << 5;
+    canFilter0.FilterMaskIdHigh = 0x001 << 5;
   	canFilter0.FilterMaskIdLow = 0x000;
     canFilter0.FilterBank = 0;
   	canFilter0.FilterMode = CAN_FILTERMODE_IDMASK;
@@ -335,10 +330,10 @@ static void MX_CAN1_Init(void)
     HAL_CAN_ConfigFilter(&hcan1, &canFilter0);
 
     // init the CAN filter for Rinehart messages
-    canFilter1.FilterIdHigh = 0x0B1 << 5;      // Rinehart IDs: 0xA0 - 0xB1
-  	canFilter1.FilterIdLow = 0x0A0;
-    canFilter1.FilterMaskIdHigh = 0x0B1 << 5;
-  	canFilter1.FilterMaskIdLow = 0x0A0;
+    canFilter1.FilterIdHigh = 0x0A7 << 5;      // Rinehart IDs: 0xA0 - 0xB1
+  	canFilter1.FilterIdLow = 0x00;
+    canFilter1.FilterMaskIdHigh = 0x0A7 << 5;
+  	canFilter1.FilterMaskIdLow = 0x000;
     canFilter1.FilterBank = 1;
   	canFilter1.FilterMode = CAN_FILTERMODE_IDMASK;
   	canFilter1.FilterFIFOAssignment = CAN_RX_FIFO0;
@@ -493,14 +488,16 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
   // get BMS total voltages
   if (rxHeader.StdId == 0x001)
   {
-    int volt1 = canRX[4];
-    int volt2 = canRX[3];
-    int volt3 = canRX[6];
-    int volt4 = canRX[5];
 
-    int emus1 = (volt1 << 8) | volt2;
-    int emus2 = (volt3 << 8) | volt4;
-    emusVoltage = (emus1 << 16) | emus2;  
+    uint8_t volt1 = canRX[4] >> 8 & 0xFF;
+    uint8_t volt2 = canRX[3] & 0xFF;
+    uint8_t volt3 = canRX[6] >> 24;
+    uint8_t volt4 = canRX[5] >> 16 & 0xFF;
+
+    uint16_t emus1 = (volt2 << 8) | volt1;
+    uint16_t emus2 = (volt4 << 8) | volt3;
+    emusVoltage = volt3 << 24 | (((volt4 << 16) | ((volt1 << 8)) | (volt2)));
+    emusVoltage = emusVoltage / 10; // scale down to rinehart *10 scaler
   }
 }
 
@@ -511,51 +508,102 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
  */
 void prechargeControl()
 {
+
+  // if 
+
+
 	switch (prechargeState)
 	{
 		case (PRECHARGE_OFF):
 			// set ready to drive to false
 			readyToDrive = 0;
 
-			// if the dc dc system is on then move to precharge on
-			// if (DCDCEnable == 1)
-			// 	prechargeState = PRECHARGE_ON;
-
-      // this state sends a message to rinehart to turn 
-      TxData[0] = 10; // controled by precharge
+      // this state sends a message to rinehart
+      if (lastPrechargeState != prechargeState){
+      // message is sent to rinehart to turn everything off
+      TxData[0] = 0; // TODO: update this message
       // send message
-      
       HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
+      
+      // update last precharge state
+      lastPrechargeState = prechargeState;
+      }
+
+      // move to precharge on
+      prechargeState = PRECHARGE_ON;
 
 		break;
 
 		case (PRECHARGE_ON):
+
+      // not ready to drive yet
+      readyToDrive = 0;
+
+      // turn on precharge relay
+      // this state sends a message to rinehart to turn 
+      if ((lastPrechargeState != prechargeState)){
+      // message is sent to rinehart to turn on precharge relay
+      TxData[0] = 10; // TODO: update this message
+      // send message
+      HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
+      
+      // update last precharge state
+      lastPrechargeState = prechargeState;
+      }
       
 			// ensure voltages are above correct values
-			if (rinehartVoltage >= (emusVoltage * PRECHARGE_COEFFICIENT))
+			if (rinehartVoltage > (emusVoltage * PRECHARGE_COEFFICIENT))
 			{ 
-				// if the RTD button is pressed, move to precharge done
-				// if (RTDButtonPressed == 1)
 				  prechargeState = PRECHARGE_DONE;
 			}
 
       // if we do this for too long, move to error state
+      if (voltageCheckCount >= NUM_VOLTAGE_CHECKS){
+        prechargeState = PRECHARGE_ERROR;
+      } else{
+        voltageCheckCount++; // add to the counter. 
+      }
 
-			// if we have a DCDC fault, end precharge
-			// if (DCDCFault == 1)
-			// 	prechargeState = PRECHARGE_ERROR;
+
 		break;
 
 		case (PRECHARGE_DONE):
 			// now that precharge is complete we can drive the car
 			readyToDrive = 1;
-      // message is sent to rinehart to turn on main contactor
+      // this state sends a message to rinehart to turn 
+      if (lastPrechargeState != prechargeState){
+      // message is sent to rinehart to turn everything off
+      TxData[0] = 10; // TODO: update this message
+      // send message
+      HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
+      
+      // update last precharge state
+      lastPrechargeState = prechargeState;
+      }
+
+      // if rinehart voltage drops below battery, something's wrong, 
+      // turn everything off
+			if (rinehartVoltage <= (emusVoltage * PRECHARGE_COEFFICIENT))
+			{
+				  prechargeState = PRECHARGE_OFF;
+			}
+
 		break;
 
 		case (PRECHARGE_ERROR):
 			// the car is most definitly not ready to drive
 			// probably requires hard reboot of systems to clear this state
 			readyToDrive = 0;
+      // this state sends a message to rinehart to turn 
+      if (lastPrechargeState != prechargeState){
+      // message is sent to rinehart to turn everything off
+      TxData[0] = 10; // TODO: update this message
+      // send message
+      HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
+      
+      // update last precharge state
+      lastPrechargeState = prechargeState;
+      }
 		break;
 
 		default:
@@ -573,8 +621,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     TxData[0] = readyToDrive; // controled by precharge
     TxData[1] = DCDCFault; // 0 for now TODO: implement fault detection
     TxData[2] = vicoreTemp; // DMA update
-    TxData[3] = rinehartVoltage; // update on CAN message
-    TxData[4] = emusVoltage; // update on CAN message
+    TxData[3] = rinehartVoltage >> 8; // update on CAN message
+    TxData[4] = rinehartVoltage & 0xFF; // update on CAN message
+    TxData[5] = emusVoltage >> 8; // update on CAN message
+    TxData[6] = emusVoltage ; // update on CAN message
     // send message
     HAL_CAN_AddTxMessage(&hcan1, &txHeader1, TxData, &TxMailbox);
   }
