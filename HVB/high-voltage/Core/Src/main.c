@@ -36,8 +36,8 @@
 // precharge
 #define PRECHARGE_COEFFICIENT       0.9		      // 90% complete with precharge so it's probably safe to continue
 #define NUM_COMMAND_MSG 10
-#define NUM_VOLTAGE_CHECKS 500 // since we're checking at 10ms Interrupts, 500 would be 5 seconds. 
-                              // precharge should be done in less than 2 seconds. 
+#define NUM_VOLTAGE_CHECKS 500                  // since we're checking at 10ms Interrupts, 500 would be 5 seconds. 
+                                                // precharge should be done in less than 2 seconds. 
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -59,16 +59,16 @@ TIM_HandleTypeDef htim14;
 uint8_t rinehart_send_command_count = 0;
 
 // inputs
-uint32_t rinehartVoltage = 0;				// read from CAN
-uint32_t emusVoltage = 0;					// read from CAN
-int vicoreTemp = 0;					// read from DMA, vicore temp
-int DCDCEnable = 0;                     // dc-dc enable (0 = disabled, 1 = enabled)
-int RTDButtonPressed = 0;               // read this from CAN, if it's 1 we can finish precharge
-uint32_t adc_buf[ADC_BUF_LEN];				// adc read buffer
+uint32_t rinehartVoltage = 0;                 // read from CAN
+uint32_t emusVoltage = 0;					            // read from CAN
+int vicoreTemp = 0;					                  // read from DMA, vicore temp
+int DCDCEnable = 0;                           // dc-dc enable (0 = disabled, 1 = enabled)
+int RTDButtonPressed = 0;                     // read this from CAN, if it's 1 we can finish precharge
+uint32_t adc_buf[ADC_BUF_LEN];				        // adc read buffer
 
 // output
-int DCDCFault = 0;                      // the dc-dc fault indicator (0 = no fault, 1 = fault)
-int readyToDrive = 0;					          // the car is ready to drive! (0 = not ready, 1 = ready)
+int DCDCFault = 0;                            // the dc-dc fault indicator (0 = no fault, 1 = fault)
+int readyToDrive = 0;					                // the car is ready to drive! (0 = not ready, 1 = ready)
 
 // precharge states
 enum prechargeStates
@@ -78,7 +78,7 @@ enum prechargeStates
 	PRECHARGE_DONE,
 	PRECHARGE_ERROR
 };
-uint8_t prechargeState = PRECHARGE_OFF;			// set initial precharge state to OFF
+uint8_t prechargeState = PRECHARGE_OFF;			  // set initial precharge state to OFF
 uint8_t lastPrechargeState = PRECHARGE_OFF;
 uint8_t voltageCheckCount = 0;
 
@@ -488,7 +488,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
   // get BMS total voltages
   if (rxHeader.StdId == 0x001)
   {
-
     uint8_t volt1 = canRX[4] >> 8 & 0xFF;
     uint8_t volt2 = canRX[3] & 0xFF;
     uint8_t volt3 = canRX[6] >> 24;
@@ -508,10 +507,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
  */
 void prechargeControl()
 {
-
-  // if 
-
-
 	switch (prechargeState)
 	{
 		case (PRECHARGE_OFF):
@@ -519,14 +514,15 @@ void prechargeControl()
 			readyToDrive = 0;
 
       // this state sends a message to rinehart
-      if (lastPrechargeState != prechargeState){
-      // message is sent to rinehart to turn everything off
-      TxData[0] = 0; // TODO: update this message
-      // send message
-      HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
-      
-      // update last precharge state
-      lastPrechargeState = prechargeState;
+      if (lastPrechargeState != prechargeState)
+      {
+        // message is sent to rinehart to turn everything off
+        TxData[0] = 0; // TODO: update this message
+        // send message
+        HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
+        
+        // update last precharge state
+        lastPrechargeState = prechargeState;
       }
 
       // move to precharge on
@@ -541,52 +537,52 @@ void prechargeControl()
 
       // turn on precharge relay
       // this state sends a message to rinehart to turn 
-      if ((lastPrechargeState != prechargeState)){
-      // message is sent to rinehart to turn on precharge relay
-      TxData[0] = 10; // TODO: update this message
-      // send message
-      HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
-      
-      // update last precharge state
-      lastPrechargeState = prechargeState;
+      if (lastPrechargeState != prechargeState)
+      {
+        // message is sent to rinehart to turn on precharge relay
+        TxData[0] = 10; // TODO: update this message
+
+        // send message
+        HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
+        
+        // update last precharge state
+        lastPrechargeState = prechargeState;
       }
       
 			// ensure voltages are above correct values
-			if (rinehartVoltage > (emusVoltage * PRECHARGE_COEFFICIENT))
-			{ 
+			if (rinehartVoltage > (emusVoltage * PRECHARGE_COEFFICIENT)) 
 				  prechargeState = PRECHARGE_DONE;
-			}
 
       // if we do this for too long, move to error state
-      if (voltageCheckCount >= NUM_VOLTAGE_CHECKS){
+      if (voltageCheckCount >= NUM_VOLTAGE_CHECKS)
         prechargeState = PRECHARGE_ERROR;
-      } else{
+      
+      else
         voltageCheckCount++; // add to the counter. 
-      }
-
 
 		break;
 
 		case (PRECHARGE_DONE):
 			// now that precharge is complete we can drive the car
 			readyToDrive = 1;
+
       // this state sends a message to rinehart to turn 
-      if (lastPrechargeState != prechargeState){
-      // message is sent to rinehart to turn everything off
-      TxData[0] = 10; // TODO: update this message
-      // send message
-      HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
-      
-      // update last precharge state
-      lastPrechargeState = prechargeState;
+      if (lastPrechargeState != prechargeState)
+      {
+        // message is sent to rinehart to turn everything off
+        TxData[0] = 10; // TODO: update this message
+
+        // send message
+        HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
+        
+        // update last precharge state
+        lastPrechargeState = prechargeState;
       }
 
       // if rinehart voltage drops below battery, something's wrong, 
       // turn everything off
 			if (rinehartVoltage <= (emusVoltage * PRECHARGE_COEFFICIENT))
-			{
 				  prechargeState = PRECHARGE_OFF;
-			}
 
 		break;
 
@@ -595,14 +591,16 @@ void prechargeControl()
 			// probably requires hard reboot of systems to clear this state
 			readyToDrive = 0;
       // this state sends a message to rinehart to turn 
-      if (lastPrechargeState != prechargeState){
-      // message is sent to rinehart to turn everything off
-      TxData[0] = 10; // TODO: update this message
-      // send message
-      HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
-      
-      // update last precharge state
-      lastPrechargeState = prechargeState;
+      if (lastPrechargeState != prechargeState)
+      {
+        // message is sent to rinehart to turn everything off
+        TxData[0] = 10; // TODO: update this message
+
+        // send message
+        HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
+        
+        // update last precharge state
+        lastPrechargeState = prechargeState;
       }
 		break;
 
@@ -614,9 +612,11 @@ void prechargeControl()
 	}
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
   // send can message
-  if (htim == &htim14){
+  if (htim == &htim14)
+  {
     // define message
     TxData[0] = readyToDrive; // controled by precharge
     TxData[1] = DCDCFault; // 0 for now TODO: implement fault detection
@@ -625,18 +625,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     TxData[4] = rinehartVoltage & 0xFF; // update on CAN message
     TxData[5] = emusVoltage >> 8; // update on CAN message
     TxData[6] = emusVoltage ; // update on CAN message
+
     // send message
     HAL_CAN_AddTxMessage(&hcan1, &txHeader1, TxData, &TxMailbox);
   }
 
   // check precharge status
-  if(htim == &htim13){
+  if(htim == &htim13)
     prechargeControl();
-  }
-
 }
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
   // TODO: check analog values for the temperature conversion
   // Define threshold for when the fan should turn on
 
@@ -644,10 +644,14 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
   vicoreTemp = adc_buf[0];
 
   // set fan based on value
-  if (vicoreTemp >= 2048){
+  if (vicoreTemp >= 2048)
+  {
     // set the fan high
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-  } else{
+  }
+
+  else
+  {
     // set fan low
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
   }
@@ -686,4 +690,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
