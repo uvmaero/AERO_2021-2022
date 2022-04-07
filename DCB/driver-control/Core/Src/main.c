@@ -24,6 +24,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <math.h>
+#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -76,10 +78,10 @@ int readyToDrive = 0;							            // ready to drive (0 = no, 1 = yes)
 
 // inputs 
 float coastRegen, brakeRegen;			    	      // coast and brake regen values 
-float pedal0, pedal1;                 			  // pedal values
-float pedal_average;
-float brake0, brake1;                		  	  // brake values
-float brake_average;
+uint8_t pedal0=0, pedal1=0;                 			  // pedal values
+uint8_t pedal_average;
+uint8_t brake0=0, brake1=0;                		  	  // brake values
+uint8_t brake_average;
 uint8_t coastMap, brakeMap;						        // maps for coast and brake regen
 float wheelSpeedFR = 0;               			  // read from sensor input
 float wheelSpeedFL = 0;               			  // read from sensor input
@@ -90,7 +92,7 @@ float rideHeightFL = 0;               			  // read from sensor input
 float rideHeightBR = 0;               			  // this needs to be retrieved from CAN
 float rideHeightBL = 0;               			  // this needs to be retrieved from CAN
 uint8_t startButton = 0;             				  // start button state (0 is not active)
-uint32_t adc_buf[ADC_BUF_LEN];                // adc buffer for dma
+uint16_t adc_buf[ADC_BUF_LEN];                // adc buffer for dma
 uint8_t faultAMS = 0;                         // updated from RCB CAN
 uint8_t faultIMD = 0;                         // updated from RCB CAN
 uint16_t commandedTorque = 0;                  // amount of torque we're requesting from Rinehart
@@ -110,7 +112,7 @@ static void MX_CAN1_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM13_Init(void);
 static void MX_TIM14_Init(void);
-
+/* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
@@ -183,7 +185,7 @@ int main(void)
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
 
 	// start the dma adc conversion
-	HAL_ADC_Start_DMA(&hadc1, adc_buf, ADC_BUF_LEN);
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, ADC_BUF_LEN);
   HAL_TIM_Base_Start_IT(&htim13); // start the timer interupt
   HAL_TIM_Base_Start_IT(&htim14); // start the timer interupt
 
@@ -275,7 +277,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 4;
   hadc1.Init.DMAContinuousRequests = ENABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     Error_Handler();
@@ -526,17 +528,17 @@ if (htim == &htim13){
 
 
   // write fault lights
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, faultAMS);
+  // HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, faultAMS);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, faultIMD);
   
-  txData[0] = 0; // regen pot
-  txData[1] = 0; // brake pot
-  txData[2] = coolingState << 1; // cooling
-  txData[3] = direction; // direction (1 is OFF, pulled up)
-  txData[4] = 0; // brake light
+//   txData[0] = 0; // regen pot
+//   txData[1] = 0; // brake pot
+//   txData[2] = coolingState << 1; // cooling
+//   txData[3] = direction; // direction (1 is OFF, pulled up)
+//   txData[4] = 0; // brake light
 
 
-  HAL_CAN_AddTxMessage(&hcan1, &txHeader3, txData, &txMailbox);
+//   HAL_CAN_AddTxMessage(&hcan1, &txHeader3, txData, &txMailbox);
 }
 
 // 20Hz timer
@@ -545,21 +547,21 @@ if (htim == &htim14){
 
   // call functions to average pedal and brake
   // brake sampling
-  brake_average = (brake0 + brake1) / 2;
+  // brake_average = (brake0 + brake1) / 2;
 
-  pedal_average = accel_pedal_compare(pedal0, pedal1);
-  commandedTorque = (int)(pedal_average * torque_conversion_ratio); // commanded torque
+  // pedal_average = accel_pedal_compare(pedal0, pedal1);
+  // commandedTorque = (int)(pedal_average * torque_conversion_ratio); // commanded torque
 
 
   // define variables
   txData[0] = commandedTorque >> 8;     // MSB, 2 byte
   txData[1] = commandedTorque && 0xFF;  // LSB, 2 byte
-  txData[2] = 0;
-  txData[3] = 0;
-  txData[4] = 0;
-  txData[5] = 0;
-  txData[6] = 0;
-  txData[7] = 0;
+  txData[2] = pedal_average;
+  txData[3] = adc_buf[0];
+  txData[4] = adc_buf[1];
+  txData[5] = 10;
+  txData[6] = adc_buf[2];
+  txData[7] = adc_buf[3];
 
 
   HAL_CAN_AddTxMessage(&hcan1, &txHeader1, txData, &txMailbox);
@@ -575,20 +577,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
   brake1 = adc_buf[1];
   pedal0 = adc_buf[2];
   pedal1 = adc_buf[3];
-
-}
-
-uint8_t accel_pedal_compare(uint8_t pedal0, uint8_t pedal1){
-
-  uint8_t pedal_average = (pedal0 + pedal1) / 2;
-
-    if (pow(pedal0 - pedal_average, 2) > MAX_PEDAL_SKEW | 
-        pow(pedal1 - pedal_average, 2) > MAX_PEDAL_SKEW ){
-        pedal_average = 0;
-    }
-
-
-    return pedal_average;
 
 }
 
