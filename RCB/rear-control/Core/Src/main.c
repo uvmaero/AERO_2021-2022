@@ -348,8 +348,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     // send control data
     txData[0] = IMDFaultState;
     txData[1] = BMSFaultState;
-    HAL_CAN_AddTxMessage(&hcan1, &txHeader2, txData, &txMailbox);
 
+    // send message
+    HAL_CAN_AddTxMessage(&hcan1, &txHeader2, txData, &txMailbox);
   }
 }
 
