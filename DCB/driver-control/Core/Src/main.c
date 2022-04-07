@@ -64,9 +64,9 @@ CAN_RxHeaderTypeDef rxHeader; 					      // CAN Bus Receive Header
 CAN_TxHeaderTypeDef txHeader1; 					      // CAN Bus Transmit Header Torque Setting
 CAN_TxHeaderTypeDef txHeader2; 					      // CAN Bus Transmit Header DAQ Data
 CAN_TxHeaderTypeDef txHeader3; 					      // CAN Bus Transmit Header Control Data
-uint8_t rxData[8] = {0, 0, 0, 0, 0, 0, 0, 0};  // CAN Bus Receive Buffer
+uint8_t rxData[8] = {0, 0, 0, 0, 0, 0, 0, 0}; // CAN Bus Receive Buffer
 uint8_t txData[8];
-CAN_FilterTypeDef filter_rcb; 					        // CAN Bus Filter
+CAN_FilterTypeDef filter_rcb; 					      // CAN Bus Filter
 uint32_t txMailbox; 							            // CAN Bus Mail box variable
 
 // rinehart & emus  
@@ -93,12 +93,12 @@ uint8_t startButton = 0;             				  // start button state (0 is not activ
 uint32_t adc_buf[ADC_BUF_LEN];                // adc buffer for dma
 uint8_t faultAMS = 0;                         // updated from RCB CAN
 uint8_t faultIMD = 0;                         // updated from RCB CAN
-uint16_t commandedTorque = 0;                  // amount of torque we're requesting from Rinehart
+uint16_t commandedTorque = 0;                 // amount of torque we're requesting from Rinehart
 
 // outputs
-uint8_t startButtonState = 0;              			  // RTD button LED toggle (0 is off)
-uint8_t coolingState = 0;                     		// cooling toggle (0 is off)
-uint8_t direction = 0;		                		    // drive direction (0 is forwards)
+uint8_t startButtonState = 0;              		// RTD button LED toggle (0 is off)
+uint8_t coolingState = 0;                     // cooling toggle (0 is off)
+uint8_t direction = 0;		                		// drive direction (0 is forwards)
 
 /* USER CODE END PV */
 
@@ -540,8 +540,9 @@ if (htim == &htim13){
 }
 
 // 20Hz timer
-// send Rinehart Parameter Command Torque Things
-if (htim == &htim14){
+// send Rinehart Parameter Command Torque
+if (htim == &htim14)
+{
 
   // call functions to average pedal and brake
   // brake sampling
@@ -561,16 +562,14 @@ if (htim == &htim14){
   txData[6] = 0;
   txData[7] = 0;
 
-
+  // send message
   HAL_CAN_AddTxMessage(&hcan1, &txHeader1, txData, &txMailbox);
-
 }
 
-}
 
 // interrupt for the DMA
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
-
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) 
+{
   brake0 = adc_buf[0];
   brake1 = adc_buf[1];
   pedal0 = adc_buf[2];
@@ -578,18 +577,15 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 
 }
 
+// pedal read check
 uint8_t accel_pedal_compare(uint8_t pedal0, uint8_t pedal1){
 
   uint8_t pedal_average = (pedal0 + pedal1) / 2;
 
-    if (pow(pedal0 - pedal_average, 2) > MAX_PEDAL_SKEW | 
-        pow(pedal1 - pedal_average, 2) > MAX_PEDAL_SKEW ){
+    if (pow(pedal0 - pedal_average, 2) > MAX_PEDAL_SKEW || pow(pedal1 - pedal_average, 2) > MAX_PEDAL_SKEW )
         pedal_average = 0;
-    }
-
 
     return pedal_average;
-
 }
 
 // /**
