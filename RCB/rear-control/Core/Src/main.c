@@ -31,26 +31,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-// inputs
-#define PIN_WATER_TEMP_IN                 17		// water temperature sensor in
-#define PIN_WATER_TEMP_OUT                29		// water temperature sensor out
-#define PIN_REAR_RIGHT_WHEEL              11		// rear right wheel speed sensor
-#define PIN_REAR_LEFT_WHEEL				        10		// rear left wheel speed sensor
-#define PIN_REAR_RIGHT_SUSPENSION		      13		// rear right suspension sensor
-#define PIN_REAR_LEFT_SUSPENSION		      12		// rear left suspension sensor
-#define PIN_IMD_FAULT					            18		// IMD fault line
-#define PIN_BMS_FAULT					            19		// BMS fault line
 
-#define ADC_BUF_LEN                       6     // length of the DMA buffer for ADC reads
-
-// outputs
-#define PIN_BRAKE_LIGHT					          14		// brake light
-#define PIN_FAN_CONTROL					          15		// fan speed/on/off control
-#define PIN_PUMP_CONTROL				          16		// pump speed/on/off control
-
-// CAN
-#define PIN_CAN_PLUS					            31		// positive CAN wire
-#define PIN_CAN_MINUS					            33		// negative CAN wire
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -58,36 +39,28 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-ADC_HandleTypeDef hadc1;
-DMA_HandleTypeDef hdma_adc1;
 CAN_HandleTypeDef hcan1;
+
+TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN PV */
 
 // CAN
 CAN_RxHeaderTypeDef rxHeader; 					        // CAN Bus Receive Header
-CAN_TxHeaderTypeDef txHeader0; 					        // CAN Bus Transmit Header BASE
-CAN_TxHeaderTypeDef txHeader1; 					        // CAN Bus Transmit Header Torque Setting
-CAN_TxHeaderTypeDef txHeader2; 					        // CAN Bus Transmit Header DAQ Data
-CAN_TxHeaderTypeDef txHeader3; 					        // CAN Bus Transmit Header Control Data
+CAN_TxHeaderTypeDef txHeader1; 					        // CAN Bus Transmit Header DAQ Data
+CAN_TxHeaderTypeDef txHeader2; 					        // CAN Bus Transmit Header Control Data
+uint8_t txData[8];
 uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	  // CAN Bus Receive Buffer
 CAN_FilterTypeDef canFilter; 					          // CAN Bus Filter
-uint32_t canMailbox; 							              // CAN Bus Mail box variable
+uint32_t txMailbox; 							              // CAN Bus Mail box variable
 
 // inputs
-float waterTempIn = 0;
-float waterTempOut = 0;
-float wheelSpeedBR = 0;
-float wheelSpeedBL = 0;
-float rideHeightBR = 0;
-float rideHeightBL = 0;
 int IMDFaultState = 0;                          // 0 is maybe not faulting 
 int BMSFaultState = 0;                          // 0 is maybe not faulting
 
-uint32_t adc_buf[ADC_BUF_LEN];                 // array to store our adc reads
 
 // outputs
-int brakeLightState = 0;                        // 0 is off maybe
+int brakeLightState = 0;                        // 0 is off
 int pumpState = 1;                              // 1 is on maybe
 int fanState = 0;                               // 1 is on maybe
 /* USER CODE END PV */
@@ -96,10 +69,8 @@ int fanState = 0;                               // 1 is on maybe
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
-static void MX_DMA_Init(void);
-static void MX_ADC1_Init(void);
+static void MX_TIM14_Init(void);
 /* USER CODE BEGIN PFP */
-void pollSensorData();
 
 /* USER CODE END PFP */
 
@@ -134,51 +105,30 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_CAN1_Init();
-  MX_DMA_Init();
-  MX_ADC1_Init();
+  MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
-    // init the CAN filter
-	canFilter.FilterBank = 0;
-	canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
-	canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
-	canFilter.FilterIdHigh = 0;
-	canFilter.FilterIdLow = 0;
-	canFilter.FilterMaskIdHigh = 0;
-	canFilter.FilterMaskIdLow = 0;
-	canFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-	canFilter.FilterActivation = ENABLE;
-	canFilter.SlaveStartFilterBank = 14;
-
-	// init the CAN mailbox for BASE
-	txHeader0.DLC = 8; // Number of bites to be transmitted max- 8
-	txHeader0.IDE = CAN_ID_STD;
-	txHeader0.RTR = CAN_RTR_DATA;
-	txHeader0.StdId = 0x80;
-	txHeader0.ExtId = 0x02;
-	txHeader0.TransmitGlobalTime = DISABLE;
 
 	// init the CAN mailbox for DAQ DATA
-	txHeader1.DLC = 8; // Number of bites to be transmitted max- 8
+	txHeader1.DLC = 2; // Number of bites to be transmitted max- 8
 	txHeader1.IDE = CAN_ID_STD;
 	txHeader1.RTR = CAN_RTR_DATA;
-	txHeader1.StdId = 0x81;
-	txHeader1.ExtId = 0x03;
+	txHeader1.StdId = 0x81; // change this to BASE + 1
+	txHeader1.ExtId = 0x0;
 	txHeader1.TransmitGlobalTime = DISABLE;
 
 	// init the CAN mailbox for CONTROL DATA
-	txHeader2.DLC = 8; // Number of bites to be transmitted max- 8
+	txHeader2.DLC = 2; // Number of bites to be transmitted max- 8
 	txHeader2.IDE = CAN_ID_STD;
 	txHeader2.RTR = CAN_RTR_DATA;
-	txHeader2.StdId = 0x82;
-	txHeader2.ExtId = 0x04;
+	txHeader2.StdId = 0x82; // change this to BASE + 2
+	txHeader2.ExtId = 0x0;
 	txHeader2.TransmitGlobalTime = DISABLE;
 
 	HAL_CAN_ConfigFilter(&hcan1, &canFilter); // Initialize CAN Filter
 	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
+  HAL_TIM_Base_Start_IT(&htim14); // start the timer interupt
 
-  // start adc dma stuff
-  HAL_ADC_Start_DMA(&hadc1, adc_buf, ADC_BUF_LEN);     // 3rd param might the length of the data from the pin not the length of the buffer
 
   /* USER CODE END 2 */
 
@@ -186,26 +136,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	// poll sensor data
-	pollSensorData();
-
-	// read CAN messages
-	if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
-		Error_Handler();
-
-	// send CAN messages
-	// BASE
-	uint8_t csend0[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-	HAL_CAN_AddTxMessage(&hcan1, &txHeader0, csend0, &canMailbox); // Send Message
-
-	// DAQ DATA
-	uint8_t csend1[] = {wheelSpeedBL, wheelSpeedBR, wheelSpeedBR, rideHeightBR, waterTempIn, waterTempOut, 0x06, 0x07};
-	HAL_CAN_AddTxMessage(&hcan1, &txHeader1, csend1, &canMailbox); // Send Message
-
-	// CONTROL DATA
-	uint8_t csend2[] = {brakeLightState, pumpState, fanState, 0x03, 0x04, 0x05, 0x06, 0x07};
-	HAL_CAN_AddTxMessage(&hcan1, &txHeader2, csend2, &canMailbox); // send message
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -235,7 +165,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 100;
+  RCC_OscInitStruct.PLL.PLLN = 90;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
@@ -259,53 +189,6 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief ADC1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_ADC1_Init(void)
-{
-
-  /* USER CODE BEGIN ADC1_Init 0 */
-  /* USER CODE END ADC1_Init 0 */
-
-  ADC_ChannelConfTypeDef sConfig = {0};
-
-  /* USER CODE BEGIN ADC1_Init 1 */
-  /* USER CODE END ADC1_Init 1 */
-  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
-  */
-  hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
-  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = ENABLE;
-  hadc1.Init.ContinuousConvMode = ENABLE;
-  hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = ENABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-  if (HAL_ADC_Init(&hadc1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
-  sConfig.Channel = ADC_CHANNEL_0;
-  sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN ADC1_Init 2 */
-  /* USER CODE END ADC1_Init 2 */
-
-}
-
-/**
   * @brief CAN1 Initialization Function
   * @param None
   * @retval None
@@ -322,8 +205,8 @@ static void MX_CAN1_Init(void)
   hcan1.Init.Prescaler = 5;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_14TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_5TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_15TQ;
+  hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = DISABLE;
   hcan1.Init.AutoWakeUp = ENABLE;
@@ -335,23 +218,52 @@ static void MX_CAN1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN CAN1_Init 2 */
+
+  // init the CAN filter
+	canFilter.FilterBank = 0;
+	canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
+	canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
+	canFilter.FilterIdHigh = 0x0FF << 5;
+	canFilter.FilterIdLow = 0x000;
+	canFilter.FilterMaskIdHigh = 0x093 << 5;
+	canFilter.FilterMaskIdLow = 0x000;
+	canFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+	canFilter.FilterActivation = ENABLE;
+	canFilter.SlaveStartFilterBank = 0;
+
+
   /* USER CODE END CAN1_Init 2 */
 
 }
 
 /**
-  * Enable DMA controller clock
+  * @brief TIM14 Initialization Function
+  * @param None
+  * @retval None
   */
-static void MX_DMA_Init(void)
+static void MX_TIM14_Init(void)
 {
 
-  /* DMA controller clock enable */
-  __HAL_RCC_DMA2_CLK_ENABLE();
+  /* USER CODE BEGIN TIM14_Init 0 */
 
-  /* DMA interrupt init */
-  /* DMA2_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  /* USER CODE END TIM14_Init 0 */
+
+  /* USER CODE BEGIN TIM14_Init 1 */
+
+  /* USER CODE END TIM14_Init 1 */
+  htim14.Instance = TIM14;
+  htim14.Init.Prescaler = 9000-1;
+  htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim14.Init.Period = 1000-1;
+  htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM14_Init 2 */
+
+  /* USER CODE END TIM14_Init 2 */
 
 }
 
@@ -370,20 +282,30 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_8, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PA4 PA5 PA6 PA8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_8;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PA6 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB0 PB1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PB1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 
@@ -397,35 +319,38 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
     Error_Handler();
 
   // get the control signals from dash
-  if ((rxHeader.StdId == 0x93))
+  if ((rxHeader.StdId == 0x093))
   {
     // get the brake light signal
-	  brakeLightState = canRX[1];
+	  brakeLightState = canRX[4];
 
     // get the cooling state
-    fanState = canRX[0];
+    // 1 byte -> 0 is fan and pump off
+    //           1 is pump on, fan off
+    //           3 is fan and pump on
+    fanState = canRX[2];
   }
 }
 
-void pollSensorData()
-{
-  // get back right wheel speed
-	wheelSpeedBL = adc_buf[0];
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
-	// get back left wheel speed
-	wheelSpeedBR = adc_buf[1];
+  // 10 Hz interrupt
+  // update outputs
+  // send can message
+  if (htim == &htim14){
 
-	// get back right ride height
-	rideHeightBL = adc_buf[2];
+    // update load switch outputs
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, fanState & 1); // Pump
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, fanState >> 1); // Fan
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, brakeLightState); // Brake
 
-	// get back left ride height
-	rideHeightBR = adc_buf[3];
 
-	// get water temp in 
-	waterTempIn = adc_buf[4];
+    // send control data
+    txData[0] = IMDFaultState;
+    txData[1] = BMSFaultState;
+    HAL_CAN_AddTxMessage(&hcan1, &txHeader2, txData, &txMailbox);
 
-	// get water temp out
-	waterTempOut = adc_buf[5];
+  }
 }
 
 /* USER CODE END 4 */
