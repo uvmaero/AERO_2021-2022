@@ -84,6 +84,7 @@ uint8_t brake0=0, brake1=0;               	  // brake values
 uint8_t brake_average;
 int buzzerState = 0;                          // for controlling the buzzer (0 = off | 1 = on)
 int buzzerCounter = 0;                        // counter for how long the buzzer has been on
+int enableInverter = 0;                       // stores state of inverter, can only be 1 after buzzer is done
 uint8_t coastMap, brakeMap;						        // maps for coast and brake regen
 float wheelSpeedFR = 0;               			  // read from sensor input
 float wheelSpeedFL = 0;               			  // read from sensor input
@@ -545,6 +546,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       {
         buzzerState = 0;
         buzzerCounter = 0;
+        enableInverter = 1;       // enable the inverter so that we can tell rinehart to turn inverter on
       }
   }
 
@@ -586,7 +588,7 @@ if (htim == &htim14)
   txData[2] = pedal_average;
   txData[3] = adc_buf[0];
   txData[4] = adc_buf[1];
-  txData[5] = 10;
+  txData[5] = enableInverter;
   txData[6] = adc_buf[2];
   txData[7] = adc_buf[3];
 
@@ -621,7 +623,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if (GPIO_Pin == GPIO_PIN_15)
   {
-    // do stuff now that the start button has been pressed
+    // check if we are ready to drive
+    if (readyToDrive == 1)
+    {
+      // turn on the buzzer
+      buzzerState = 1;
+    }
   }
 }
 
