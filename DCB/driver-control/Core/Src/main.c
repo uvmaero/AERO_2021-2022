@@ -78,10 +78,12 @@ int readyToDrive = 0;							            // ready to drive (0 = no, 1 = yes)
 
 // inputs 
 float coastRegen, brakeRegen;			    	      // coast and brake regen values 
-uint8_t pedal0=0, pedal1=0;                 			  // pedal values
+uint8_t pedal0=0, pedal1=0;                   // pedal values
 uint8_t pedal_average;
-uint8_t brake0=0, brake1=0;                		  	  // brake values
+uint8_t brake0=0, brake1=0;               	  // brake values
 uint8_t brake_average;
+int buzzerState = 0;                          // for controlling the buzzer (0 = off | 1 = on)
+int buzzerCounter = 0;                        // counter for how long the buzzer has been on
 uint8_t coastMap, brakeMap;						        // maps for coast and brake regen
 float wheelSpeedFR = 0;               			  // read from sensor input
 float wheelSpeedFL = 0;               			  // read from sensor input
@@ -196,7 +198,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	// all of the main loop code is in the defaultTask function as the infinite loop is in there
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -521,6 +522,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 // 10Hz timer
 // update indicator lights and  send switch values to RCB
 if (htim == &htim13){
+  // buzzer logic
+  if (buzzerState == 1)
+  {
+    buzzerCounter++;
+    if (buzzerCounter >= 200)   // buzzerCounter is being updated on a 10Hz interval, so after 200 cycles, 2 seconds have passed
+    {
+      buzzerState = 0;
+      buzzerCounter = 0;
+    }
+  }
 
   // read switches
   coolingState = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12);
