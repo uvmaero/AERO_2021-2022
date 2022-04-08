@@ -5,23 +5,23 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 S_SRCS += \
-../Core/Startup/startup_stm32f413cgux.s 
+../Application/User/Startup/startup_stm32f413cgux.s 
 
 OBJS += \
-./Core/Startup/startup_stm32f413cgux.o 
+./Application/User/Startup/startup_stm32f413cgux.o 
 
 S_DEPS += \
-./Core/Startup/startup_stm32f413cgux.d 
+./Application/User/Startup/startup_stm32f413cgux.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
-Core/Startup/%.o: ../Core/Startup/%.s Core/Startup/subdir.mk
+Application/User/Startup/%.o: ../Application/User/Startup/%.s Application/User/Startup/subdir.mk
 	arm-none-eabi-gcc -mcpu=cortex-m4 -g3 -DDEBUG -c -x assembler-with-cpp -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@" "$<"
 
-clean: clean-Core-2f-Startup
+clean: clean-Application-2f-User-2f-Startup
 
-clean-Core-2f-Startup:
-	-$(RM) ./Core/Startup/startup_stm32f413cgux.d ./Core/Startup/startup_stm32f413cgux.o
+clean-Application-2f-User-2f-Startup:
+	-$(RM) ./Application/User/Startup/startup_stm32f413cgux.d ./Application/User/Startup/startup_stm32f413cgux.o
 
-.PHONY: clean-Core-2f-Startup
+.PHONY: clean-Application-2f-User-2f-Startup
 
