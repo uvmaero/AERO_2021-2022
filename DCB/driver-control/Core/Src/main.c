@@ -494,7 +494,9 @@ static void MX_GPIO_Init(void)
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 {
   if (HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, rxData) != HAL_OK)
+  {
     Error_Handler();
+  }
 
   // get sensor data from rcb
   if (rxHeader.StdId == 0x81)
@@ -506,31 +508,33 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
   }
 
   // get ready to drive from high voltage for precharge complete
-  if (rxHeader.StdId == 0x87){
-	  readyToDrive = rxData[0]; // 0 is NO, 1 is YES
+  if (rxHeader.StdId == 0x87)
+  {
+	  readyToDrive = rxData[0];             // 0 is NO, 1 is YES
   }
 
   // data from RCB for fault lights
-  if (rxHeader.StdId == 0x82){
+  if (rxHeader.StdId == 0x82)
+  {
     faultAMS = rxData[1];
     faultIMD = rxData[0];
   }
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-
-// 10Hz timer
-// update indicator lights and  send switch values to RCB
-if (htim == &htim13){
-  // buzzer logic
-  if (buzzerState == 1)
-  {
-    buzzerCounter++;
-    if (buzzerCounter >= 200)   // buzzerCounter is being updated on a 10Hz interval, so after 200 cycles, 2 seconds have passed
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  // 10Hz timer
+  // update indicator lights and send switch values to RCB
+  if (htim == &htim13){
+    // buzzer logic
+    if (buzzerState == 1)
     {
-      buzzerState = 0;
-      buzzerCounter = 0;
-    }
+      buzzerCounter++;
+      if (buzzerCounter >= 200)   // buzzerCounter is being updated on a 10Hz interval, so after 200 cycles, 2 seconds have passed
+      {
+        buzzerState = 0;
+        buzzerCounter = 0;
+      }
   }
 
   // read switches
@@ -542,11 +546,11 @@ if (htim == &htim13){
   // HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, faultAMS);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, faultIMD);
   
-//   txData[0] = 0; // regen pot
-//   txData[1] = 0; // brake pot
-//   txData[2] = coolingState << 1; // cooling
-//   txData[3] = direction; // direction (1 is OFF, pulled up)
-//   txData[4] = 0; // brake light
+  // txData[0] = 0;                         // regen pot
+  // txData[1] = 0;                         // brake pot
+  // txData[2] = coolingState << 1;         // cooling
+  // txData[3] = direction;                 // direction (1 is OFF, pulled up)
+  // txData[4] = 0;                         // brake light
 
 
 //   HAL_CAN_AddTxMessage(&hcan1, &txHeader3, txData, &txMailbox);
