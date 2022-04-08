@@ -556,17 +556,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 
   // write fault lights
-  // HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, faultAMS);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, faultAMS);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, faultIMD);
   
-  // txData[0] = 0;                         // regen pot
-  // txData[1] = 0;                         // brake pot
-  // txData[2] = coolingState << 1;         // cooling
-  // txData[3] = direction;                 // direction (1 is OFF, pulled up)
-  // txData[4] = 0;                         // brake light
+  txData[0] = 0;                         // regen pot
+  txData[1] = 0;                         // brake pot
+  txData[2] = coolingState << 1;         // cooling
+  txData[3] = direction;                 // direction (1 is OFF, pulled up)
+  txData[4] = 0;                         // brake light
 
 
-//   HAL_CAN_AddTxMessage(&hcan1, &txHeader3, txData, &txMailbox);
+  HAL_CAN_AddTxMessage(&hcan1, &txHeader3, txData, &txMailbox);
 }
 
 // 20Hz timer
@@ -576,11 +576,10 @@ if (htim == &htim14)
 
   // call functions to average pedal and brake
   // brake sampling
-  // brake_average = (brake0 + brake1) / 2;
+  brake_average = (brake0 + brake1) / 2;
 
-  // pedal_average = accel_pedal_compare(pedal0, pedal1);
-  // commandedTorque = (int)(pedal_average * torque_conversion_ratio); // commanded torque
-
+  pedal_average = accel_pedal_compare(pedal0, pedal1);
+  commandedTorque = (int)(pedal_average * torque_conversion_ratio); // commanded torque
 
   // define variables
   txData[0] = commandedTorque >> 8;     // MSB, 2 byte
@@ -604,7 +603,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
   brake1 = adc_buf[1];
   pedal0 = adc_buf[2];
   pedal1 = adc_buf[3];
-
 }
 
 // pedal read check
@@ -613,7 +611,9 @@ uint8_t accel_pedal_compare(uint8_t pedal0, uint8_t pedal1){
   uint8_t pedal_average = (pedal0 + pedal1) / 2;
 
     if (pow(pedal0 - pedal_average, 2) > MAX_PEDAL_SKEW || pow(pedal1 - pedal_average, 2) > MAX_PEDAL_SKEW )
-        pedal_average = 0;
+    {
+      pedal_average = 0;
+    }
 
     return pedal_average;
 }
