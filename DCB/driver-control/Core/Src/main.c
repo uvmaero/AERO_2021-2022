@@ -615,7 +615,7 @@ uint8_t accel_pedal_compare(uint8_t pedal0, uint8_t pedal1){
     return pedal_average;
 }
 
-// ready to drive interrupt handler
+// ready to drive handler for start button interrupt
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if (GPIO_Pin == GPIO_PIN_15)
