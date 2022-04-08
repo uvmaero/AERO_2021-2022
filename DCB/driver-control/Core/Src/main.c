@@ -123,6 +123,7 @@ static void MX_TIM14_Init(void);
 
 // compares accelerator pedal, 0 if above skew value
 uint8_t accel_pedal_compare(uint8_t pedal0, uint8_t pedal1); 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 /* USER CODE END 0 */
 
