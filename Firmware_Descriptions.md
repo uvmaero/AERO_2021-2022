@@ -1,6 +1,6 @@
 # Firmware Descrptions
 
-Here you'll find more information about the firmare of each of the boards throughout the car. You can expect to find documentation for things like each function used, a program flow chart, CAN addresses and message content, and more. 
+Here you'll find more information about the firmware of each of the boards throughout the car. You can expect to find documentation for things like each function used, a program flow chart, CAN addresses and message content, and more. 
 
 ## Diver Control Board
 ### Overview: 
@@ -11,7 +11,16 @@ This board controls all of the hardware that the driver needs to interface with 
 #### pollSensorData:
 Input Parameters: void  
 Return Type & Value: void  
-Description: Reads each sensor that the board monitors and updates the appropriate global variable holding the sensor value.
+Description: Reads each sensor that the board monitors and updates the appropriate global variable holding the sensor value.  
+### HAL_GPIO_EXTI_Callback
+Input Parameters: uint16_t GPIO_PIN
+Return Type & Value: void
+Description: The IRQ handler for the start button, this will send a ready to drive CAN message to rinehart, enabling the car to drive!
+
+### accel_pedal_compare
+Input Parameters: uint8_t pedal0, uint8_t pedal1
+Return Type & Value: uint8_t pedal_average (the average pedal value computed)
+Description: compares the two samples from the pedal potentiometeres to ensure that the values are within 10 millivolts of eachother to prevent unintended acceleration (very dangerous!)
 
 ### CAN Information: 
 #### Outgoing Messages:
