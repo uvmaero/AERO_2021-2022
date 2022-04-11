@@ -33,10 +33,11 @@
 
 // analog buffer
 #define ADC_BUF_LEN 4086
+
 // precharge
 #define PRECHARGE_COEFFICIENT       0.9		      // 90% complete with precharge so it's probably safe to continue
-#define NUM_COMMAND_MSG 10
-#define NUM_VOLTAGE_CHECKS 500                  // since we're checking at 10ms Interrupts, 500 would be 5 seconds. 
+#define NUM_COMMAND_MSG             10
+#define NUM_VOLTAGE_CHECKS          500         // since we're checking at 10ms Interrupts, 500 would be 5 seconds. 
                                                 // precharge should be done in less than 2 seconds. 
 /* USER CODE END PD */
 
@@ -82,14 +83,17 @@ uint8_t prechargeState = PRECHARGE_OFF;			  // set initial precharge state to OF
 uint8_t lastPrechargeState = PRECHARGE_OFF;
 uint8_t voltageCheckCount = 0;
 
-// CAN
+// CAN transmit 
 uint32_t TxMailbox; 							            // CAN Bus Mail box variable
 CAN_TxHeaderTypeDef txHeader0; 					      // CAN Bus Transmit Header BASE
 CAN_TxHeaderTypeDef txHeader1; 					      // CAN Bus Transmit Header DATA
 CAN_TxHeaderTypeDef txHeader2; 					      // CAN Bus Transmit Header DATA
+uint8_t TxData[8];                            // CAN transmit buffer
+
+// CAN recive
 CAN_RxHeaderTypeDef rxHeader; 					      // CAN Bus Receive Header
 uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	// CAN Bus Receive Buffer
-uint8_t TxData[8];                            // CAN transmit buffer
+
 CAN_FilterTypeDef canFilter0; 					      // CAN Bus Filter for BMS
 CAN_FilterTypeDef canFilter1;                 // CAN Bus Filter for Rinehart
 /* USER CODE END PV */
@@ -171,7 +175,7 @@ int main(void)
 	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
 
-  // start timer
+  // start timers
   HAL_TIM_Base_Start_IT(&htim14);
   HAL_TIM_Base_Start_IT(&htim13);
 
@@ -184,8 +188,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    
-    
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -481,6 +483,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
     // rinehart voltage is spread across the first 2 bytes
 	  int rine1 = canRX[0];
     int rine2 = canRX[1];
+
     // combine the first two bytes and assign that to the rinehart voltage
     rinehartVoltage = (rine1 << 8) | rine2;
   }
@@ -550,16 +553,21 @@ void prechargeControl()
       }
       
 			// ensure voltages are above correct values
-			if (rinehartVoltage > (emusVoltage * PRECHARGE_COEFFICIENT)) 
-				  prechargeState = PRECHARGE_DONE;
+			if (rinehartVoltage > (emusVoltage * PRECHARGE_COEFFICIENT))
+      {
+        prechargeState = PRECHARGE_DONE;
+      }
 
       // if we do this for too long, move to error state
       if (voltageCheckCount >= NUM_VOLTAGE_CHECKS)
+      {
         prechargeState = PRECHARGE_ERROR;
+      }
       
       else
+      {
         voltageCheckCount++; // add to the counter. 
-
+      }
 		break;
 
 		case (PRECHARGE_DONE):
@@ -582,15 +590,17 @@ void prechargeControl()
       // if rinehart voltage drops below battery, something's wrong, 
       // turn everything off
 			if (rinehartVoltage <= (emusVoltage * PRECHARGE_COEFFICIENT))
-				  prechargeState = PRECHARGE_OFF;
+      {
+        prechargeState = PRECHARGE_OFF;
+      }
 
 		break;
 
 		case (PRECHARGE_ERROR):
 			// the car is most definitly not ready to drive
-			// probably requires hard reboot of systems to clear this state
+      // set ready to drive off 
 			readyToDrive = 0;
-      // this state sends a message to rinehart to turn 
+
       if (lastPrechargeState != prechargeState)
       {
         // message is sent to rinehart to turn everything off
@@ -614,10 +624,10 @@ void prechargeControl()
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  // send can message
+  // on __Hz interval
   if (htim == &htim14)
   {
-    // define message
+    // build message for _____
     TxData[0] = readyToDrive; // controled by precharge
     TxData[1] = DCDCFault; // 0 for now TODO: implement fault detection
     TxData[2] = vicoreTemp; // DMA update
@@ -630,9 +640,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_CAN_AddTxMessage(&hcan1, &txHeader1, TxData, &TxMailbox);
   }
 
-  // check precharge status
+  // on __Hz interval 
   if(htim == &htim13)
+  {
+    // check precharge status
     prechargeControl();
+  }
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
