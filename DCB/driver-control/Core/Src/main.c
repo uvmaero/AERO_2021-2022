@@ -2,12 +2,9 @@
 /**
   ******************************************************************************
   * @file           : main.c
-  * @brief          : Dash Control Board Firmware
+  * @brief          : Main program body
   ******************************************************************************
   * @attention
-  * 
-  * This is the code for the dash board. This reads all of the sensor data, reads and 
-  * sends CAN messages, and drives the LCD screen on the dashboard.
   *
   * Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.
@@ -24,27 +21,24 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <math.h>
-#include <stdio.h>
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_BUF_LEN 4
+#define MAX_PEDAL_SKEW 100
 
-// inputs
-#define ADC_BUF_LEN 4				      // length of dma adc buffer
-#define MAX_PEDAL_SKEW 36         // this is the square of the difference allowed
-#define MAX_COMMAND_TORQUE 100    // Nm of torque allowed. Pedal scales this value
-#define ADC_BIT_SIZE 1024         // 10 bit sample, so it's 1024 values
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -58,73 +52,55 @@ TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN PV */
 
-// pedal conversion ratio
-float torque_conversion_ratio = (float)MAX_COMMAND_TORQUE / ADC_BIT_SIZE;
+CAN_TxHeaderTypeDef TxHeader;
+CAN_TxHeaderTypeDef TxHeader2; // rinehart command message
+uint8_t TxData[8];
+uint32_t TxMailbox;
 
-// CAN
-CAN_RxHeaderTypeDef rxHeader; 					      // CAN Bus Receive Header
-CAN_TxHeaderTypeDef txHeader1; 					      // CAN Bus Transmit Header Torque Setting
-CAN_TxHeaderTypeDef txHeader2; 					      // CAN Bus Transmit Header DAQ Data
-CAN_TxHeaderTypeDef txHeader3; 					      // CAN Bus Transmit Header Control Data
-uint8_t rxData[8] = {0, 0, 0, 0, 0, 0, 0, 0}; // CAN Bus Receive Buffer
-uint8_t txData[8];
-CAN_FilterTypeDef filter_rcb; 					      // CAN Bus Filter
-uint32_t txMailbox; 							            // CAN Bus Mail box variable
+CAN_RxHeaderTypeDef RxHeader;
+uint8_t RxData[8];
+CAN_FilterTypeDef filter0;
+CAN_FilterTypeDef filter1;
 
-// rinehart & emus  
-float rinehartVoltage = 0;				  		      // voltage in rinehart
-float emusVoltage = 0;				  			        // emus bus voltage
-int readyToDrive = 0;							            // ready to drive (0 = no, 1 = yes)
+// signal variables
+uint8_t imdFault = 0;
+uint8_t bmsFault = 0;
+uint8_t switch_cooling = 0;
+uint8_t switch_direction = 0;
 
-// inputs 
-float coastRegen, brakeRegen;			    	      // coast and brake regen values 
-uint8_t pedal0=0, pedal1=0;                   // pedal values
-uint8_t pedal_average;
-uint8_t brake0=0, brake1=0;               	  // brake values
-uint8_t brake_average;
-int buzzerState = 0;                          // for controlling the buzzer (0 = off | 1 = on)
-int buzzerCounter = 0;                        // counter for how long the buzzer has been on
-int enableInverter = 0;                       // stores state of inverter, can only be 1 after buzzer is done
-uint8_t coastMap, brakeMap;						        // maps for coast and brake regen
-float wheelSpeedFR = 0;               			  // read from sensor input
-float wheelSpeedFL = 0;               			  // read from sensor input
-float wheelSpeedBR = 0;               			  // this needs to be retrieved from CAN
-float wheelSpeedBL = 0;               			  // this needs to be retrieved from CAN
-float rideHeightFR = 0;               			  // read from sensor input
-float rideHeightFL = 0;               			  // read from sensor input
-float rideHeightBR = 0;               			  // this needs to be retrieved from CAN
-float rideHeightBL = 0;               			  // this needs to be retrieved from CAN
-uint8_t startButton = 0;             				  // start button state (0 is not active)
-uint16_t adc_buf[ADC_BUF_LEN];                // adc buffer for dma
-uint8_t faultAMS = 0;                         // updated from RCB CAN
-uint8_t faultIMD = 0;                         // updated from RCB CAN
-uint16_t commandedTorque = 0;                 // amount of torque we're requesting from Rinehart
+// analog pins
+uint16_t adc_buf[ADC_BUF_LEN];
+uint16_t pedal0 = 0;
+uint16_t pedal1 = 1;
+uint16_t pedalAverage = 0;
 
-// outputs
-uint8_t startButtonState = 0;              		// RTD button LED toggle (0 is off)
-uint8_t coolingState = 0;                     // cooling toggle (0 is off)
-uint8_t direction = 0;		                		// drive direction (0 is forwards)
+uint8_t ready_to_drive = 0;                // false until precharge is done. press button now
+uint8_t buzzer_signal = 0;          // Turn on for 
+uint8_t startButtonState = 0;       // RTD button LED toggle (0 is off)
+uint8_t buzzerState = 0;            // for controlling the buzzer (0 = off | 1 = on)
+uint8_t buzzerCounter = 0;          // counter for how long the buzzer has been on
+uint8_t enableInverter = 0;         // stores state of inverter, can only be 1 after buzzer is done
+
+// rinehart commands
+uint16_t command_torque_limit = 100;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_ADC1_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_DMA_Init(void);
-static void MX_TIM13_Init(void);
+static void MX_ADC1_Init(void);
 static void MX_TIM14_Init(void);
+static void MX_TIM13_Init(void);
 /* USER CODE BEGIN PFP */
+uint16_t pedal_conversion(uint16_t pedal0, uint16_t pedal1);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-// compares accelerator pedal, 0 if above skew value
-uint8_t accel_pedal_compare(uint8_t pedal0, uint8_t pedal1); 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 /* USER CODE END 0 */
 
@@ -135,6 +111,23 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
+  // define TX header
+  TxHeader.StdId = 0x093;
+  TxHeader.ExtId = 0x0;
+  TxHeader.IDE = CAN_ID_STD;
+  TxHeader.RTR = CAN_RTR_DATA;
+  TxHeader.DLC = 8;
+  TxHeader.TransmitGlobalTime = DISABLE;
+  
+  // Rinehart command message
+  TxHeader2.StdId = 0x0C0;
+  TxHeader2.ExtId = 0x0;
+  TxHeader2.IDE = CAN_ID_STD;
+  TxHeader2.RTR = CAN_RTR_DATA;
+  TxHeader2.DLC = 8;
+  TxHeader2.TransmitGlobalTime = DISABLE;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -143,56 +136,31 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ADC1_Init();
   MX_CAN1_Init();
   MX_DMA_Init();
-  MX_TIM13_Init();
+  MX_ADC1_Init();
   MX_TIM14_Init();
+  MX_TIM13_Init();
   /* USER CODE BEGIN 2 */
 
-	// init the CAN mailbox for Rinehart Command Torque Parameters
-	txHeader1.DLC = 8; // Number of bites to be transmitted max- 8
-	txHeader1.IDE = CAN_ID_STD;
-	txHeader1.RTR = CAN_RTR_DATA;
-	txHeader1.StdId = 0xC0;
-	txHeader1.ExtId = 0;
-	txHeader1.TransmitGlobalTime = DISABLE;
-
-	// init the CAN mailbox for DAQ Data
-	txHeader2.DLC = 8; // Number of bites to be transmitted max- 8
-	txHeader2.IDE = CAN_ID_STD;
-	txHeader2.RTR = CAN_RTR_DATA;
-	txHeader2.StdId = 0x92;
-	txHeader2.ExtId = 0;
-	txHeader2.TransmitGlobalTime = DISABLE;
-
-	// init the CAN mailbox for Control Data
-	txHeader3.DLC = 8; // Number of bites to be transmitted max- 8
-	txHeader3.IDE = CAN_ID_STD;
-	txHeader3.RTR = CAN_RTR_DATA;
-	txHeader3.StdId = 0x93;
-	txHeader3.ExtId = 0;
-	txHeader3.TransmitGlobalTime = DISABLE;
-
-	HAL_CAN_ConfigFilter(&hcan1, &filter_rcb); // Initialize CAN Filter
-	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
-	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
-
-	// start the dma adc conversion
-	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, ADC_BUF_LEN);
-  HAL_TIM_Base_Start_IT(&htim13); // start the timer interupt
-  HAL_TIM_Base_Start_IT(&htim14); // start the timer interupt
-
+  // start interrupts
+  HAL_CAN_Start(&hcan1);
+  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+  HAL_TIM_Base_Start_IT(&htim14);
+  HAL_TIM_Base_Start_IT(&htim13);
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, ADC_BUF_LEN);
 
   /* USER CODE END 2 */
 
@@ -200,6 +168,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -261,11 +230,13 @@ static void MX_ADC1_Init(void)
 {
 
   /* USER CODE BEGIN ADC1_Init 0 */
+
   /* USER CODE END ADC1_Init 0 */
 
   ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
+
   /* USER CODE END ADC1_Init 1 */
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
@@ -280,7 +251,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 4;
   hadc1.Init.DMAContinuousRequests = ENABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     Error_Handler();
@@ -319,6 +290,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN ADC1_Init 2 */
+
   /* USER CODE END ADC1_Init 2 */
 
 }
@@ -332,15 +304,17 @@ static void MX_CAN1_Init(void)
 {
 
   /* USER CODE BEGIN CAN1_Init 0 */
+
   /* USER CODE END CAN1_Init 0 */
 
   /* USER CODE BEGIN CAN1_Init 1 */
+
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 5;
+  hcan1.Init.Prescaler = 18;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_15TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_2TQ;
   hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = DISABLE;
@@ -354,17 +328,33 @@ static void MX_CAN1_Init(void)
   }
   /* USER CODE BEGIN CAN1_Init 2 */
 
-    // init the CAN filter
-	filter_rcb.FilterBank = 0;
-	filter_rcb.FilterMode = CAN_FILTERMODE_IDMASK;
-	filter_rcb.FilterFIFOAssignment = CAN_RX_FIFO0;
-	filter_rcb.FilterIdHigh = 0x0FF << 5;
-	filter_rcb.FilterIdLow = 0x082 << 5;
-	filter_rcb.FilterMaskIdHigh = 0x082 << 5;
-	filter_rcb.FilterMaskIdLow = 0xFFF << 5;
-	filter_rcb.FilterScale = CAN_FILTERSCALE_32BIT;
-	filter_rcb.FilterActivation = ENABLE;
-	filter_rcb.SlaveStartFilterBank = 0;
+  filter0.FilterIdHigh = 0x082 << 5;
+  filter0.FilterIdLow = 0x000;
+  filter0.FilterMaskIdHigh = 0x082 << 5;
+  filter0.FilterMaskIdLow = 0x000;
+  filter0.FilterFIFOAssignment =  CAN_RX_FIFO0;
+  filter0.FilterBank = 1;
+  filter0.FilterMode = CAN_FILTERMODE_IDMASK;
+  filter0.FilterScale = CAN_FILTERSCALE_32BIT;
+  filter0.FilterActivation = ENABLE;
+  filter0.SlaveStartFilterBank = 0;
+
+  HAL_CAN_ConfigFilter(&hcan1, &filter0);
+
+  // listen for HVB
+  filter1.FilterIdHigh = 0x087 << 5;
+  filter1.FilterIdLow = 0x000;
+  filter1.FilterMaskIdHigh = 0x087 << 5;
+  filter1.FilterMaskIdLow = 0x000;
+  filter1.FilterFIFOAssignment =  CAN_RX_FIFO0;
+  filter1.FilterBank = 2;
+  filter1.FilterMode = CAN_FILTERMODE_IDMASK;
+  filter1.FilterScale = CAN_FILTERSCALE_32BIT;
+  filter1.FilterActivation = ENABLE;
+  filter1.SlaveStartFilterBank = 0;
+
+  HAL_CAN_ConfigFilter(&hcan1, &filter1);
+
   /* USER CODE END CAN1_Init 2 */
 
 }
@@ -387,7 +377,7 @@ static void MX_TIM13_Init(void)
   htim13.Instance = TIM13;
   htim13.Init.Prescaler = 9000-1;
   htim13.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim13.Init.Period = 1000-1;
+  htim13.Init.Period = 500-1;
   htim13.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim13.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim13) != HAL_OK)
@@ -418,7 +408,7 @@ static void MX_TIM14_Init(void)
   htim14.Instance = TIM14;
   htim14.Init.Prescaler = 9000-1;
   htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim14.Init.Period = 500-1;
+  htim14.Init.Period = 1000-1;
   htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
@@ -462,22 +452,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2|GPIO_PIN_10|GPIO_PIN_8, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2|GPIO_PIN_8, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PB2 PB10 PB8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_10|GPIO_PIN_8;
+  /*Configure GPIO pins : PB2 PB8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_8;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PB12 PB13 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PB15 */
@@ -501,312 +485,106 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-// *** functions *** //
-
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
-{
-  if (HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, rxData) != HAL_OK)
-  {
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
+  if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK){
     Error_Handler();
   }
 
-  // get sensor data from rcb
-  if (rxHeader.StdId == 0x81)
-  {
-	  wheelSpeedBL = rxData[0];
-	  wheelSpeedBR = rxData[1];
-	  rideHeightBL = rxData[2];
-	  rideHeightBR = rxData[3];
+  if (RxHeader.StdId == 0x082){
+      imdFault = RxData[0];
+      bmsFault = RxData[1];
+  }
+  if (RxHeader.StdId == 0x087){
+      ready_to_drive = RxData[0];
   }
 
-  // get ready to drive from high voltage for precharge complete
-  if (rxHeader.StdId == 0x87)
-  {
-	  readyToDrive = rxData[0];             // 0 is NO, 1 is YES
-  }
-
-  // data from RCB for fault lights
-  if (rxHeader.StdId == 0x82)
-  {
-    faultAMS = rxData[1];
-    faultIMD = rxData[0];
-  }
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  // 10Hz timer
-  // update indicator lights and send switch values to RCB
-  if (htim == &htim13){
-    // buzzer logic
-    if (buzzerState == 1)
-    {
-      buzzerCounter++;
-      if (buzzerCounter >= 200)   // buzzerCounter is being updated on a 10Hz interval, so after 200 cycles, 2 seconds have passed
-      {
-        buzzerState = 0;
-        buzzerCounter = 0;
-        enableInverter = 1;       // enable the inverter so that we can tell rinehart to turn inverter on
-      }
-  }
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 
-  // read switches
-  coolingState = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12);
-  direction = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13);
-
-
-  // write fault lights
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, faultAMS);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, faultIMD);
-  
-  txData[0] = 0;                         // regen pot
-  txData[1] = 0;                         // brake pot
-  txData[2] = coolingState << 1;         // cooling
-  txData[3] = direction;                 // direction (1 is OFF, pulled up)
-  txData[4] = 0;                         // brake light
-
-
-  HAL_CAN_AddTxMessage(&hcan1, &txHeader3, txData, &txMailbox);
-}
-
-// 20Hz timer
-// send Rinehart Parameter Command Torque
-if (htim == &htim14)
-{
-
-  // call functions to average pedal and brake
-  // brake sampling
-  brake_average = (brake0 + brake1) / 2;
-
-  pedal_average = accel_pedal_compare(pedal0, pedal1);
-  commandedTorque = (int)(pedal_average * torque_conversion_ratio); // commanded torque
-
-  // define variables
-  txData[0] = commandedTorque >> 8;     // MSB, 2 byte
-  txData[1] = commandedTorque && 0xFF;  // LSB, 2 byte
-  txData[2] = pedal_average;
-  txData[3] = adc_buf[0];
-  txData[4] = adc_buf[1];
-  txData[5] = enableInverter;
-  txData[6] = adc_buf[2];
-  txData[7] = adc_buf[3];
-
-  // send message
-  HAL_CAN_AddTxMessage(&hcan1, &txHeader1, txData, &txMailbox);
-}
-
-
-// interrupt for the DMA
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) 
-{
-  brake0 = adc_buf[0];
-  brake1 = adc_buf[1];
-  pedal0 = adc_buf[2];
-  pedal1 = adc_buf[3];
-}
-
-// pedal read check
-uint8_t accel_pedal_compare(uint8_t pedal0, uint8_t pedal1){
-
-  uint8_t pedal_average = (pedal0 + pedal1) / 2;
-
-    if (pow(pedal0 - pedal_average, 2) > MAX_PEDAL_SKEW || pow(pedal1 - pedal_average, 2) > MAX_PEDAL_SKEW )
-    {
-      pedal_average = 0;
-    }
-
-    return pedal_average;
-}
-
-// ready to drive handler for start button interrupt
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-  if (GPIO_Pin == GPIO_PIN_15)
-  {
-    // check if we are ready to drive
-    if (readyToDrive == 1)
-    {
-      // turn on the buzzer
+  if (GPIO_Pin == GPIO_PIN_15){
+    if (ready_to_drive){
       buzzerState = 1;
     }
   }
 }
 
-// /**
-//  * @brief welcome & boot screen
-//  * 
-//  */
-// void welcomeScreen()
-// {
-// 	lcdInit(&hi2c1, 0x27, 2, 16);       			// init lcd (i2c reference, LCD address, lines, rows)
-// 	lcdAutoscrollOff();								// turn off autoscroll
-// 	lcdBacklightOn();								// turn on backlight
-// 	lcdDisplayClear();                  			// clear the screen
-// 	lcdSetCursorPosition(2, 0);         			// set the cursor
-// 	lcdPrintStr((uint8_t*)"welcome AERO!", 13);   	// print
-// 	lcdSetCursorPosition(2, 1);         			// next line
-// 	lcdPrintStr((uint8_t*)"booting up...", 13);   	// print
-// 	HAL_Delay(3000);								// delay 3 seconds so the screen can be read
-// 	lcdDisplayClear();								// clear the display so the other screens can be printed
-// }
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+  
+  if (htim == &htim13){
+    pedalAverage = pedal_conversion(pedal0, pedal1);
+    
+    TxData[0] = pedalAverage & 0xFF;
+    TxData[1] = pedalAverage >> 8;
+    TxData[2] = 0;
+    TxData[3] = 0;
+    TxData[4] = switch_direction;
+    TxData[5] = enableInverter;
+    TxData[6] = command_torque_limit & 0xFF;
+    TxData[7] = command_torque_limit >>8;
+
+    HAL_CAN_AddTxMessage(&hcan1, &TxHeader2, TxData, &TxMailbox);
+
+  }
+  
+  
+  if (htim == &htim14){
+
+    switch_cooling = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12);
+    switch_direction = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13);
+
+    if (buzzerState==1){
+      buzzerCounter++;
+      if (buzzerCounter >= 20)   // buzzerCounter is being updated on a 10Hz interval, so after 20 cycles, 2 seconds have passed
+      {
+        buzzerState = 0;
+        buzzerCounter = 0;
+        enableInverter = 1;       // enable the inverter so that we can tell rinehart to turn inverter on
+      }
+    }
+
+    TxData[0] = pedal1 & 0xFF;
+    TxData[1] = pedal1 >> 8;
+    TxData[2] = switch_cooling;
+    TxData[3] = pedalAverage & 0xFF;
+    TxData[4] = switch_direction;
+    TxData[6] = pedal0 & 0xFF;
+    TxData[5] = pedal0 >> 8;
+    TxData[7] = pedalAverage >>8;
 
 
-// /**
-//  * @brief racing hud: mph(est), battery%, drive direction, coast regen, brake regen
-//  *
-//  */
-// void racingHUD()
-// {
-// 	// get wheel speed
-// 	float averageWheelSpeed = (wheelSpeedFR + wheelSpeedFL) / 2;
+    HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
 
-// 	// get current mph from wheel speed
-// 	float currentMPH = ((averageWheelSpeed * WHEEL_DIAMETER) * (3.14159 * 60)) / 63360;
+    // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, imdFault);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, bmsFault);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, switch_direction);
+    // HAL_Delay(500);
+  }
+}
 
-// 	// get battery percentage
-// 	float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 
-// 	// init some char buffs for variables
-// 	char battStr[10];
-// 	char speedStr[10];
-// 	char coastStr[10];
-// 	char brakeStr[10];
+    pedal0 = adc_buf[2];
+    pedal1 = adc_buf[3];
 
-// 	// drive direction
-// 	lcdSetCursorPosition(0, 0);									// position of drive direction
-// 	if (direction) lcdPrintStr((uint8_t*)"FWD", 3);     		// print drive direction
-// 	else lcdPrintStr((uint8_t*)"RVS", 3);
+}
 
-// 	// battery percentage
-// 	lcdSetCursorPosition(12, 0); 								// set cursor for battery percentage value
-// 	sprintf(battStr, "%.0d%%", (int)batteryPercentage); 		// sprintf it
-// 	lcdPrintStr((uint8_t*)battStr, strlen(battStr));			// print the battery percentage value
-
-// 	// speedometer		
-// 	lcdSetCursorPosition(7, 0);                     			// set cursor for mph value
-// 	sprintf(speedStr, "%.0d", (int)currentMPH);					// sprintf it
-// 	lcdPrintStr((uint8_t*)speedStr, strlen(speedStr));			// print the current speed in MPH, cast to int to round to whole number
-// 	lcdSetCursorPosition(7, 1);                     			// set cursor for units
-// 	lcdPrintStr((uint8_t*)"mph", 3);                    		// print units
-
-// 	// coast regen		
-// 	lcdSetCursorPosition(0, 1);                      			// set cursor for CR
-// 	sprintf(coastStr, "C:%.0d%%", (int)coastRegen);				// sprintf it
-// 	lcdPrintStr((uint8_t*)coastStr, strlen(coastStr));  		// print coast regen value
-
-// 	// brake regen		
-// 	lcdSetCursorPosition(11, 1);                     			// set cursor for BR
-// 	sprintf(brakeStr, "B: %d%%", (int)brakeRegen);				// sprintf it
-// 	lcdPrintStr((uint8_t*)brakeStr, strlen(brakeStr));  		// print brake regen value
-// }
+uint16_t pedal_conversion(uint16_t pedal0, uint16_t pedal1){
 
 
-// /**
-//  * @brief battery state, bus voltage, rinehart voltage, power mode
-//  * 
-//  */
-// void electricalSettings()
-// {
-// 	// get battery percentage
-// 	float batteryPercentage = (emusVoltage / MAX_PACK_VOLTAGE) * 100;
+  // 
 
-// 	// init some char buffs for variables
-// 	char battStr[10];
-// 	char busVStr[10];
+    pedalAverage = (pedal0 + pedal1) / 2;
 
-// 	// battery percentage
-// 	lcdSetCursorPosition(0, 0);									// set cursor for battery title
-// 	sprintf(battStr, "Batt:%d%%", (int)batteryPercentage);		// sprintf it
-// 	lcdPrintStr((uint8_t*)battStr, strlen(battStr));			// print title
-
-// 	// bus voltage
-// 	lcdSetCursorPosition(11, 0);								// set cursor for bus voltage title
-// 	sprintf(busVStr, "Bus:%d", (int)emusVoltage);				// sprintf it			
-// 	lcdPrintStr((uint8_t*)busVStr, strlen(busVStr));			// print
-// 	lcdSetCursorPosition(15, 1);                                // set cursor for units
-// 	lcdPrintStr((uint8_t*)"V", 1);                              // print units
-
-// 	/*	not planning on using this for the time being
-// 	// rinehart voltage
-// 	lcdSetCursorPosition(12, 0);                                // set cursor for rinehart voltage value
-// 	lcdPrintStr(rinehartVoltage);                           	// print the rinehart voltage value
-// 	lcdSetCursorPosition(15, 0);                                // set cursor for units
-// 	lcdPrintStr("V");                                       	// print % sign
-// 	*/
-
-// 	// power mode
-// 	lcdSetCursorPosition(0, 1);                                 // set cursor for mode text
-// 	lcdPrintStr((uint8_t*)"Mode:", 5);							// print mode text
-// 	lcdSetCursorPosition(5, 1);                                 // set cursor current mode setting
-// 	if (powerMode == TUTORIAL) lcdPrintStr((uint8_t*)"TUTR", 4);
-// 	if (powerMode == ECO) lcdPrintStr((uint8_t*)"ECO", 3);
-// 	if (powerMode == EXPERT) lcdPrintStr((uint8_t*)"EXPT", 4);
-// 	else lcdPrintStr((uint8_t*)(uint8_t*)"ERR!", 4);
-// }
+    // if (pow(pedal0 - pedalAverage, 2) > MAX_PEDAL_SKEW || 
+    //     pow(pedal1 - pedalAverage, 2) > MAX_PEDAL_SKEW ){
+    //     pedalAverage = 0;
+    // }
 
 
-// /**
-//  * @brief ride height, wheel rpm, coast regen, brake regen
-//  *
-//  */
-// void rideSettings()
-// {
-// 	// init some char buffs for variables
-// 	char rideStr[10];
-// 	char wheelStr[10];
-
-// 	// ride height
-// 	lcdSetCursorPosition(0, 0);									// set cursor for front left ride height value
-// 	sprintf(rideStr, "%d", (int)rideHeightFL);					// sprintf it
-// 	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));			// print front left ride height value
-
-// 	lcdSetCursorPosition(2, 0);				  					// spacer
-// 	lcdPrintStr((uint8_t*)"-", 1);						  		// spacer
-
-// 	lcdSetCursorPosition(3, 0);									// set cursor for front right ride height value
-// 	sprintf(rideStr, "%d", (int)rideHeightFR);					// sprintf it
-// 	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));			// print front right ride height value
-
-// 	lcdSetCursorPosition(5, 0);									// set cursor for "<- Ride"
-// 	lcdPrintStr((uint8_t*)"<-Ride", 6);							// print
-
-// 	lcdSetCursorPosition(0, 1);                  				// set cursor for back left ride height value
-// 	sprintf(rideStr, "%d", (int)rideHeightBL);					// sprintf it
-// 	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));         	// print back left ride height value
-
-// 	lcdSetCursorPosition(2, 1);				  					// spacer
-// 	lcdPrintStr((uint8_t*)"-", 1);						  		// spacer
-
-// 	lcdSetCursorPosition(3, 1);                  				// set cursor for back right ride height value
-// 	sprintf(rideStr, "%d", (int)rideHeightBR);					// sprintf it
-// 	lcdPrintStr((uint8_t*)rideStr, strlen(rideStr));			// print back right ride height value
-
-// 	lcdSetCursorPosition(6, 1);                  				// set cursor for "RPM->"
-// 	lcdPrintStr((uint8_t*)"RPM->", 5);                   		// print the "RPM->"
-
-// 	// wheel speed
-// 	lcdSetCursorPosition(11, 0);								// set cursor for front left wheelspeed value
-// 	sprintf(wheelStr, "%d", (int)wheelSpeedFL);					// sprintf it
-// 	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print front left wheelspeed value
-
-// 	lcdSetCursorPosition(13, 0);								// spacer
-// 	lcdPrintStr((uint8_t*)"-", 1);						  		// spacer
-
-// 	lcdSetCursorPosition(14, 0);                 				// set cursor for front right wheelspeed value
-// 	sprintf(wheelStr, "%d", (int)wheelSpeedFR);					// sprintf it
-// 	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print front right wheelspeed value
-
-// 	lcdSetCursorPosition(11, 1);                 				// set cursor for back left wheelspeed value
-// 	sprintf(wheelStr, "%d", (int)wheelSpeedBL);					// sprintf it
-// 	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print back left wheelspeed value
-
-// 	lcdSetCursorPosition(13, 1);								// set cursor for "-"
-// 	lcdPrintStr((uint8_t*)"-", 1);								// print the "-"
-
-// 	lcdSetCursorPosition(14, 1);								// set cursor for back right wheelspeed value
-// 	sprintf(wheelStr, "%d", (int)wheelSpeedBR);					// sprintf it
-// 	lcdPrintStr((uint8_t*)wheelStr, strlen(wheelStr));			// print value for back right wheelspeed value
-// }
+    return pedalAverage;
+}
 
 /* USER CODE END 4 */
 
@@ -817,11 +595,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-	/* User can add his own implementation to report the HAL error return state */
-	__disable_irq();
-	while (1)
-	{
-	}
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -836,8 +614,8 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-	/* User can add his own implementation to report the file name and line number,
-		ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

@@ -1,4 +1,4 @@
-ARM GAS  /tmp/ccLm9v8Y.s 			page 1
+ARM GAS  /tmp/ccqLj0OK.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -36,60 +36,60 @@ ARM GAS  /tmp/ccLm9v8Y.s 			page 1
    6:Core/Src/stm32f4xx_it.c ****   ******************************************************************************
    7:Core/Src/stm32f4xx_it.c ****   * @attention
    8:Core/Src/stm32f4xx_it.c ****   *
-   9:Core/Src/stm32f4xx_it.c ****   * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
-  10:Core/Src/stm32f4xx_it.c ****   * All rights reserved.</center></h2>
+   9:Core/Src/stm32f4xx_it.c ****   * Copyright (c) 2022 STMicroelectronics.
+  10:Core/Src/stm32f4xx_it.c ****   * All rights reserved.
   11:Core/Src/stm32f4xx_it.c ****   *
-  12:Core/Src/stm32f4xx_it.c ****   * This software component is licensed by ST under BSD 3-Clause license,
-  13:Core/Src/stm32f4xx_it.c ****   * the "License"; You may not use this file except in compliance with the
-  14:Core/Src/stm32f4xx_it.c ****   * License. You may obtain a copy of the License at:
-  15:Core/Src/stm32f4xx_it.c ****   *                        opensource.org/licenses/BSD-3-Clause
-  16:Core/Src/stm32f4xx_it.c ****   *
-  17:Core/Src/stm32f4xx_it.c ****   ******************************************************************************
-  18:Core/Src/stm32f4xx_it.c ****   */
-  19:Core/Src/stm32f4xx_it.c **** /* USER CODE END Header */
-  20:Core/Src/stm32f4xx_it.c **** 
-  21:Core/Src/stm32f4xx_it.c **** /* Includes ------------------------------------------------------------------*/
-  22:Core/Src/stm32f4xx_it.c **** #include "main.h"
-  23:Core/Src/stm32f4xx_it.c **** #include "stm32f4xx_it.h"
-  24:Core/Src/stm32f4xx_it.c **** /* Private includes ----------------------------------------------------------*/
-  25:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN Includes */
-  26:Core/Src/stm32f4xx_it.c **** /* USER CODE END Includes */
-  27:Core/Src/stm32f4xx_it.c **** 
-  28:Core/Src/stm32f4xx_it.c **** /* Private typedef -----------------------------------------------------------*/
-  29:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN TD */
-  30:Core/Src/stm32f4xx_it.c **** 
-ARM GAS  /tmp/ccLm9v8Y.s 			page 2
+  12:Core/Src/stm32f4xx_it.c ****   * This software is licensed under terms that can be found in the LICENSE file
+  13:Core/Src/stm32f4xx_it.c ****   * in the root directory of this software component.
+  14:Core/Src/stm32f4xx_it.c ****   * If no LICENSE file comes with this software, it is provided AS-IS.
+  15:Core/Src/stm32f4xx_it.c ****   *
+  16:Core/Src/stm32f4xx_it.c ****   ******************************************************************************
+  17:Core/Src/stm32f4xx_it.c ****   */
+  18:Core/Src/stm32f4xx_it.c **** /* USER CODE END Header */
+  19:Core/Src/stm32f4xx_it.c **** 
+  20:Core/Src/stm32f4xx_it.c **** /* Includes ------------------------------------------------------------------*/
+  21:Core/Src/stm32f4xx_it.c **** #include "main.h"
+  22:Core/Src/stm32f4xx_it.c **** #include "stm32f4xx_it.h"
+  23:Core/Src/stm32f4xx_it.c **** /* Private includes ----------------------------------------------------------*/
+  24:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN Includes */
+  25:Core/Src/stm32f4xx_it.c **** /* USER CODE END Includes */
+  26:Core/Src/stm32f4xx_it.c **** 
+  27:Core/Src/stm32f4xx_it.c **** /* Private typedef -----------------------------------------------------------*/
+  28:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN TD */
+  29:Core/Src/stm32f4xx_it.c **** 
+  30:Core/Src/stm32f4xx_it.c **** /* USER CODE END TD */
+ARM GAS  /tmp/ccqLj0OK.s 			page 2
 
 
-  31:Core/Src/stm32f4xx_it.c **** /* USER CODE END TD */
-  32:Core/Src/stm32f4xx_it.c **** 
-  33:Core/Src/stm32f4xx_it.c **** /* Private define ------------------------------------------------------------*/
-  34:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN PD */
-  35:Core/Src/stm32f4xx_it.c **** 
-  36:Core/Src/stm32f4xx_it.c **** /* USER CODE END PD */
-  37:Core/Src/stm32f4xx_it.c **** 
-  38:Core/Src/stm32f4xx_it.c **** /* Private macro -------------------------------------------------------------*/
-  39:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN PM */
-  40:Core/Src/stm32f4xx_it.c **** 
-  41:Core/Src/stm32f4xx_it.c **** /* USER CODE END PM */
-  42:Core/Src/stm32f4xx_it.c **** 
-  43:Core/Src/stm32f4xx_it.c **** /* Private variables ---------------------------------------------------------*/
-  44:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN PV */
-  45:Core/Src/stm32f4xx_it.c **** 
-  46:Core/Src/stm32f4xx_it.c **** /* USER CODE END PV */
-  47:Core/Src/stm32f4xx_it.c **** 
-  48:Core/Src/stm32f4xx_it.c **** /* Private function prototypes -----------------------------------------------*/
-  49:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN PFP */
-  50:Core/Src/stm32f4xx_it.c **** 
-  51:Core/Src/stm32f4xx_it.c **** /* USER CODE END PFP */
-  52:Core/Src/stm32f4xx_it.c **** 
-  53:Core/Src/stm32f4xx_it.c **** /* Private user code ---------------------------------------------------------*/
-  54:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN 0 */
-  55:Core/Src/stm32f4xx_it.c **** 
-  56:Core/Src/stm32f4xx_it.c **** /* USER CODE END 0 */
-  57:Core/Src/stm32f4xx_it.c **** 
-  58:Core/Src/stm32f4xx_it.c **** /* External variables --------------------------------------------------------*/
-  59:Core/Src/stm32f4xx_it.c **** extern CAN_HandleTypeDef hcan1;
+  31:Core/Src/stm32f4xx_it.c **** 
+  32:Core/Src/stm32f4xx_it.c **** /* Private define ------------------------------------------------------------*/
+  33:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN PD */
+  34:Core/Src/stm32f4xx_it.c **** 
+  35:Core/Src/stm32f4xx_it.c **** /* USER CODE END PD */
+  36:Core/Src/stm32f4xx_it.c **** 
+  37:Core/Src/stm32f4xx_it.c **** /* Private macro -------------------------------------------------------------*/
+  38:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN PM */
+  39:Core/Src/stm32f4xx_it.c **** 
+  40:Core/Src/stm32f4xx_it.c **** /* USER CODE END PM */
+  41:Core/Src/stm32f4xx_it.c **** 
+  42:Core/Src/stm32f4xx_it.c **** /* Private variables ---------------------------------------------------------*/
+  43:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN PV */
+  44:Core/Src/stm32f4xx_it.c **** 
+  45:Core/Src/stm32f4xx_it.c **** /* USER CODE END PV */
+  46:Core/Src/stm32f4xx_it.c **** 
+  47:Core/Src/stm32f4xx_it.c **** /* Private function prototypes -----------------------------------------------*/
+  48:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN PFP */
+  49:Core/Src/stm32f4xx_it.c **** 
+  50:Core/Src/stm32f4xx_it.c **** /* USER CODE END PFP */
+  51:Core/Src/stm32f4xx_it.c **** 
+  52:Core/Src/stm32f4xx_it.c **** /* Private user code ---------------------------------------------------------*/
+  53:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN 0 */
+  54:Core/Src/stm32f4xx_it.c **** 
+  55:Core/Src/stm32f4xx_it.c **** /* USER CODE END 0 */
+  56:Core/Src/stm32f4xx_it.c **** 
+  57:Core/Src/stm32f4xx_it.c **** /* External variables --------------------------------------------------------*/
+  58:Core/Src/stm32f4xx_it.c **** extern CAN_HandleTypeDef hcan1;
+  59:Core/Src/stm32f4xx_it.c **** extern TIM_HandleTypeDef htim13;
   60:Core/Src/stm32f4xx_it.c **** extern TIM_HandleTypeDef htim14;
   61:Core/Src/stm32f4xx_it.c **** /* USER CODE BEGIN EV */
   62:Core/Src/stm32f4xx_it.c **** 
@@ -118,7 +118,7 @@ ARM GAS  /tmp/ccLm9v8Y.s 			page 1
   36              		.loc 1 77 3 discriminator 1 view .LVU1
   78:Core/Src/stm32f4xx_it.c ****   {
   79:Core/Src/stm32f4xx_it.c ****   }
-ARM GAS  /tmp/ccLm9v8Y.s 			page 3
+ARM GAS  /tmp/ccqLj0OK.s 			page 3
 
 
   37              		.loc 1 79 3 discriminator 1 view .LVU2
@@ -178,7 +178,7 @@ ARM GAS  /tmp/ccLm9v8Y.s 			page 1
   96:Core/Src/stm32f4xx_it.c **** }
   97:Core/Src/stm32f4xx_it.c **** 
   98:Core/Src/stm32f4xx_it.c **** /**
-ARM GAS  /tmp/ccLm9v8Y.s 			page 4
+ARM GAS  /tmp/ccqLj0OK.s 			page 4
 
 
   99:Core/Src/stm32f4xx_it.c ****   * @brief This function handles Memory management fault.
@@ -238,7 +238,7 @@ ARM GAS  /tmp/ccLm9v8Y.s 			page 1
  122:Core/Src/stm32f4xx_it.c ****   {
  123:Core/Src/stm32f4xx_it.c ****     /* USER CODE BEGIN W1_BusFault_IRQn 0 */
  124:Core/Src/stm32f4xx_it.c ****     /* USER CODE END W1_BusFault_IRQn 0 */
-ARM GAS  /tmp/ccLm9v8Y.s 			page 5
+ARM GAS  /tmp/ccqLj0OK.s 			page 5
 
 
  125:Core/Src/stm32f4xx_it.c ****   }
@@ -298,7 +298,7 @@ ARM GAS  /tmp/ccLm9v8Y.s 			page 1
  141:Core/Src/stm32f4xx_it.c **** }
  142:Core/Src/stm32f4xx_it.c **** 
  143:Core/Src/stm32f4xx_it.c **** /**
-ARM GAS  /tmp/ccLm9v8Y.s 			page 6
+ARM GAS  /tmp/ccqLj0OK.s 			page 6
 
 
  144:Core/Src/stm32f4xx_it.c ****   * @brief This function handles System service call via SWI instruction.
@@ -358,7 +358,7 @@ ARM GAS  /tmp/ccLm9v8Y.s 			page 1
  182              		.syntax unified
  183              		.thumb
  184              		.thumb_func
-ARM GAS  /tmp/ccLm9v8Y.s 			page 7
+ARM GAS  /tmp/ccqLj0OK.s 			page 7
 
 
  185              		.fpu fpv4-sp-d16
@@ -418,7 +418,7 @@ ARM GAS  /tmp/ccLm9v8Y.s 			page 1
  219 0002 FFF7FEFF 		bl	HAL_IncTick
  220              	.LVL0:
  191:Core/Src/stm32f4xx_it.c ****   /* USER CODE BEGIN SysTick_IRQn 1 */
-ARM GAS  /tmp/ccLm9v8Y.s 			page 8
+ARM GAS  /tmp/ccqLj0OK.s 			page 8
 
 
  192:Core/Src/stm32f4xx_it.c **** 
@@ -478,7 +478,7 @@ ARM GAS  /tmp/ccLm9v8Y.s 			page 1
  253              	.L18:
  254 000c 00000000 		.word	hcan1
  255              		.cfi_endproc
-ARM GAS  /tmp/ccLm9v8Y.s 			page 9
+ARM GAS  /tmp/ccqLj0OK.s 			page 9
 
 
  256              	.LFE139:
@@ -526,23 +526,23 @@ ARM GAS  /tmp/ccLm9v8Y.s 			page 1
  286 000c 00000000 		.word	hcan1
  287              		.cfi_endproc
  288              	.LFE140:
- 290              		.section	.text.TIM8_TRG_COM_TIM14_IRQHandler,"ax",%progbits
+ 290              		.section	.text.TIM8_UP_TIM13_IRQHandler,"ax",%progbits
  291              		.align	1
- 292              		.global	TIM8_TRG_COM_TIM14_IRQHandler
+ 292              		.global	TIM8_UP_TIM13_IRQHandler
  293              		.syntax unified
  294              		.thumb
  295              		.thumb_func
  296              		.fpu fpv4-sp-d16
- 298              	TIM8_TRG_COM_TIM14_IRQHandler:
+ 298              	TIM8_UP_TIM13_IRQHandler:
  299              	.LFB141:
  230:Core/Src/stm32f4xx_it.c **** 
  231:Core/Src/stm32f4xx_it.c **** /**
- 232:Core/Src/stm32f4xx_it.c ****   * @brief This function handles TIM8 trigger and commutation interrupts and TIM14 global interrupt
-ARM GAS  /tmp/ccLm9v8Y.s 			page 10
+ 232:Core/Src/stm32f4xx_it.c ****   * @brief This function handles TIM8 update interrupt and TIM13 global interrupt.
+ARM GAS  /tmp/ccqLj0OK.s 			page 10
 
 
  233:Core/Src/stm32f4xx_it.c ****   */
- 234:Core/Src/stm32f4xx_it.c **** void TIM8_TRG_COM_TIM14_IRQHandler(void)
+ 234:Core/Src/stm32f4xx_it.c **** void TIM8_UP_TIM13_IRQHandler(void)
  235:Core/Src/stm32f4xx_it.c **** {
  300              		.loc 1 235 1 is_stmt 1 view -0
  301              		.cfi_startproc
@@ -553,74 +553,125 @@ ARM GAS  /tmp/ccLm9v8Y.s 			page 1
  306              		.cfi_def_cfa_offset 8
  307              		.cfi_offset 3, -8
  308              		.cfi_offset 14, -4
- 236:Core/Src/stm32f4xx_it.c ****   /* USER CODE BEGIN TIM8_TRG_COM_TIM14_IRQn 0 */
+ 236:Core/Src/stm32f4xx_it.c ****   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 0 */
  237:Core/Src/stm32f4xx_it.c **** 
- 238:Core/Src/stm32f4xx_it.c ****   /* USER CODE END TIM8_TRG_COM_TIM14_IRQn 0 */
- 239:Core/Src/stm32f4xx_it.c ****   HAL_TIM_IRQHandler(&htim14);
+ 238:Core/Src/stm32f4xx_it.c ****   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
+ 239:Core/Src/stm32f4xx_it.c ****   HAL_TIM_IRQHandler(&htim13);
  309              		.loc 1 239 3 view .LVU36
  310 0002 0248     		ldr	r0, .L26
  311 0004 FFF7FEFF 		bl	HAL_TIM_IRQHandler
  312              	.LVL3:
- 240:Core/Src/stm32f4xx_it.c ****   /* USER CODE BEGIN TIM8_TRG_COM_TIM14_IRQn 1 */
+ 240:Core/Src/stm32f4xx_it.c ****   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 1 */
  241:Core/Src/stm32f4xx_it.c **** 
- 242:Core/Src/stm32f4xx_it.c ****   /* USER CODE END TIM8_TRG_COM_TIM14_IRQn 1 */
+ 242:Core/Src/stm32f4xx_it.c ****   /* USER CODE END TIM8_UP_TIM13_IRQn 1 */
  243:Core/Src/stm32f4xx_it.c **** }
  313              		.loc 1 243 1 is_stmt 0 view .LVU37
  314 0008 08BD     		pop	{r3, pc}
  315              	.L27:
  316 000a 00BF     		.align	2
  317              	.L26:
- 318 000c 00000000 		.word	htim14
+ 318 000c 00000000 		.word	htim13
  319              		.cfi_endproc
  320              	.LFE141:
- 322              		.text
- 323              	.Letext0:
- 324              		.file 2 "/usr/lib/gcc/arm-none-eabi/9.2.1/include/stdint.h"
- 325              		.file 3 "Drivers/CMSIS/Include/core_cm4.h"
- 326              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/system_stm32f4xx.h"
- 327              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f413xx.h"
- 328              		.file 6 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h"
- 329              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
- 330              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
- 331              		.file 9 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_can.h"
- 332              		.file 10 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h"
- 333              		.file 11 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
-ARM GAS  /tmp/ccLm9v8Y.s 			page 11
+ 322              		.section	.text.TIM8_TRG_COM_TIM14_IRQHandler,"ax",%progbits
+ 323              		.align	1
+ 324              		.global	TIM8_TRG_COM_TIM14_IRQHandler
+ 325              		.syntax unified
+ 326              		.thumb
+ 327              		.thumb_func
+ 328              		.fpu fpv4-sp-d16
+ 330              	TIM8_TRG_COM_TIM14_IRQHandler:
+ 331              	.LFB142:
+ 244:Core/Src/stm32f4xx_it.c **** 
+ 245:Core/Src/stm32f4xx_it.c **** /**
+ 246:Core/Src/stm32f4xx_it.c ****   * @brief This function handles TIM8 trigger and commutation interrupts and TIM14 global interrupt
+ 247:Core/Src/stm32f4xx_it.c ****   */
+ 248:Core/Src/stm32f4xx_it.c **** void TIM8_TRG_COM_TIM14_IRQHandler(void)
+ 249:Core/Src/stm32f4xx_it.c **** {
+ 332              		.loc 1 249 1 is_stmt 1 view -0
+ 333              		.cfi_startproc
+ 334              		@ args = 0, pretend = 0, frame = 0
+ 335              		@ frame_needed = 0, uses_anonymous_args = 0
+ 336 0000 08B5     		push	{r3, lr}
+ 337              	.LCFI4:
+ 338              		.cfi_def_cfa_offset 8
+ 339              		.cfi_offset 3, -8
+ 340              		.cfi_offset 14, -4
+ 250:Core/Src/stm32f4xx_it.c ****   /* USER CODE BEGIN TIM8_TRG_COM_TIM14_IRQn 0 */
+ARM GAS  /tmp/ccqLj0OK.s 			page 11
+
+
+ 251:Core/Src/stm32f4xx_it.c **** 
+ 252:Core/Src/stm32f4xx_it.c ****   /* USER CODE END TIM8_TRG_COM_TIM14_IRQn 0 */
+ 253:Core/Src/stm32f4xx_it.c ****   HAL_TIM_IRQHandler(&htim14);
+ 341              		.loc 1 253 3 view .LVU39
+ 342 0002 0248     		ldr	r0, .L30
+ 343 0004 FFF7FEFF 		bl	HAL_TIM_IRQHandler
+ 344              	.LVL4:
+ 254:Core/Src/stm32f4xx_it.c ****   /* USER CODE BEGIN TIM8_TRG_COM_TIM14_IRQn 1 */
+ 255:Core/Src/stm32f4xx_it.c **** 
+ 256:Core/Src/stm32f4xx_it.c ****   /* USER CODE END TIM8_TRG_COM_TIM14_IRQn 1 */
+ 257:Core/Src/stm32f4xx_it.c **** }
+ 345              		.loc 1 257 1 is_stmt 0 view .LVU40
+ 346 0008 08BD     		pop	{r3, pc}
+ 347              	.L31:
+ 348 000a 00BF     		.align	2
+ 349              	.L30:
+ 350 000c 00000000 		.word	htim14
+ 351              		.cfi_endproc
+ 352              	.LFE142:
+ 354              		.text
+ 355              	.Letext0:
+ 356              		.file 2 "/usr/lib/gcc/arm-none-eabi/9.2.1/include/stdint.h"
+ 357              		.file 3 "Drivers/CMSIS/Include/core_cm4.h"
+ 358              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/system_stm32f4xx.h"
+ 359              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f413xx.h"
+ 360              		.file 6 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h"
+ 361              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 362              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 363              		.file 9 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_can.h"
+ 364              		.file 10 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h"
+ 365              		.file 11 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
+ARM GAS  /tmp/ccqLj0OK.s 			page 12
 
 
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 stm32f4xx_it.c
-     /tmp/ccLm9v8Y.s:18     .text.NMI_Handler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:26     .text.NMI_Handler:0000000000000000 NMI_Handler
-     /tmp/ccLm9v8Y.s:44     .text.HardFault_Handler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:51     .text.HardFault_Handler:0000000000000000 HardFault_Handler
-     /tmp/ccLm9v8Y.s:68     .text.MemManage_Handler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:75     .text.MemManage_Handler:0000000000000000 MemManage_Handler
-     /tmp/ccLm9v8Y.s:92     .text.BusFault_Handler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:99     .text.BusFault_Handler:0000000000000000 BusFault_Handler
-     /tmp/ccLm9v8Y.s:116    .text.UsageFault_Handler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:123    .text.UsageFault_Handler:0000000000000000 UsageFault_Handler
-     /tmp/ccLm9v8Y.s:140    .text.SVC_Handler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:147    .text.SVC_Handler:0000000000000000 SVC_Handler
-     /tmp/ccLm9v8Y.s:160    .text.DebugMon_Handler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:167    .text.DebugMon_Handler:0000000000000000 DebugMon_Handler
-     /tmp/ccLm9v8Y.s:180    .text.PendSV_Handler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:187    .text.PendSV_Handler:0000000000000000 PendSV_Handler
-     /tmp/ccLm9v8Y.s:200    .text.SysTick_Handler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:207    .text.SysTick_Handler:0000000000000000 SysTick_Handler
-     /tmp/ccLm9v8Y.s:227    .text.CAN1_TX_IRQHandler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:234    .text.CAN1_TX_IRQHandler:0000000000000000 CAN1_TX_IRQHandler
-     /tmp/ccLm9v8Y.s:254    .text.CAN1_TX_IRQHandler:000000000000000c $d
-     /tmp/ccLm9v8Y.s:259    .text.CAN1_RX0_IRQHandler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:266    .text.CAN1_RX0_IRQHandler:0000000000000000 CAN1_RX0_IRQHandler
-     /tmp/ccLm9v8Y.s:286    .text.CAN1_RX0_IRQHandler:000000000000000c $d
-     /tmp/ccLm9v8Y.s:291    .text.TIM8_TRG_COM_TIM14_IRQHandler:0000000000000000 $t
-     /tmp/ccLm9v8Y.s:298    .text.TIM8_TRG_COM_TIM14_IRQHandler:0000000000000000 TIM8_TRG_COM_TIM14_IRQHandler
-     /tmp/ccLm9v8Y.s:318    .text.TIM8_TRG_COM_TIM14_IRQHandler:000000000000000c $d
+     /tmp/ccqLj0OK.s:18     .text.NMI_Handler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:26     .text.NMI_Handler:0000000000000000 NMI_Handler
+     /tmp/ccqLj0OK.s:44     .text.HardFault_Handler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:51     .text.HardFault_Handler:0000000000000000 HardFault_Handler
+     /tmp/ccqLj0OK.s:68     .text.MemManage_Handler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:75     .text.MemManage_Handler:0000000000000000 MemManage_Handler
+     /tmp/ccqLj0OK.s:92     .text.BusFault_Handler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:99     .text.BusFault_Handler:0000000000000000 BusFault_Handler
+     /tmp/ccqLj0OK.s:116    .text.UsageFault_Handler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:123    .text.UsageFault_Handler:0000000000000000 UsageFault_Handler
+     /tmp/ccqLj0OK.s:140    .text.SVC_Handler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:147    .text.SVC_Handler:0000000000000000 SVC_Handler
+     /tmp/ccqLj0OK.s:160    .text.DebugMon_Handler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:167    .text.DebugMon_Handler:0000000000000000 DebugMon_Handler
+     /tmp/ccqLj0OK.s:180    .text.PendSV_Handler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:187    .text.PendSV_Handler:0000000000000000 PendSV_Handler
+     /tmp/ccqLj0OK.s:200    .text.SysTick_Handler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:207    .text.SysTick_Handler:0000000000000000 SysTick_Handler
+     /tmp/ccqLj0OK.s:227    .text.CAN1_TX_IRQHandler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:234    .text.CAN1_TX_IRQHandler:0000000000000000 CAN1_TX_IRQHandler
+     /tmp/ccqLj0OK.s:254    .text.CAN1_TX_IRQHandler:000000000000000c $d
+     /tmp/ccqLj0OK.s:259    .text.CAN1_RX0_IRQHandler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:266    .text.CAN1_RX0_IRQHandler:0000000000000000 CAN1_RX0_IRQHandler
+     /tmp/ccqLj0OK.s:286    .text.CAN1_RX0_IRQHandler:000000000000000c $d
+     /tmp/ccqLj0OK.s:291    .text.TIM8_UP_TIM13_IRQHandler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:298    .text.TIM8_UP_TIM13_IRQHandler:0000000000000000 TIM8_UP_TIM13_IRQHandler
+     /tmp/ccqLj0OK.s:318    .text.TIM8_UP_TIM13_IRQHandler:000000000000000c $d
+     /tmp/ccqLj0OK.s:323    .text.TIM8_TRG_COM_TIM14_IRQHandler:0000000000000000 $t
+     /tmp/ccqLj0OK.s:330    .text.TIM8_TRG_COM_TIM14_IRQHandler:0000000000000000 TIM8_TRG_COM_TIM14_IRQHandler
+     /tmp/ccqLj0OK.s:350    .text.TIM8_TRG_COM_TIM14_IRQHandler:000000000000000c $d
 
 UNDEFINED SYMBOLS
 HAL_IncTick
 HAL_CAN_IRQHandler
 hcan1
 HAL_TIM_IRQHandler
+htim13
 htim14

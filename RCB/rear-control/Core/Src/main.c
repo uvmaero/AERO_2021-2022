@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * This is the code for the rear control board. This reads all of the sensor data, 
-  * sends and reads CAN messages, and also manages faults from around the car.
+  * Copyright (c) 2022 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -22,47 +21,45 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 CAN_HandleTypeDef hcan1;
 
+TIM_HandleTypeDef htim13;
 TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN PV */
 
-// CAN
-CAN_RxHeaderTypeDef rxHeader; 					        // CAN Bus Receive Header
-CAN_TxHeaderTypeDef txHeader1; 					        // CAN Bus Transmit Header DAQ Data
-CAN_TxHeaderTypeDef txHeader2; 					        // CAN Bus Transmit Header Control Data
-uint8_t txData[8];
-uint8_t canRX[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 	  // CAN Bus Receive Buffer
-CAN_FilterTypeDef canFilter; 					          // CAN Bus Filter
-uint32_t txMailbox; 							              // CAN Bus Mail box variable
+CAN_TxHeaderTypeDef TxHeader;
+uint8_t TxData[8];
+uint32_t TxMailbox;
 
-// inputs
-int IMDFaultState = 0;                          // 0 is maybe not faulting 
-int BMSFaultState = 0;                          // 0 is maybe not faulting
+CAN_RxHeaderTypeDef RxHeader;
+CAN_FilterTypeDef filter0;
+uint8_t RxData[8];
 
+// signal pins
+uint8_t brakeSig = 0;
+uint8_t fanSig = 0;
+uint8_t imdFault = 0;
+uint8_t bmsFault = 0;
 
-// outputs
-int brakeLightState = 0;                        // 0 is off
-int pumpState = 1;                              // 1 is on maybe
-int fanState = 0;                               // 1 is on maybe
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,12 +67,15 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_TIM14_Init(void);
+static void MX_TIM13_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+
 /* USER CODE END 0 */
 
 /**
@@ -85,6 +85,15 @@ static void MX_TIM14_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  // define header
+  TxHeader.StdId = 0x082;
+  TxHeader.ExtId = 0x0;
+  TxHeader.IDE = CAN_ID_STD;
+  TxHeader.RTR = CAN_RTR_DATA;
+  TxHeader.DLC = 8;
+  TxHeader.TransmitGlobalTime = DISABLE;
+  // TxHeader.FilterMatchIndex = 
+
 
   /* USER CODE END 1 */
 
@@ -94,41 +103,28 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_CAN1_Init();
   MX_TIM14_Init();
+  MX_TIM13_Init();
   /* USER CODE BEGIN 2 */
 
-	// init the CAN mailbox for DAQ DATA
-	txHeader1.DLC = 2; // Number of bites to be transmitted max- 8
-	txHeader1.IDE = CAN_ID_STD;
-	txHeader1.RTR = CAN_RTR_DATA;
-	txHeader1.StdId = 0x81; // change this to BASE + 1
-	txHeader1.ExtId = 0x0;
-	txHeader1.TransmitGlobalTime = DISABLE;
-
-	// init the CAN mailbox for CONTROL DATA
-	txHeader2.DLC = 2; // Number of bites to be transmitted max- 8
-	txHeader2.IDE = CAN_ID_STD;
-	txHeader2.RTR = CAN_RTR_DATA;
-	txHeader2.StdId = 0x82; // change this to BASE + 2
-	txHeader2.ExtId = 0x0;
-	txHeader2.TransmitGlobalTime = DISABLE;
-
-	HAL_CAN_ConfigFilter(&hcan1, &canFilter); // Initialize CAN Filter
-	HAL_CAN_Start(&hcan1); // Initialize CAN Bus
-	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);   // Initialize CAN Bus Rx Interrupt
-  HAL_TIM_Base_Start_IT(&htim14); // start the timer interupt
-
+  // start interrupts
+  HAL_CAN_Start(&hcan1);
+  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+  HAL_TIM_Base_Start_IT(&htim14);
+  HAL_TIM_Base_Start_IT(&htim13);
 
   /* USER CODE END 2 */
 
@@ -136,6 +132,22 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // TxData[0] = 0;
+    // TxData[1] = 1;
+    // TxData[2] = 2;
+    // TxData[3] = 3;
+    // TxData[4] = 4;
+    // TxData[5] = 5;
+    // TxData[6] = 6;
+    // TxData[7] = 7;
+
+
+    // HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
+
+    // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_1);
+    // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_2);
+    // HAL_Delay(500);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -197,15 +209,17 @@ static void MX_CAN1_Init(void)
 {
 
   /* USER CODE BEGIN CAN1_Init 0 */
+
   /* USER CODE END CAN1_Init 0 */
 
   /* USER CODE BEGIN CAN1_Init 1 */
+
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 5;
+  hcan1.Init.Prescaler = 18;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_15TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_2TQ;
   hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = DISABLE;
@@ -219,20 +233,51 @@ static void MX_CAN1_Init(void)
   }
   /* USER CODE BEGIN CAN1_Init 2 */
 
-  // init the CAN filter
-	canFilter.FilterBank = 0;
-	canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
-	canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
-	canFilter.FilterIdHigh = 0x0FF << 5;
-	canFilter.FilterIdLow = 0x000;
-	canFilter.FilterMaskIdHigh = 0x093 << 5;
-	canFilter.FilterMaskIdLow = 0x000;
-	canFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-	canFilter.FilterActivation = ENABLE;
-	canFilter.SlaveStartFilterBank = 0;
+  filter0.FilterIdHigh = 0x093 << 5;
+  filter0.FilterIdLow = 0x000;
+  filter0.FilterMaskIdHigh = 0x093 << 5;
+  filter0.FilterMaskIdLow = 0x000;
+  filter0.FilterFIFOAssignment =  CAN_RX_FIFO0;
+  filter0.FilterBank = 1;
+  filter0.FilterMode = CAN_FILTERMODE_IDMASK;
+  filter0.FilterScale = CAN_FILTERSCALE_32BIT;
+  filter0.FilterActivation = ENABLE;
+  filter0.SlaveStartFilterBank = 0;
 
+  HAL_CAN_ConfigFilter(&hcan1, &filter0);
 
   /* USER CODE END CAN1_Init 2 */
+
+}
+
+/**
+  * @brief TIM13 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM13_Init(void)
+{
+
+  /* USER CODE BEGIN TIM13_Init 0 */
+
+  /* USER CODE END TIM13_Init 0 */
+
+  /* USER CODE BEGIN TIM13_Init 1 */
+
+  /* USER CODE END TIM13_Init 1 */
+  htim13.Instance = TIM13;
+  htim13.Init.Prescaler = 9000-1;
+  htim13.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim13.Init.Period = 100-1;
+  htim13.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim13.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim13) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM13_Init 2 */
+
+  /* USER CODE END TIM13_Init 2 */
 
 }
 
@@ -282,10 +327,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PA6 PA7 */
   GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
@@ -293,64 +335,54 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB0 PB1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
+  /*Configure GPIO pins : PB0 PB1 PB2 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
 }
 
 /* USER CODE BEGIN 4 */
 
-// *** functions *** //
-
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
-{
-  if (HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxHeader, canRX) != HAL_OK)
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
+  if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK){
     Error_Handler();
-
-  // get the control signals from dash
-  if ((rxHeader.StdId == 0x093))
-  {
-    // get the brake light signal
-	  brakeLightState = canRX[4];
-
-    // get the cooling state
-    // 1 byte -> 0 is fan and pump off
-    //           1 is pump on, fan off
-    //           3 is fan and pump on
-    fanState = canRX[2];
   }
+
+  if (RxHeader.StdId == 0x093){
+      brakeSig = RxData[2];
+      fanSig = RxData[4];
+  }
+
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-
-  // 10 Hz interrupt
-  // update outputs
-  // send can message
+  
+  if (htim == &htim13){
+    imdFault = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6);
+    bmsFault = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7);
+  }
+  
   if (htim == &htim14){
 
-    // update load switch outputs
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, fanState & 1); // Pump
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, fanState >> 1); // Fan
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, brakeLightState); // Brake
+    TxData[0] = imdFault;
+    TxData[1] = bmsFault;
+    TxData[2] = 2;
+    TxData[3] = 3;
+    TxData[4] = 4;
+    TxData[5] = 5;
+    TxData[6] = 6;
+    TxData[7] = 7;
 
 
-    // send control data
-    txData[0] = IMDFaultState;
-    txData[1] = BMSFaultState;
+    HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
 
-    // send message
-    HAL_CAN_AddTxMessage(&hcan1, &txHeader2, txData, &txMailbox);
+    // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, fanSig);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, brakeSig);
+    // HAL_Delay(500);
   }
 }
 
