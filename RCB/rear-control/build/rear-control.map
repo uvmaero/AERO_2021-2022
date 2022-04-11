@@ -1715,42 +1715,42 @@ LOAD /usr/lib/gcc/arm-none-eabi/9.2.1/thumb/v7e-m+fp/hard/libgcc.a
  .debug_line    0x000000000000b68e      0x61a /usr/lib/gcc/arm-none-eabi/9.2.1/thumb/v7e-m+fp/hard/libgcc.a(_udivmoddi4.o)
  .debug_line    0x000000000000bca8       0x60 /usr/lib/gcc/arm-none-eabi/9.2.1/thumb/v7e-m+fp/hard/libgcc.a(_dvmd_tls.o)
 
-.debug_str      0x0000000000000000     0x560c
- .debug_str     0x0000000000000000      0xf01 build/main.o
-                                        0xff1 (size before relaxing)
- .debug_str     0x0000000000000f01      0x138 build/stm32f4xx_it.o
+.debug_str      0x0000000000000000     0x564f
+ .debug_str     0x0000000000000000      0xf16 build/main.o
+                                       0x1006 (size before relaxing)
+ .debug_str     0x0000000000000f16      0x166 build/stm32f4xx_it.o
                                         0xb32 (size before relaxing)
- .debug_str     0x0000000000001039      0x653 build/stm32f4xx_hal_msp.o
+ .debug_str     0x000000000000107c      0x653 build/stm32f4xx_hal_msp.o
                                        0x11c2 (size before relaxing)
- .debug_str     0x000000000000168c      0x3e2 build/stm32f4xx_hal_can.o
+ .debug_str     0x00000000000016cf      0x3e2 build/stm32f4xx_hal_can.o
                                         0xb02 (size before relaxing)
- .debug_str     0x0000000000001a6e      0x1cf build/stm32f4xx_hal_rcc.o
+ .debug_str     0x0000000000001ab1      0x1cf build/stm32f4xx_hal_rcc.o
                                         0x788 (size before relaxing)
- .debug_str     0x0000000000001c3d      0x2e7 build/stm32f4xx_hal_rcc_ex.o
+ .debug_str     0x0000000000001c80      0x2e7 build/stm32f4xx_hal_rcc_ex.o
                                         0x7f3 (size before relaxing)
- .debug_str     0x0000000000001f24      0x11d build/stm32f4xx_hal_gpio.o
+ .debug_str     0x0000000000001f67      0x11d build/stm32f4xx_hal_gpio.o
                                         0x5bf (size before relaxing)
- .debug_str     0x0000000000002041      0x4d0 build/stm32f4xx_hal_cortex.o
+ .debug_str     0x0000000000002084      0x4d0 build/stm32f4xx_hal_cortex.o
                                         0xd83 (size before relaxing)
- .debug_str     0x0000000000002511      0x229 build/stm32f4xx_hal.o
+ .debug_str     0x0000000000002554      0x229 build/stm32f4xx_hal.o
                                         0xc68 (size before relaxing)
- .debug_str     0x000000000000273a      0xea5 build/stm32f4xx_hal_tim.o
+ .debug_str     0x000000000000277d      0xea5 build/stm32f4xx_hal_tim.o
                                        0x1777 (size before relaxing)
- .debug_str     0x00000000000035df      0x59f build/stm32f4xx_hal_tim_ex.o
+ .debug_str     0x0000000000003622      0x59f build/stm32f4xx_hal_tim_ex.o
                                        0x10ad (size before relaxing)
- .debug_str     0x0000000000003b7e       0x47 build/system_stm32f4xx.o
+ .debug_str     0x0000000000003bc1       0x47 build/system_stm32f4xx.o
                                         0x424 (size before relaxing)
- .debug_str     0x0000000000003bc5       0x22 build/startup_stm32f413xx.o
+ .debug_str     0x0000000000003c08       0x22 build/startup_stm32f413xx.o
                                          0x50 (size before relaxing)
- .debug_str     0x0000000000003be7      0x18e /usr/lib/gcc/arm-none-eabi/9.2.1/../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+ .debug_str     0x0000000000003c2a      0x18e /usr/lib/gcc/arm-none-eabi/9.2.1/../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
                                         0x229 (size before relaxing)
- .debug_str     0x0000000000003d75      0x6ef /usr/lib/gcc/arm-none-eabi/9.2.1/../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memset.o)
+ .debug_str     0x0000000000003db8      0x6ef /usr/lib/gcc/arm-none-eabi/9.2.1/../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memset.o)
                                         0x90f (size before relaxing)
- .debug_str     0x0000000000004464       0x97 /usr/lib/gcc/arm-none-eabi/9.2.1/thumb/v7e-m+fp/hard/libgcc.a(_aeabi_uldivmod.o)
+ .debug_str     0x00000000000044a7       0x97 /usr/lib/gcc/arm-none-eabi/9.2.1/thumb/v7e-m+fp/hard/libgcc.a(_aeabi_uldivmod.o)
                                          0xa3 (size before relaxing)
- .debug_str     0x00000000000044fb     0x10e1 /usr/lib/gcc/arm-none-eabi/9.2.1/thumb/v7e-m+fp/hard/libgcc.a(_udivmoddi4.o)
+ .debug_str     0x000000000000453e     0x10e1 /usr/lib/gcc/arm-none-eabi/9.2.1/thumb/v7e-m+fp/hard/libgcc.a(_udivmoddi4.o)
                                        0x11e6 (size before relaxing)
- .debug_str     0x00000000000055dc       0x30 /usr/lib/gcc/arm-none-eabi/9.2.1/thumb/v7e-m+fp/hard/libgcc.a(_dvmd_tls.o)
+ .debug_str     0x000000000000561f       0x30 /usr/lib/gcc/arm-none-eabi/9.2.1/thumb/v7e-m+fp/hard/libgcc.a(_dvmd_tls.o)
                                          0xa7 (size before relaxing)
 
 .debug_frame    0x0000000000000000     0x1c38
