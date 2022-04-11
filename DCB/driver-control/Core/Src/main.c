@@ -52,18 +52,20 @@ TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN PV */
 
+// CAN transmitting
 CAN_TxHeaderTypeDef TxHeader;
-CAN_TxHeaderTypeDef TxHeader2; // rinehart command message
+CAN_TxHeaderTypeDef TxHeader2;             // rinehart command message
 uint8_t TxData[8];
 uint32_t TxMailbox;
 
+// CAN reciving 
 CAN_RxHeaderTypeDef RxHeader;
 uint8_t RxData[8];
 CAN_FilterTypeDef filter0;
 CAN_FilterTypeDef filter1;
 
-// signal variables
-uint8_t imdFault = 0;
+// signal variables (0 = off | 1 = on)
+uint8_t imdFault = 0;             
 uint8_t bmsFault = 0;
 uint8_t switch_cooling = 0;
 uint8_t switch_direction = 0;
@@ -74,12 +76,13 @@ uint16_t pedal0 = 0;
 uint16_t pedal1 = 1;
 uint16_t pedalAverage = 0;
 
-uint8_t ready_to_drive = 0;                // false until precharge is done. press button now
-uint8_t buzzer_signal = 0;          // Turn on for 
-uint8_t startButtonState = 0;       // RTD button LED toggle (0 is off)
-uint8_t buzzerState = 0;            // for controlling the buzzer (0 = off | 1 = on)
-uint8_t buzzerCounter = 0;          // counter for how long the buzzer has been on
-uint8_t enableInverter = 0;         // stores state of inverter, can only be 1 after buzzer is done
+// state variables
+uint8_t ready_to_drive = 0;                 // false until precharge is done. press button now
+uint8_t buzzer_signal = 0;                  // Turn on for 
+uint8_t startButtonState = 0;               // RTD button LED toggle (0 is off)
+uint8_t buzzerState = 0;                    // for controlling the buzzer (0 = off | 1 = on)
+uint8_t buzzerCounter = 0;                  // counter for how long the buzzer has been on
+uint8_t enableInverter = 0;                 // stores state of inverter, can only be 1 after buzzer is done
 
 // rinehart commands
 uint16_t command_torque_limit = 100;
@@ -485,35 +488,44 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
   if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK){
     Error_Handler();
   }
 
+  // read CAN data from Rear Control Board
   if (RxHeader.StdId == 0x082){
       imdFault = RxData[0];
       bmsFault = RxData[1];
   }
+
+  // read CAN data from High Voltage Board 
   if (RxHeader.StdId == 0x087){
       ready_to_drive = RxData[0];
   }
-
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-
-  if (GPIO_Pin == GPIO_PIN_15){
-    if (ready_to_drive){
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  // handle start button interrupt
+  if (GPIO_Pin == GPIO_PIN_15)
+  {
+    // if ready to drive & the button has been pushed, start the buzzer
+    if (ready_to_drive)
+    {
       buzzerState = 1;
     }
   }
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-  
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  // on a __Hz interval 
   if (htim == &htim13){
     pedalAverage = pedal_conversion(pedal0, pedal1);
     
+    // build DAQ data CAN message
     TxData[0] = pedalAverage & 0xFF;
     TxData[1] = pedalAverage >> 8;
     TxData[2] = 0;
@@ -521,19 +533,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     TxData[4] = switch_direction;
     TxData[5] = enableInverter;
     TxData[6] = command_torque_limit & 0xFF;
-    TxData[7] = command_torque_limit >>8;
+    TxData[7] = command_torque_limit >> 8;
 
+    // send message
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader2, TxData, &TxMailbox);
-
   }
   
-  
-  if (htim == &htim14){
-
+  // on a __Hz interval
+  if (htim == &htim14)
+  {
+    // sample cooling switch and drive direction switch
     switch_cooling = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12);
     switch_direction = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13);
-
-    if (buzzerState==1){
+    
+    // buzzer logic
+    if (buzzerState == 1){
       buzzerCounter++;
       if (buzzerCounter >= 20)   // buzzerCounter is being updated on a 10Hz interval, so after 20 cycles, 2 seconds have passed
       {
@@ -543,6 +557,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
       }
     }
 
+    // build CAN message 
     TxData[0] = pedal1 & 0xFF;
     TxData[1] = pedal1 >> 8;
     TxData[2] = switch_cooling;
@@ -552,38 +567,36 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     TxData[5] = pedal0 >> 8;
     TxData[7] = pedalAverage >>8;
 
-
+    // send message
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
 
-    // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    // update LEDS and inverter drive direction 
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, imdFault);
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, bmsFault);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, switch_direction);
-    // HAL_Delay(500);
   }
 }
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
-
-    pedal0 = adc_buf[2];
-    pedal1 = adc_buf[3];
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+  // read values from DMA
+  pedal0 = adc_buf[2];
+  pedal1 = adc_buf[3];
 
 }
 
-uint16_t pedal_conversion(uint16_t pedal0, uint16_t pedal1){
+uint16_t pedal_conversion(uint16_t pedal0, uint16_t pedal1)
+{
+  // calculate the average of the two pedal potentiometer readings 
+  pedalAverage = (pedal0 + pedal1) / 2;
 
+  // ensure the pedal skew isn't dangerously out of bounds
+  // if (pow(pedal0 - pedalAverage, 2) > MAX_PEDAL_SKEW || 
+  //     pow(pedal1 - pedalAverage, 2) > MAX_PEDAL_SKEW ){
+  //     pedalAverage = 0;
+  // }
 
-  // 
-
-    pedalAverage = (pedal0 + pedal1) / 2;
-
-    // if (pow(pedal0 - pedalAverage, 2) > MAX_PEDAL_SKEW || 
-    //     pow(pedal1 - pedalAverage, 2) > MAX_PEDAL_SKEW ){
-    //     pedalAverage = 0;
-    // }
-
-
-    return pedalAverage;
+  return pedalAverage;
 }
 
 /* USER CODE END 4 */
