@@ -46,19 +46,21 @@ TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN PV */
 
+// CAN transmit 
 CAN_TxHeaderTypeDef TxHeader;
 uint8_t TxData[8];
 uint32_t TxMailbox;
 
+// CAN recive 
 CAN_RxHeaderTypeDef RxHeader;
 CAN_FilterTypeDef filter0;
 uint8_t RxData[8];
 
-// signal pins
+// signal pins (0 = off | 1 = on)
 uint8_t brakeSig = 0;
 uint8_t fanSig = 0;
-uint8_t imdFault = 0;
-uint8_t bmsFault = 0;
+uint8_t imdFault = 1;
+uint8_t bmsFault = 1;
 
 /* USER CODE END PV */
 
@@ -85,15 +87,13 @@ static void MX_TIM13_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  // define header
+  // setup transmit header
   TxHeader.StdId = 0x082;
   TxHeader.ExtId = 0x0;
   TxHeader.IDE = CAN_ID_STD;
   TxHeader.RTR = CAN_RTR_DATA;
   TxHeader.DLC = 8;
   TxHeader.TransmitGlobalTime = DISABLE;
-  // TxHeader.FilterMatchIndex = 
-
 
   /* USER CODE END 1 */
 
@@ -132,22 +132,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // TxData[0] = 0;
-    // TxData[1] = 1;
-    // TxData[2] = 2;
-    // TxData[3] = 3;
-    // TxData[4] = 4;
-    // TxData[5] = 5;
-    // TxData[6] = 6;
-    // TxData[7] = 7;
-
-
-    // HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
-
-    // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-    // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_1);
-    // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_2);
-    // HAL_Delay(500);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -346,27 +330,33 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
   if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK){
     Error_Handler();
   }
 
-  if (RxHeader.StdId == 0x093){
+  // read CAN message from 
+  if (RxHeader.StdId == 0x093)
+  {
       brakeSig = RxData[2];
       fanSig = RxData[4];
   }
-
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-  
-  if (htim == &htim13){
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{  
+  // on __Hz interval 
+  if (htim == &htim13)
+  {
     imdFault = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6);
     bmsFault = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7);
   }
   
-  if (htim == &htim14){
-
+  // on __Hz interval 
+  if (htim == &htim14)
+  {
+    // build CAN message for 
     TxData[0] = imdFault;
     TxData[1] = bmsFault;
     TxData[2] = 2;
@@ -376,13 +366,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     TxData[6] = 6;
     TxData[7] = 7;
 
-
+    // send message
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
 
-    // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    // update fan and brake 
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, fanSig);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, brakeSig);
-    // HAL_Delay(500);
   }
 }
 
