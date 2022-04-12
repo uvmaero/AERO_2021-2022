@@ -357,8 +357,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim == &htim14)
   {
     // build CAN message for 
-    TxData[0] = imdFault;
-    TxData[1] = bmsFault;
+    TxData[0] = !imdFault;      // need to flip the bit since the LED is pulled low
+    TxData[1] = !bmsFault;      // need to flip the bit since the LED is pulled low
     TxData[2] = 2;
     TxData[3] = 3;
     TxData[4] = 4;
