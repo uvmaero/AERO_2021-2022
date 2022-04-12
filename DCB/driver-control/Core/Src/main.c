@@ -76,10 +76,9 @@ uint16_t pedal0 = 0;
 uint16_t pedal1 = 1;
 uint16_t pedalAverage = 0;
 
-// state variables
+// state variables (0 = off | 1 = on)
 uint8_t ready_to_drive = 0;                 // false until precharge is done. press button now
 uint8_t buzzer_signal = 0;                  // Turn on for 
-uint8_t startButtonState = 0;               // RTD button LED toggle (0 is off)
 uint8_t buzzerState = 0;                    // for controlling the buzzer (0 = off | 1 = on)
 uint8_t buzzerCounter = 0;                  // counter for how long the buzzer has been on
 uint8_t enableInverter = 0;                 // stores state of inverter, can only be 1 after buzzer is done
@@ -545,6 +544,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // sample cooling switch and drive direction switch
     switch_cooling = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12);
     switch_direction = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13);
+
+    // start button led logic
+    if (ready_to_drive)
+    {
+      // turn the LED on
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);
+    }
+    else
+    {
+      // turn the LED off
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);
+    }
     
     // buzzer logic
     if (buzzerState == 1){
@@ -571,7 +582,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
 
     // update LEDS and inverter drive direction 
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, imdFault);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, imdFault);
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, bmsFault);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, switch_direction);
   }
