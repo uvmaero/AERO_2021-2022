@@ -54,22 +54,22 @@ TIM_HandleTypeDef htim14;
 /* USER CODE BEGIN PV */
 
 // CAN transmitting
-CAN_TxHeaderTypeDef TxHeader;
-CAN_TxHeaderTypeDef TxHeader2;             // rinehart command message
+CAN_TxHeaderTypeDef TxHeader;               // either daq or control idk which one address 
+CAN_TxHeaderTypeDef TxHeader2;              // rinehart command message address
 uint8_t TxData[8];
 uint32_t TxMailbox;
 
 // CAN reciving 
 CAN_RxHeaderTypeDef RxHeader;
 uint8_t RxData[8];
-CAN_FilterTypeDef filter0;
-CAN_FilterTypeDef filter1;
+CAN_FilterTypeDef filter0;                  // filter for __________
+CAN_FilterTypeDef filter1;                  // fiter for ___________
 
 // signal variables (0 = off | 1 = on)
 uint8_t imdFault = 0;             
 uint8_t bmsFault = 0;
 uint8_t switch_cooling = 0;
-uint8_t switch_direction = 0;
+uint8_t switch_direction = 0;               // 0 = forward | 1 = reverse (this changes requires an inverter restart)
 
 // analog pins
 uint16_t adc_buf[ADC_BUF_LEN];
@@ -78,17 +78,21 @@ uint16_t pedal1 = 1;
 uint16_t pedalAverage = 0;
 
 // state variables (0 = off | 1 = on)
-uint8_t ready_to_drive = 0;                 // false until precharge is done. press button now
-uint8_t buzzer_signal = 0;                  // Turn on for 
-uint8_t buzzerState = 0;                    // for controlling the buzzer (0 = off | 1 = on)
-uint8_t buzzerCounter = 0;                  // counter for how long the buzzer has been on
-uint8_t enableInverter = 0;                 // stores state of inverter, can only be 1 after buzzer is done
+uint8_t ready_to_drive = 0;                 // 0 until precharge is done
+uint8_t buzzerState = 0;                    // for controlling the buzzer
+uint8_t buzzerCounter = 0;                  // counter for how long the buzzer has been buzzing
+uint8_t enableInverter = 0;                 // stores state of inverter, can only be 1 after buzzer is done buzzing 
 
 // rinehart commands
-uint16_t commandedTorque = 0;
-uint16_t command_torque_limit = 100;
-enum mode {SLOW, ECO, FAST};
-int driveMode = ECO;
+uint16_t commandedTorque = 0;               // torque request sent to rinehart, init with 0 to prevent unintended acceleration 
+uint16_t command_torque_limit = 0;          // max torque allowed to be requested from rinehart, init with 0 to prevent unintended accleration
+enum mode                                   // create an enumeration for the drive modes
+{
+  SLOW,       // 50% power 
+  ECO,        // 75% power
+  FAST        // 100% power 
+};
+int driveMode = ECO;                        // set the inital drive mode of the car
 
 /* USER CODE END PV */
 
@@ -521,7 +525,7 @@ uint16_t getCommandedTorque()
     break;
 
     case FAST:
-      command_torque_limit = 100;
+      command_torque_limit = 100;   // do not change this to more than 100 
       commandedTorque = mapValue(pedalAverage, 0, PEDAL_MAX, 0, command_torque_limit);
       return commandedTorque;
     break;
