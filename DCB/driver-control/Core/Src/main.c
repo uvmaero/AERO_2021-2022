@@ -31,8 +31,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ADC_BUF_LEN 4
-#define MAX_PEDAL_SKEW 100
+#define ADC_BUF_LEN               4
+#define MAX_PEDAL_SKEW            100
+#define PEDAL_MAX                 1023
 
 /* USER CODE END PD */
 
@@ -84,7 +85,10 @@ uint8_t buzzerCounter = 0;                  // counter for how long the buzzer h
 uint8_t enableInverter = 0;                 // stores state of inverter, can only be 1 after buzzer is done
 
 // rinehart commands
+uint16_t commandedTorque = 0;
 uint16_t command_torque_limit = 100;
+enum mode {SLOW, ECO, FAST};
+int driveMode = ECO;
 
 /* USER CODE END PV */
 
@@ -98,6 +102,8 @@ static void MX_TIM14_Init(void);
 static void MX_TIM13_Init(void);
 /* USER CODE BEGIN PFP */
 uint16_t pedal_conversion(uint16_t pedal0, uint16_t pedal1);
+long mapValue(long x, long in_min, long in_max, long out_min, long out_max);
+uint16_t getCommandedTorque();
 
 /* USER CODE END PFP */
 
@@ -487,6 +493,50 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+// re-map function
+long mapValue(long x, long in_min, long in_max, long out_min, long out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+
+// function to re-map the pedal value to a torque value based on the drive mode
+uint16_t getCommandedTorque()
+{
+  // get the pedal average
+  pedalAverage = pedal_conversion(pedal0, pedal1);
+
+  // drive mode logic
+  switch (driveMode)
+  {
+    case SLOW:
+      command_torque_limit = 50;
+      commandedTorque = mapValue(pedalAverage, 0, PEDAL_MAX, 0, command_torque_limit);
+      return commandedTorque;
+    break;
+
+    case ECO:
+      command_torque_limit = 75;
+      commandedTorque = mapValue(pedalAverage, 0, PEDAL_MAX, 0, command_torque_limit);
+      return commandedTorque;
+    break;
+
+    case FAST:
+      command_torque_limit = 100;
+      commandedTorque = mapValue(pedalAverage, 0, PEDAL_MAX, 0, command_torque_limit);
+      return commandedTorque;
+    break;
+    
+    // error state, set the mode to ECO
+    default:
+      // set the state to ECO for next time
+      driveMode = ECO;
+
+      // we don't want to send a torque if we are in an undefined state
+      return commandedTorque = 0;
+    break;
+  }
+}
+
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
   if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK){
@@ -518,27 +568,30 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   }
 }
 
+// Timer Interrupts
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  // on a __Hz interval 
+  // Timer Interrupt on a __Hz interval
   if (htim == &htim13){
-    pedalAverage = pedal_conversion(pedal0, pedal1);
+
+    // drive mode logic
+    commandedTorque = getCommandedTorque();
     
-    // build DAQ data CAN message
+    // build CONTROL CAN message
     TxData[0] = pedalAverage & 0xFF;
     TxData[1] = pedalAverage >> 8;
     TxData[2] = 0;
     TxData[3] = 0;
     TxData[4] = switch_direction;
     TxData[5] = enableInverter;
-    TxData[6] = command_torque_limit & 0xFF;
-    TxData[7] = command_torque_limit >> 8;
+    TxData[6] = commandedTorque & 0xFF;
+    TxData[7] = commandedTorque >> 8;
 
     // send message
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader2, TxData, &TxMailbox);
   }
   
-  // on a __Hz interval
+  // Timer Interrupt on a __Hz interval
   if (htim == &htim14)
   {
     // sample cooling switch and drive direction switch
