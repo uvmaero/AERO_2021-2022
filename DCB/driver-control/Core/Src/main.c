@@ -612,6 +612,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
       // turn the LED off
       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);
+      enableInverter = 0;
     }
     
     // buzzer logic
@@ -630,7 +631,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     TxData[1] = pedal1 >> 8;
     TxData[2] = switch_cooling;
     TxData[3] = pedalAverage & 0xFF;
-    TxData[4] = switch_direction;
+    TxData[4] = buzzerState;
     TxData[6] = pedal0 & 0xFF;
     TxData[5] = pedal0 >> 8;
     TxData[7] = pedalAverage >>8;
@@ -641,7 +642,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // update LEDS and inverter drive direction 
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, imdFault);
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, bmsFault);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, switch_direction);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, buzzerState);
   }
 }
 
