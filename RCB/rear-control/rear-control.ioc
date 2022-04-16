@@ -1,11 +1,10 @@
 #MicroXplorer Configuration settings - do not modify
 CAN1.AWUM=ENABLE
-CAN1.BS1=CAN_BS1_2TQ
-CAN1.BS2=CAN_BS2_2TQ
+CAN1.BS1=CAN_BS1_3TQ
 CAN1.CalculateBaudRate=500000
 CAN1.CalculateTimeBit=2000
 CAN1.CalculateTimeQuantum=400.0
-CAN1.IPParameters=CalculateTimeQuantum,CalculateTimeBit,CalculateBaudRate,Prescaler,AWUM,NART,BS1,BS2
+CAN1.IPParameters=CalculateTimeQuantum,CalculateTimeBit,CalculateBaudRate,Prescaler,AWUM,NART,BS1
 CAN1.NART=ENABLE
 CAN1.Prescaler=18
 File.Version=6
@@ -106,7 +105,7 @@ ProjectManager.StackSize=0x400
 ProjectManager.TargetToolchain=Makefile
 ProjectManager.ToolChainLocation=
 ProjectManager.UnderRoot=false
-ProjectManager.functionlistsort=1-MX_GPIO_Init-GPIO-false-HAL-true,2-SystemClock_Config-RCC-false-HAL-false,3-MX_CAN1_Init-CAN1-false-HAL-true,4-MX_TIM14_Init-TIM14-false-HAL-true
+ProjectManager.functionlistsort=1-MX_GPIO_Init-GPIO-false-HAL-true,2-SystemClock_Config-RCC-false-HAL-false,3-MX_CAN1_Init-CAN1-false-HAL-true,4-MX_TIM14_Init-TIM14-false-HAL-true,5-MX_TIM13_Init-TIM13-false-HAL-true
 RCC.AHBFreq_Value=90000000
 RCC.APB1CLKDivider=RCC_HCLK_DIV2
 RCC.APB1Freq_Value=45000000
