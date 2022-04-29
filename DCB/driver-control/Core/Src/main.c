@@ -582,14 +582,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     commandedTorque = getCommandedTorque();
     
     // build CONTROL CAN message
-    TxData[0] = pedalAverage & 0xFF;
-    TxData[1] = pedalAverage >> 8;
+    TxData[0] = commandedTorque & 0xFF;
+    TxData[1] = commandedTorque >> 8;
     TxData[2] = 0;
     TxData[3] = 0;
     TxData[4] = switch_direction;
     TxData[5] = enableInverter;
-    TxData[6] = commandedTorque & 0xFF;
-    TxData[7] = commandedTorque >> 8;
+    TxData[6] =  0x64;                // this is the max relative torque that can be accepted
+    TxData[7] =  0x00;                // little endian order for rinehart mesages
 
     // send message
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader2, TxData, &TxMailbox);
@@ -632,8 +632,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     TxData[2] = switch_cooling;
     TxData[3] = pedalAverage & 0xFF;
     TxData[4] = buzzerState;
-    TxData[6] = pedal0 & 0xFF;
-    TxData[5] = pedal0 >> 8;
+    TxData[5] = pedal0 & 0xFF;
+    TxData[6] = pedal0 >> 8;
     TxData[7] = pedalAverage >>8;
 
     // send message
