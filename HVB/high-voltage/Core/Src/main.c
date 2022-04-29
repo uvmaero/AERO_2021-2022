@@ -35,7 +35,7 @@
 #define ADC_BUF_LEN 4086
 
 // precharge
-#define PRECHARGE_COEFFICIENT       0.9		      // 90% complete with precharge so it's probably safe to continue
+#define PRECHARGE_COEFFICIENT       0.95		      // 95% complete with precharge so it's probably safe to continue
 #define NUM_COMMAND_MSG             10
 #define NUM_VOLTAGE_CHECKS          500         // since we're checking at 10ms Interrupts, 500 would be 5 seconds. 
                                                 // precharge should be done in less than 2 seconds. 
@@ -319,9 +319,9 @@ static void MX_CAN1_Init(void)
   /* USER CODE BEGIN CAN1_Init 2 */
 
   // init the CAN filter for BMS messages
-    canFilter0.FilterIdHigh = 0x001 << 5;   // BMS IDs: 0 - 0x72
+    canFilter0.FilterIdHigh = 0x06B << 5;   // BMS IDs: 0 - 0x72
   	canFilter0.FilterIdLow = 0x000;
-    canFilter0.FilterMaskIdHigh = 0x001 << 5;
+    canFilter0.FilterMaskIdHigh = 0x06B << 5;
   	canFilter0.FilterMaskIdLow = 0x000;
     canFilter0.FilterBank = 0;
   	canFilter0.FilterMode = CAN_FILTERMODE_IDMASK;
@@ -485,21 +485,18 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
     int rine2 = canRX[1];
 
     // combine the first two bytes and assign that to the rinehart voltage
-    rinehartVoltage = (rine1 << 8) | rine2;
+    rinehartVoltage = (rine2 << 8) | rine1;
   }
 
   // get BMS total voltages
-  if (rxHeader.StdId == 0x001)
+  if (rxHeader.StdId == 0x06B)
   {
-    uint8_t volt1 = canRX[4] >> 8 & 0xFF;
-    uint8_t volt2 = canRX[3] & 0xFF;
-    uint8_t volt3 = canRX[6] >> 24;
-    uint8_t volt4 = canRX[5] >> 16 & 0xFF;
+    // BMS voltage is spread across the first 2 bytes
+	  int volt1 = canRX[2];
+    int volt2 = canRX[3];
 
-    uint16_t emus1 = (volt2 << 8) | volt1;
-    uint16_t emus2 = (volt4 << 8) | volt3;
-    emusVoltage = volt3 << 24 | (((volt4 << 16) | ((volt1 << 8)) | (volt2)));
-    emusVoltage = emusVoltage / 10; // scale down to rinehart *10 scaler
+    // combine the first two bytes and assign that to the BMS voltage
+    emusVoltage = (volt1 << 8) | volt2; // orion has a precaller of *10
   }
 }
 
@@ -578,10 +575,10 @@ void prechargeControl()
       }
 
       // if we do this for too long, move to error state
-      if (voltageCheckCount >= NUM_VOLTAGE_CHECKS)
-      {
-        prechargeState = PRECHARGE_ERROR;
-      }
+      // if (voltageCheckCount >= NUM_VOLTAGE_CHECKS)
+      // {
+      //   prechargeState = PRECHARGE_ERROR;
+      // }
       
       // else
       // {
@@ -616,10 +613,10 @@ void prechargeControl()
 
       // if rinehart voltage drops below battery, something's wrong, 
       // turn everything off
-			if (rinehartVoltage <= (emusVoltage * (PRECHARGE_COEFFICIENT)-20) // 20 is a magic number
-      {
-        prechargeState = PRECHARGE_OFF;
-      }
+			// if (rinehartVoltage <= (emusVoltage * (PRECHARGE_COEFFICIENT)-20)) // 20 is a magic number
+      // {
+      //   prechargeState = PRECHARGE_OFF; // something weird happened. Go to error
+      // }
 
 		break;
 
@@ -635,7 +632,7 @@ void prechargeControl()
         TxData[1] = 0; // parameter address. MSB
         TxData[2] = 1; // Read / Write. 1 is write
         TxData[3] = 0; // N/A
-        TxData[4] = 1; // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
+        TxData[4] = 0; // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
         TxData[5] = 55; // 55 means relay control
         TxData[6] = 0; // N/A
         TxData[7] = 0; // N/A
