@@ -33,9 +33,13 @@
 /* USER CODE BEGIN PD */
 #define ADC_BUF_LEN               4
 #define MAX_PEDAL_SKEW            100
-#define PEDAL_MAX                 600 // max pedal found from Accelerator test 12bit ADC
-#define PEDAL_MIN                 128 // max pedal found from Accelerator test 12bit ADC
-#define PEDAL_DEADBAND                 10 // max pedal found from Accelerator test 12bit ADC
+#define PEDAL_MAX                 600     // max pedal found from Accelerator test 12bit ADC
+#define PEDAL_MIN                 128     // max pedal found from Accelerator test 12bit ADC
+#define PEDAL_DEADBAND            10      // max pedal found from Accelerator test 12bit ADC
+#define TORQUE_DEADBAND           5       // commanded torque deadband 
+#define SLOW_MAX_TORQUE           50      // max commanded torque value for SLOW mode
+#define ECO_MAX_TORQUE            75      // max commanded torque value for ECO mode
+#define FAST_MAX_TORQUE           100     // max commanded torque value for FAST mode, this CANNOT EXCEED 100!!
 
 /* USER CODE END PD */
 
@@ -515,21 +519,15 @@ uint16_t getCommandedTorque()
   switch (driveMode)
   {
     case SLOW:
-      command_torque_limit = 50;
-      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, command_torque_limit);
-      return commandedTorque;
+      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, SLOW_MAX_TORQUE);
     break;
 
     case ECO:
-      command_torque_limit = 75;
-      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, command_torque_limit);
-      return commandedTorque;
+      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, ECO_MAX_TORQUE);
     break;
 
     case FAST:
-      command_torque_limit = 100;   // do not change this to more than 100 
-      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, command_torque_limit);
-      return commandedTorque;
+      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, FAST_MAX_TORQUE);
     break;
     
     // error state, set the mode to ECO
@@ -538,9 +536,17 @@ uint16_t getCommandedTorque()
       driveMode = ECO;
 
       // we don't want to send a torque if we are in an undefined state
-      return commandedTorque = 0;
+      commandedTorque = 0;
     break;
   }
+
+  // for throttle safety, we will have a deadband
+  if (commandedTorque <= TORQUE_DEADBAND)   // if less than 5% power is requested, just call it 0
+  {
+    commandedTorque = 0;
+  }
+
+  return commandedTorque;
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
@@ -586,12 +592,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // build CONTROL CAN message
     TxData[0] = commandedTorque & 0xFF;
     TxData[1] = commandedTorque >> 8;
-    TxData[2] = 0;
-    TxData[3] = 0;
+    TxData[2] = 0;                        // N/A
+    TxData[3] = 0;                        // N/A
     TxData[4] = switch_direction;
     TxData[5] = enableInverter;
-    TxData[6] =  0x64;                // this is the max relative torque that can be accepted
-    TxData[7] =  0x00;                // little endian order for rinehart mesages
+    TxData[6] =  0x64;                    // this is the max relative torque value that we are 
+    TxData[7] =  0x00;                    // establishing that can be sent to rinehart
 
     // send message
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader2, TxData, &TxMailbox);
@@ -620,7 +626,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // buzzer logic
     if (buzzerState == 1){
       buzzerCounter++;
-      if (buzzerCounter >= 20)   // buzzerCounter is being updated on a 10Hz interval, so after 20 cycles, 2 seconds have passed
+      if (buzzerCounter >= 20)    // buzzerCounter is being updated on a 10Hz interval, so after 20 cycles, 2 seconds have passed
       {
         buzzerState = 0;
         buzzerCounter = 0;
@@ -636,7 +642,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     TxData[4] = buzzerState;
     TxData[5] = pedal0 & 0xFF;
     TxData[6] = pedal0 >> 8;
-    TxData[7] = pedalAverage >>8;
+    TxData[7] = pedalAverage >> 8;
 
     // send message
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
@@ -653,17 +659,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
   // read values from DMA
   pedal0 = adc_buf[2];
   pedal1 = adc_buf[3];
-
 }
 
 uint16_t pedal_conversion(uint16_t pedal0, uint16_t pedal1)
 {
   // calculate the average of the two pedal potentiometer readings 
   pedalAverage = (pedal0 + pedal1) / 2;
-
-  if (pedalAverage < PEDAL_DEADBAND){
-    pedalAverage = 0; // if pedal is below threashold, no value
-  }
 
   // ensure the pedal skew isn't dangerously out of bounds
   // if (pow(pedal0 - pedalAverage, 2) > MAX_PEDAL_SKEW || 
