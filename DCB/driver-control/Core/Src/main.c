@@ -33,7 +33,9 @@
 /* USER CODE BEGIN PD */
 #define ADC_BUF_LEN               4
 #define MAX_PEDAL_SKEW            100
-#define PEDAL_MAX                 1023
+#define PEDAL_MAX                 600 // max pedal found from Accelerator test 12bit ADC
+#define PEDAL_MIN                 128 // max pedal found from Accelerator test 12bit ADC
+#define PEDAL_DEADBAND                 10 // max pedal found from Accelerator test 12bit ADC
 
 /* USER CODE END PD */
 
@@ -514,19 +516,19 @@ uint16_t getCommandedTorque()
   {
     case SLOW:
       command_torque_limit = 50;
-      commandedTorque = mapValue(pedalAverage, 0, PEDAL_MAX, 0, command_torque_limit);
+      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, command_torque_limit);
       return commandedTorque;
     break;
 
     case ECO:
       command_torque_limit = 75;
-      commandedTorque = mapValue(pedalAverage, 0, PEDAL_MAX, 0, command_torque_limit);
+      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, command_torque_limit);
       return commandedTorque;
     break;
 
     case FAST:
       command_torque_limit = 100;   // do not change this to more than 100 
-      commandedTorque = mapValue(pedalAverage, 0, PEDAL_MAX, 0, command_torque_limit);
+      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, command_torque_limit);
       return commandedTorque;
     break;
     
@@ -658,6 +660,10 @@ uint16_t pedal_conversion(uint16_t pedal0, uint16_t pedal1)
 {
   // calculate the average of the two pedal potentiometer readings 
   pedalAverage = (pedal0 + pedal1) / 2;
+
+  if (pedalAverage < PEDAL_DEADBAND){
+    pedalAverage = 0; // if pedal is below threashold, no value
+  }
 
   // ensure the pedal skew isn't dangerously out of bounds
   // if (pow(pedal0 - pedalAverage, 2) > MAX_PEDAL_SKEW || 
