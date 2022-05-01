@@ -35,10 +35,10 @@
 #define ADC_BUF_LEN 4086
 
 // precharge
-#define PRECHARGE_COEFFICIENT       0.95		      // 95% complete with precharge so it's probably safe to continue
-#define NUM_COMMAND_MSG             10
-#define NUM_VOLTAGE_CHECKS          500         // since we're checking at 10ms Interrupts, 500 would be 5 seconds. 
-                                                // precharge should be done in less than 2 seconds. 
+#define PRECHARGE_COEFFICIENT       0.95          // 95% complete with precharge so it's probably safe to continue
+#define NUM_COMMAND_MSG             10            // number of command messages we see from rinehart
+#define NUM_VOLTAGE_CHECKS          500           // since we're checking at 10ms Interrupts, 500 would be 5 seconds. 
+                                                  // precharge should be done in less than 2 seconds. 
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,7 +61,7 @@ uint8_t rinehart_send_command_count = 0;
 
 // inputs
 uint32_t rinehartVoltage = 0;                 // read from CAN
-uint32_t emusVoltage = 0;					            // read from CAN
+uint32_t bmsVoltage = 0;					            // read from CAN
 int vicoreTemp = 0;					                  // read from DMA, vicore temp
 int DCDCEnable = 0;                           // dc-dc enable (0 = disabled, 1 = enabled)
 int RTDButtonPressed = 0;                     // read this from CAN, if it's 1 we can finish precharge
@@ -319,9 +319,9 @@ static void MX_CAN1_Init(void)
   /* USER CODE BEGIN CAN1_Init 2 */
 
   // init the CAN filter for BMS messages
-    canFilter0.FilterIdHigh = 0x06B << 5;   // BMS IDs: 0 - 0x72
+    canFilter0.FilterIdHigh = 0x6B0 << 5;   // Orion ID: 0x6B0
   	canFilter0.FilterIdLow = 0x000;
-    canFilter0.FilterMaskIdHigh = 0x06B << 5;
+    canFilter0.FilterMaskIdHigh = 0x6B0 << 5;
   	canFilter0.FilterMaskIdLow = 0x000;
     canFilter0.FilterBank = 0;
   	canFilter0.FilterMode = CAN_FILTERMODE_IDMASK;
@@ -478,7 +478,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
     Error_Handler();
 
   // get rinehart bus voltage
-  if (rxHeader.StdId == 0x0A7)
+  if (rxHeader.StdId == 0x0A7 && rxHeader.DLC == 8)    // sometimes rinehart sends 0 length messages so only read when there's data
   {
     // rinehart voltage is spread across the first 2 bytes
 	  int rine1 = canRX[0];
@@ -489,14 +489,14 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
   }
 
   // get BMS total voltages
-  if (rxHeader.StdId == 0x06B)
+  if (rxHeader.StdId == 0x6B0)
   {
     // BMS voltage is spread across the first 2 bytes
 	  int volt1 = canRX[2];
     int volt2 = canRX[3];
 
     // combine the first two bytes and assign that to the BMS voltage
-    emusVoltage = (volt1 << 8) | volt2; // orion has a precaller of *10
+    bmsVoltage = (volt1 << 8) | volt2; // orion has a pre-scaller of *10
   }
 }
 
@@ -507,7 +507,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
  */
 void prechargeControl()
 {
-
   // NOTE: Weird thing about Rinehart 0x0A7 message: 
   //      Sometimes it sends a 0 byte length data. Make sure we're only reading
   //      The value if the DLC is 8
@@ -521,14 +520,15 @@ void prechargeControl()
       if (lastPrechargeState != prechargeState)
       {
         // message is sent to rinehart to turn everything off
-        TxData[0] = 1; // parameter address. LSB
-        TxData[1] = 0; // parameter address. MSB
-        TxData[2] = 1; // Read / Write. 1 is write
-        TxData[3] = 0; // N/A
-        TxData[4] = 0; // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
-        TxData[5] = 55; // 55 means relay control
-        TxData[6] = 0; // N/A
-        TxData[7] = 0; // N/A
+        TxData[0] = 1;          // parameter address. LSB
+        TxData[1] = 0;          // parameter address. MSB
+        TxData[2] = 1;          // Read / Write. 1 is write
+        TxData[3] = 0;          // N/A
+        TxData[4] = 0;          // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
+        TxData[5] = 55;         // 55 means relay control
+        TxData[6] = 0;          // N/A
+        TxData[7] = 0;          // N/A
+
         // send message
         HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
         
@@ -538,11 +538,9 @@ void prechargeControl()
 
       // move to precharge on
       prechargeState = PRECHARGE_ON;
-
 		break;
 
 		case (PRECHARGE_ON):
-
       // not ready to drive yet
       readyToDrive = 0;
 
@@ -552,14 +550,14 @@ void prechargeControl()
       {
         // message is sent to rinehart to turn on precharge relay
         // precharge relay is on relay 1 from Rinehart
-        TxData[0] = 1; // parameter address. LSB
-        TxData[1] = 0; // parameter address. MSB
-        TxData[2] = 1; // Read / Write. 1 is write
-        TxData[3] = 0; // N/A
-        TxData[4] = 1; // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
-        TxData[5] = 55; // 55 means relay control
-        TxData[6] = 0; // N/A
-        TxData[7] = 0; // N/A
+        TxData[0] = 1;            // parameter address. LSB
+        TxData[1] = 0;            // parameter address. MSB
+        TxData[2] = 1;            // Read / Write. 1 is write
+        TxData[3] = 0;            // N/A
+        TxData[4] = 1;            // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
+        TxData[5] = 55;           // 55 means relay control
+        TxData[6] = 0;            // N/A
+        TxData[7] = 0;            // N/A
 
         // send message
         HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
@@ -569,7 +567,7 @@ void prechargeControl()
       }
       
 			// ensure voltages are above correct values
-			if (rinehartVoltage > (emusVoltage * PRECHARGE_COEFFICIENT))
+			if (rinehartVoltage > (bmsVoltage * PRECHARGE_COEFFICIENT))
       {
         prechargeState = PRECHARGE_DONE;
       }
@@ -587,9 +585,6 @@ void prechargeControl()
 		break;
 
 		case (PRECHARGE_DONE):
-			// now that precharge is complete we can drive the car
-			readyToDrive = 1;
-
       // this state sends a message to rinehart to turn 
       if (lastPrechargeState != prechargeState)
       {
@@ -606,18 +601,20 @@ void prechargeControl()
 
         // send message
         HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
-        
+
+        // now that precharge is complete we can drive the car
+        readyToDrive = 1;
+          
         // update last precharge state
         lastPrechargeState = prechargeState;
       }
 
       // if rinehart voltage drops below battery, something's wrong, 
       // turn everything off
-			// if (rinehartVoltage <= (emusVoltage * (PRECHARGE_COEFFICIENT)-20)) // 20 is a magic number
+			// if (rinehartVoltage <= (bmsVoltage * (PRECHARGE_COEFFICIENT)-20)) // 20 is a magic number
       // {
       //   prechargeState = PRECHARGE_OFF; // something weird happened. Go to error
       // }
-
 		break;
 
 		case (PRECHARGE_ERROR):
@@ -628,14 +625,14 @@ void prechargeControl()
       if (lastPrechargeState != prechargeState)
       {
         // message is sent to rinehart to turn everything off
-        TxData[0] = 1; // parameter address. LSB
-        TxData[1] = 0; // parameter address. MSB
-        TxData[2] = 1; // Read / Write. 1 is write
-        TxData[3] = 0; // N/A
-        TxData[4] = 0; // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
-        TxData[5] = 55; // 55 means relay control
-        TxData[6] = 0; // N/A
-        TxData[7] = 0; // N/A
+        TxData[0] = 1;            // parameter address. LSB
+        TxData[1] = 0;            // parameter address. MSB
+        TxData[2] = 1;            // Read / Write. 1 is write
+        TxData[3] = 0;            // N/A
+        TxData[4] = 0;            // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
+        TxData[5] = 55;           // 55 means relay control
+        TxData[6] = 0;            // N/A
+        TxData[7] = 0;            // N/A
 
         // send message
         HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
@@ -659,14 +656,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim == &htim14)
   {
     // build message for _____
-    TxData[0] = readyToDrive; // controled by precharge
-    TxData[1] = DCDCFault; // 0 for now TODO: implement fault detection
-    TxData[2] = vicoreTemp; // DMA update
-    TxData[3] = rinehartVoltage & 0xFF; // update on CAN message LSB
-    TxData[4] = rinehartVoltage >> 8; // update on CAN message MSB
-    TxData[5] = emusVoltage & 0xFF; // update on CAN message LSB
-    TxData[6] = emusVoltage >> 8; // update on CAN message MSB
-    TxData[7] = 0;
+    TxData[0] = readyToDrive;               // controled by precharge
+    TxData[1] = DCDCFault;                  // 0 for now TODO: implement fault detection
+    TxData[2] = vicoreTemp;                 // DMA update
+    TxData[3] = rinehartVoltage & 0xFF;     // update on CAN message LSB
+    TxData[4] = rinehartVoltage >> 8;       // update on CAN message MSB
+    TxData[5] = bmsVoltage & 0xFF;          // update on CAN message LSB
+    TxData[6] = bmsVoltage >> 8;            // update on CAN message MSB
+    TxData[7] = 0x07;
 
     // send message
     HAL_CAN_AddTxMessage(&hcan1, &txHeader1, TxData, &TxMailbox);
