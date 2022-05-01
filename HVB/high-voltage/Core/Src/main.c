@@ -333,7 +333,7 @@ static void MX_CAN1_Init(void)
 
     // init the CAN filter for Rinehart messages
     canFilter1.FilterIdHigh = 0x0A7 << 5;      // Rinehart IDs: 0xA0 - 0xB1
-  	canFilter1.FilterIdLow = 0x00;
+  	canFilter1.FilterIdLow = 0x000;
     canFilter1.FilterMaskIdHigh = 0x0A7 << 5;
   	canFilter1.FilterMaskIdLow = 0x000;
     canFilter1.FilterBank = 1;
