@@ -567,7 +567,7 @@ void prechargeControl()
       }
       
 			// ensure voltages are above correct values
-			if (rinehartVoltage > (bmsVoltage * PRECHARGE_COEFFICIENT))
+			if ((rinehartVoltage > (bmsVoltage * PRECHARGE_COEFFICIENT)) && (bmsVoltage > 220))   // 220 so not just 1 pack can trigger this
       {
         prechargeState = PRECHARGE_DONE;
       }
