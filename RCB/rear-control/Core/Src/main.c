@@ -57,7 +57,7 @@ CAN_FilterTypeDef filter0;
 uint8_t RxData[8];
 
 // signal pins (0 = off | 1 = on)
-uint8_t brakeSig = 0;
+uint8_t brakeLight = 0;
 uint8_t fanSig = 0;
 uint8_t imdFault = 1;
 uint8_t bmsFault = 1;
@@ -339,8 +339,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   // read CAN message from 
   if (RxHeader.StdId == 0x093)
   {
-      brakeSig = RxData[2];
-      fanSig = RxData[4];
+      brakeLight = RxData[2];
+      // fanSig = RxData[4];
   }
 }
 
@@ -357,21 +357,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim == &htim14)
   {
     // build CAN message for 
-    TxData[0] = !imdFault;
-    TxData[1] = !bmsFault;
-    TxData[2] = 2;
-    TxData[3] = 3;
-    TxData[4] = 4;
-    TxData[5] = 5;
-    TxData[6] = 6;
-    TxData[7] = 7;
+    TxData[0] = !imdFault;            // inverted because the fault clears high, LEDs then read low on DCB
+    TxData[1] = !bmsFault;            // inverted because the fault clears high, LEDs then read low on DCB
+    TxData[2] = 0x02;
+    TxData[3] = 0x03;
+    TxData[4] = 0x04;
+    TxData[5] = 0x05;
+    TxData[6] = 0x06;
+    TxData[7] = 0x07;
 
     // send message
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
 
     // update fan and brake 
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, fanSig);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, brakeSig);
+    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, fanSig);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, brakeLight);
   }
 }
 
