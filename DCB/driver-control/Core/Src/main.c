@@ -38,9 +38,7 @@
 #define PEDAL_DEADBAND            10      // max pedal found from Accelerator test 12bit ADC
 #define BRAKE_LIGHT_THRESHOLD     10      // when the brake light turns on
 #define TORQUE_DEADBAND           5       // commanded torque deadband 
-#define SLOW_MAX_TORQUE           50      // max commanded torque value for SLOW mode
-#define ECO_MAX_TORQUE            75      // max commanded torque value for ECO mode
-#define FAST_MAX_TORQUE           100     // max commanded torque value for FAST mode, this CANNOT EXCEED 100!!
+#define MAX_TORQUE                220     // MAX TORQUE RINEHART CAN ACCEPT, DO NOT CHANGE (230)
 
 /* USER CODE END PD */
 
@@ -524,16 +522,16 @@ uint16_t getCommandedTorque()
   // drive mode logic
   switch (driveMode)
   {
-    case SLOW:
-      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, SLOW_MAX_TORQUE);
+    case SLOW:  // runs at 50% power
+      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, MAX_TORQUE * 0.50);
     break;
 
-    case ECO:
-      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, ECO_MAX_TORQUE);
+    case ECO:   // runs at 75% power
+      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, MAX_TORQUE * 0.75);
     break;
 
-    case FAST:
-      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, FAST_MAX_TORQUE);
+    case FAST:  // runs at 100% power
+      commandedTorque = mapValue(pedalAverage, PEDAL_MIN, PEDAL_MAX, 0, MAX_TORQUE);
     break;
     
     // error state, set the mode to ECO
