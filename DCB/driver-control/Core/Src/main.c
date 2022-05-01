@@ -36,6 +36,7 @@
 #define PEDAL_MAX                 600     // max pedal found from Accelerator test 12bit ADC
 #define PEDAL_MIN                 128     // max pedal found from Accelerator test 12bit ADC
 #define PEDAL_DEADBAND            10      // max pedal found from Accelerator test 12bit ADC
+#define BRAKE_LIGHT_THRESHOLD     10      // when the brake light turns on
 #define TORQUE_DEADBAND           5       // commanded torque deadband 
 #define SLOW_MAX_TORQUE           50      // max commanded torque value for SLOW mode
 #define ECO_MAX_TORQUE            75      // max commanded torque value for ECO mode
@@ -76,11 +77,15 @@ uint8_t imdFault = 0;
 uint8_t bmsFault = 0;
 uint8_t switch_cooling = 0;
 uint8_t switch_direction = 0;               // 0 = forward | 1 = reverse (this changes requires an inverter restart)
+uint8_t brakeLight = 0;
 
 // analog pins
 uint16_t adc_buf[ADC_BUF_LEN];
+uint16_t brake0 = 0;
+uint16_t brake1 = 0;
 uint16_t pedal0 = 0;
 uint16_t pedal1 = 1;
+uint16_t brakeAverage = 0;
 uint16_t pedalAverage = 0;
 
 // state variables (0 = off | 1 = on)
@@ -111,7 +116,7 @@ static void MX_ADC1_Init(void);
 static void MX_TIM14_Init(void);
 static void MX_TIM13_Init(void);
 /* USER CODE BEGIN PFP */
-uint16_t pedal_conversion(uint16_t pedal0, uint16_t pedal1);
+uint16_t adc_average(uint16_t adc0, uint16_t adc1);
 long mapValue(long x, long in_min, long in_max, long out_min, long out_max);
 uint16_t getCommandedTorque();
 
@@ -346,6 +351,7 @@ static void MX_CAN1_Init(void)
   }
   /* USER CODE BEGIN CAN1_Init 2 */
 
+  // listen for RCB
   filter0.FilterIdHigh = 0x082 << 5;
   filter0.FilterIdLow = 0x000;
   filter0.FilterMaskIdHigh = 0x082 << 5;
@@ -513,7 +519,7 @@ long mapValue(long x, long in_min, long in_max, long out_min, long out_max) {
 uint16_t getCommandedTorque()
 {
   // get the pedal average
-  pedalAverage = pedal_conversion(pedal0, pedal1);
+  pedalAverage = adc_average(pedal0, pedal1);
 
   // drive mode logic
   switch (driveMode)
@@ -549,6 +555,7 @@ uint16_t getCommandedTorque()
   return commandedTorque;
 }
 
+// Recive CAN Messages
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
   if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK){
@@ -556,13 +563,15 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   }
 
   // read CAN data from Rear Control Board
-  if (RxHeader.StdId == 0x082){
+  if (RxHeader.StdId == 0x082)
+  {
       imdFault = RxData[0];
       bmsFault = RxData[1];
   }
 
   // read CAN data from High Voltage Board 
-  if (RxHeader.StdId == 0x087){
+  if (RxHeader.StdId == 0x087)
+  {
       ready_to_drive = RxData[0];
   }
 }
@@ -584,20 +593,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   // Timer Interrupt on a __Hz interval
-  if (htim == &htim13){
-
+  if (htim == &htim13)
+  {
     // drive mode logic
     commandedTorque = getCommandedTorque();
     
-    // build CONTROL CAN message
+    // build CONTROL CAN message - sending to rinehart to address C0
     TxData[0] = commandedTorque & 0xFF;
     TxData[1] = commandedTorque >> 8;
-    TxData[2] = 0;                        // N/A
-    TxData[3] = 0;                        // N/A
-    TxData[4] = switch_direction;
+    TxData[2] = 0;                        // speed command NOT USING
+    TxData[3] = 0;                        // speed command NOT USING
+    TxData[4] = 0;                        // switch_direction is usually here, 0 is reverse (we run in reverse)
     TxData[5] = enableInverter;
-    TxData[6] =  0x64;                    // this is the max relative torque value that we are 
-    TxData[7] =  0x00;                    // establishing that can be sent to rinehart
+    TxData[6] =  0xDC;                    // this is the max  torque value that we are establishing that can be sent to rinehart
+    TxData[7] =  0x00;                    // HARDCODED AS 220, MAX VALUE ACCEPTED BY MOTOR is 230 
 
     // send message
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader2, TxData, &TxMailbox);
@@ -613,14 +622,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // start button led logic
     if (ready_to_drive)
     {
-      // turn the LED on
-      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);      // turn the LED on
     }
     else
     {
-      // turn the LED off
-      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);
-      enableInverter = 0;
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);    // turn the LED off
+      enableInverter = 0;                                       // disable inverter
     }
     
     // buzzer logic
@@ -634,15 +641,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       }
     }
 
-    // build CAN message 
-    TxData[0] = pedal1 & 0xFF;
-    TxData[1] = pedal1 >> 8;
-    TxData[2] = switch_cooling;
-    TxData[3] = pedalAverage & 0xFF;
-    TxData[4] = buzzerState;
-    TxData[5] = pedal0 & 0xFF;
-    TxData[6] = pedal0 >> 8;
-    TxData[7] = pedalAverage >> 8;
+    // brake light logic 
+    brakeAverage = adc_average(brake0, brake1);
+    if (brakeAverage >= BRAKE_LIGHT_THRESHOLD)
+    {
+      brakeLight = 1;     // turn it on 
+    }
+
+    else
+    {
+      brakeLight = 0;     // turn it off
+    }
+
+
+    // build CAN message - sends from address 0x93
+    TxData[0] = pedalAverage >> 8;
+    TxData[1] = pedalAverage & 0xFF;
+    TxData[2] = brakeAverage >> 8;
+    TxData[3] = brakeAverage & 0xFF;
+    TxData[4] = brakeLight;
+    TxData[5] = buzzerState;
+    TxData[6] = driveMode;
+    TxData[7] = 0x07;
 
     // send message
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
@@ -657,14 +677,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
   // read values from DMA
+  brake0 = adc_buf[0];
+  brake1 = adc_buf[1];
   pedal0 = adc_buf[2];
   pedal1 = adc_buf[3];
 }
 
-uint16_t pedal_conversion(uint16_t pedal0, uint16_t pedal1)
+uint16_t adc_average(uint16_t adc0, uint16_t adc1)
 {
   // calculate the average of the two pedal potentiometer readings 
-  pedalAverage = (pedal0 + pedal1) / 2;
+  uint16_t average = (adc0 + adc1) / 2;
 
   // ensure the pedal skew isn't dangerously out of bounds
   // if (pow(pedal0 - pedalAverage, 2) > MAX_PEDAL_SKEW || 
@@ -672,7 +694,7 @@ uint16_t pedal_conversion(uint16_t pedal0, uint16_t pedal1)
   //     pedalAverage = 0;
   // }
 
-  return pedalAverage;
+  return average;
 }
 
 /* USER CODE END 4 */
