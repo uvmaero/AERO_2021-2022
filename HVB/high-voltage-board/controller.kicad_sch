@@ -1938,6 +1938,11 @@
     (uuid ffa442c7-cbef-461f-8613-c211201cec06)
   )
 
+  (text "Need to add\nTSV and/or flyback diodes\nto help w/ tranience"
+    (at 35.56 56.515 0)
+    (effects (font (size 1.27 1.27) bold italic) (justify left bottom))
+    (uuid 2319b49e-00fe-43ee-bd40-18313ec56720)
+  )
   (text "G.Spearing\nFebruary 2022" (at 224.79 179.07 0)
     (effects (font (size 2.54 2.54)) (justify left bottom))
     (uuid 26bc8641-9bca-4204-9709-deedbe202a36)
@@ -1945,6 +1950,10 @@
   (text "Fan Control" (at 144.78 18.415 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 5b729fd3-5840-4016-96b8-36aaaca1bde1)
+  )
+  (text "DESD2CAN" (at 235.585 150.495 0)
+    (effects (font (size 1.27 1.27) bold italic) (justify left bottom))
+    (uuid 6a417a63-b4f4-43dc-a342-e6f39ecad015)
   )
   (text "PROGRAMMING" (at 256.54 30.48 180)
     (effects (font (size 1.27 1.27)) (justify right bottom))
@@ -1961,6 +1970,10 @@
   (text "Power Regulation" (at 80.01 20.32 180)
     (effects (font (size 2.9972 2.9972)) (justify right bottom))
     (uuid f203116d-f256-4611-a03e-9536bbedaf2f)
+  )
+  (text "DNP" (at 219.71 135.255 0)
+    (effects (font (size 1.27 1.27) bold italic) (justify left bottom))
+    (uuid f49c2cfb-2390-40d4-9c64-5942ace4e607)
   )
 
   (label "CAN_RX" (at 106.68 157.48 180)
