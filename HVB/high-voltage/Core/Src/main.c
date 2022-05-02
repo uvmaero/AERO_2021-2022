@@ -366,7 +366,7 @@ static void MX_TIM13_Init(void)
   htim13.Instance = TIM13;
   htim13.Init.Prescaler = 9000-1;
   htim13.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim13.Init.Period = 1000-1;
+  htim13.Init.Period = 100-1;
   htim13.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim13.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim13) != HAL_OK)
@@ -517,15 +517,15 @@ void prechargeControl()
 			readyToDrive = 0;
 
       // this state sends a message to rinehart
-      if (lastPrechargeState != prechargeState)
-      {
+      // if (lastPrechargeState != prechargeState)
+      // {
         // message is sent to rinehart to turn everything off
         TxData[0] = 1;          // parameter address. LSB
         TxData[1] = 0;          // parameter address. MSB
         TxData[2] = 1;          // Read / Write. 1 is write
         TxData[3] = 0;          // N/A
         TxData[4] = 0;          // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
-        TxData[5] = 55;         // 55 means relay control
+        TxData[5] = 0x55;         // 55 means relay control
         TxData[6] = 0;          // N/A
         TxData[7] = 0;          // N/A
 
@@ -533,8 +533,8 @@ void prechargeControl()
         HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
         
         // update last precharge state
-        lastPrechargeState = prechargeState;
-      }
+        // lastPrechargeState = prechargeState;
+      // }
 
       // move to precharge on
       prechargeState = PRECHARGE_ON;
@@ -546,8 +546,8 @@ void prechargeControl()
 
       // turn on precharge relay
       // this state sends a message to rinehart to turn 
-      if (lastPrechargeState != prechargeState)
-      {
+      // if (lastPrechargeState != prechargeState)
+      // {
         // message is sent to rinehart to turn on precharge relay
         // precharge relay is on relay 1 from Rinehart
         TxData[0] = 1;            // parameter address. LSB
@@ -555,7 +555,7 @@ void prechargeControl()
         TxData[2] = 1;            // Read / Write. 1 is write
         TxData[3] = 0;            // N/A
         TxData[4] = 1;            // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
-        TxData[5] = 55;           // 55 means relay control
+        TxData[5] = 0x55;           // 55 means relay control
         TxData[6] = 0;            // N/A
         TxData[7] = 0;            // N/A
 
@@ -563,8 +563,8 @@ void prechargeControl()
         HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
         
         // update last precharge state
-        lastPrechargeState = prechargeState;
-      }
+        // lastPrechargeState = prechargeState;
+      // }
       
 			// ensure voltages are above correct values
 			if ((rinehartVoltage > (bmsVoltage * PRECHARGE_COEFFICIENT)) && (bmsVoltage > 220))   // 220 so not just 1 pack can trigger this
@@ -586,8 +586,8 @@ void prechargeControl()
 
 		case (PRECHARGE_DONE):
       // this state sends a message to rinehart to turn 
-      if (lastPrechargeState != prechargeState)
-      {
+      // if (lastPrechargeState != prechargeState)
+      // {
         // message is sent to rinehart to turn everything on
         // Keep precharge relay on and turn on main contactor
         TxData[0] = 1; // parameter address. LSB
@@ -595,7 +595,7 @@ void prechargeControl()
         TxData[2] = 1; // Read / Write. 1 is write
         TxData[3] = 0; // N/A
         TxData[4] = 3; // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
-        TxData[5] = 55; // 55 means relay control
+        TxData[5] = 0x55; // 55 means relay control
         TxData[6] = 0; // N/A
         TxData[7] = 0; // N/A
 
@@ -606,8 +606,8 @@ void prechargeControl()
         readyToDrive = 1;
           
         // update last precharge state
-        lastPrechargeState = prechargeState;
-      }
+        // lastPrechargeState = prechargeState;
+      // }
 
       // if rinehart voltage drops below battery, something's wrong, 
       // turn everything off
@@ -622,15 +622,15 @@ void prechargeControl()
       // set ready to drive off 
 			readyToDrive = 0;
 
-      if (lastPrechargeState != prechargeState)
-      {
+      // if (lastPrechargeState != prechargeState)
+      // {
         // message is sent to rinehart to turn everything off
         TxData[0] = 1;            // parameter address. LSB
         TxData[1] = 0;            // parameter address. MSB
         TxData[2] = 1;            // Read / Write. 1 is write
         TxData[3] = 0;            // N/A
         TxData[4] = 0;            // Data. "0" off, "1": relay 1 on, "2": relay 2 on, "3": relay 1 and 2 on
-        TxData[5] = 55;           // 55 means relay control
+        TxData[5] = 0x55;           // 55 means relay control
         TxData[6] = 0;            // N/A
         TxData[7] = 0;            // N/A
 
@@ -638,8 +638,8 @@ void prechargeControl()
         HAL_CAN_AddTxMessage(&hcan1, &txHeader2, TxData, &TxMailbox);
         
         // update last precharge state
-        lastPrechargeState = prechargeState;
-      }
+        // lastPrechargeState = prechargeState;
+      // }
 		break;
 
 		default:
@@ -663,7 +663,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     TxData[4] = rinehartVoltage >> 8;       // update on CAN message MSB
     TxData[5] = bmsVoltage & 0xFF;          // update on CAN message LSB
     TxData[6] = bmsVoltage >> 8;            // update on CAN message MSB
-    TxData[7] = 0x07;
+    TxData[7] = prechargeState;             // show which state of precharge / driving we're in, 0:off, 1:pre, 2: main
 
     // send message
     HAL_CAN_AddTxMessage(&hcan1, &txHeader1, TxData, &TxMailbox);
