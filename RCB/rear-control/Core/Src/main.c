@@ -124,7 +124,7 @@ int main(void)
   HAL_CAN_Start(&hcan1);
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
   HAL_TIM_Base_Start_IT(&htim14);
-  HAL_TIM_Base_Start_IT(&htim13);
+  // HAL_TIM_Base_Start_IT(&htim13);
 
   /* USER CODE END 2 */
 
@@ -208,7 +208,7 @@ static void MX_CAN1_Init(void)
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = ENABLE;
   hcan1.Init.AutoWakeUp = DISABLE;
-  hcan1.Init.AutoRetransmission = ENABLE;
+  hcan1.Init.AutoRetransmission = DISABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
@@ -283,7 +283,7 @@ static void MX_TIM14_Init(void)
   htim14.Instance = TIM14;
   htim14.Init.Prescaler = 9000-1;
   htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim14.Init.Period = 1000-1;
+  htim14.Init.Period = 100-1;
   htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
@@ -349,13 +349,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   // on __Hz interval 
   if (htim == &htim13)
   {
-    imdFault = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6);
-    bmsFault = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7);
+    // imdFault = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6);
+    // bmsFault = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7);
   }
   
   // on __Hz interval 
   if (htim == &htim14)
   {
+
+    imdFault = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6);
+    bmsFault = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7);
+
     // build CAN message for 
     TxData[0] = !imdFault;            // inverted because the fault clears high, LEDs then read low on DCB
     TxData[1] = !bmsFault;            // inverted because the fault clears high, LEDs then read low on DCB
